@@ -32,7 +32,11 @@
                 "output": "engine",
                 "ignore": [
                   "stockfish.js",
-                  "stockfish.wasm"
+                  "stockfish.wasm",
+                  "stockfish-18.js",
+                  "stockfish-18.wasm",
+                  "stockfish-18-single.js",
+                  "stockfish-18-single.wasm"
                 ]
               },
               {

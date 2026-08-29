@@ -61,16 +61,13 @@ describe('the heap ceiling', () => {
 	const CEILING_MB = 2048;
 
 	it('never offers a hash size that could fill the heap on its own', () => {
-		for (const id of ['sf18', 'sf18-single', 'sf18-lite', 'sf18-lite-single', 'sf18-asm']) {
+		for (const id of ['sf18-lite', 'sf18-lite-single', 'sf18-asm']) {
 			const engine = engineById(id);
 			expect(engine.maxHashMb, id).toBeLessThan(CEILING_MB);
 			expect(recommendedHashMb(device({ memoryGb: 64 }), engine), id).toBeLessThanOrEqual(engine.maxHashMb);
 		}
 	});
 
-	it('leaves the full builds more headroom than the lite ones, because the network is 113MB', () => {
-		expect(engineById('sf18-single').maxHashMb).toBeLessThan(engineById('sf18-lite-single').maxHashMb);
-	});
 });
 
 describe('unsupportedReason', () => {

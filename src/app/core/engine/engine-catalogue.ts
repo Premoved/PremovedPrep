@@ -21,29 +21,6 @@ const WASM_HEAP_CEILING_MB = 2048;
 
 export const ENGINE_CATALOGUE: readonly EngineDefinition[] = [
 	{
-		id: 'sf18',
-		kind: 'wasm',
-		label: 'Stockfish 18 · 113MB NNUE · multi-threaded',
-		shortLabel: 'SF 18 · 113MB NNUE',
-		worker: `${BIN}/stockfish-18.js`,
-		threads: true,
-		requiresIsolation: true,
-		/** A quarter of the heap: the full network is 113 MB on disk and more once resident. */
-		maxHashMb: WASM_HEAP_CEILING_MB / 4,
-		downloadMb: 113,
-	},
-	{
-		id: 'sf18-single',
-		kind: 'wasm',
-		label: 'Stockfish 18 · 113MB NNUE · single-threaded',
-		shortLabel: 'SF 18 · 113MB NNUE',
-		worker: `${BIN}/stockfish-18-single.js`,
-		threads: false,
-		requiresIsolation: false,
-		maxHashMb: WASM_HEAP_CEILING_MB / 4,
-		downloadMb: 113,
-	},
-	{
 		id: 'sf18-lite',
 		kind: 'wasm',
 		label: 'Stockfish 18 Lite · 7MB NNUE · multi-threaded',
