@@ -67,7 +67,6 @@ describe('the heap ceiling', () => {
 			expect(recommendedHashMb(device({ memoryGb: 64 }), engine), id).toBeLessThanOrEqual(engine.maxHashMb);
 		}
 	});
-
 });
 
 describe('unsupportedReason', () => {
