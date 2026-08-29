@@ -50,7 +50,9 @@ describe('recommendedHashMb', () => {
 	});
 
 	it('still returns a usable size on a machine too small for any step', () => {
-		expect(recommendedHashMb(device({ memoryGb: 0.25 }), MULTI)).toBe(16);
+		// An eighth of 0.25 GB is 32 MB, which is a step - that input never reached the fallback.
+		// Below 0.125 GB the eighth lands under the smallest step and the floor is what answers.
+		expect(recommendedHashMb(device({ memoryGb: 0.1 }), MULTI)).toBe(16);
 	});
 });
 
