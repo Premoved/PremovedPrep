@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BoardThemeService } from '../../core/board/board-theme.service';
 import { BOARD_THEMES } from '../../core/board/board-themes';
@@ -36,6 +36,7 @@ export class SettingsPageComponent {
 	private readonly sounds = inject(MoveSoundService);
 	private readonly customTheme = inject(CustomThemeService);
 	private readonly route = inject(ActivatedRoute);
+	private readonly router = inject(Router);
 	private readonly notify = inject(NotificationService);
 
 	readonly boardThemes = BOARD_THEMES;
@@ -180,6 +181,49 @@ export class SettingsPageComponent {
 			this.confirmPassword() === this.newPassword() &&
 			this.passwordProblem() === '',
 	);
+
+	readonly deleting = signal(false);
+	readonly deleteConfirm = signal('');
+	readonly deleteBusy = signal(false);
+	readonly deleteError = signal('');
+
+	/** Exact match, not a second click: the name is on screen, so typing it is the deliberate part. */
+	readonly deleteReady = computed(() => {
+		const username = this.auth.currentUser()?.username;
+		return username !== undefined && this.deleteConfirm().trim() === username;
+	});
+
+	startDelete(): void {
+		this.deleteConfirm.set('');
+		this.deleteError.set('');
+		this.deleting.set(true);
+	}
+
+	cancelDelete(): void {
+		this.deleting.set(false);
+		this.deleteConfirm.set('');
+		this.deleteError.set('');
+	}
+
+	confirmDelete(): void {
+		if (!this.deleteReady() || this.deleteBusy()) return;
+
+		this.deleteBusy.set(true);
+		this.deleteError.set('');
+		this.auth.deleteAccount(this.deleteConfirm().trim()).subscribe({
+			next: () => {
+				this.deleteBusy.set(false);
+				this.deleting.set(false);
+				this.auth.logout();
+				void this.router.navigateByUrl('/home');
+				this.notify.info('Your account and everything in it have been deleted.');
+			},
+			error: (err: Error) => {
+				this.deleteBusy.set(false);
+				this.deleteError.set(err.message);
+			},
+		});
+	}
 
 	constructor() {
 		this.route.fragment.pipe(takeUntilDestroyed()).subscribe((fragment) => this.scrollTo(fragment));

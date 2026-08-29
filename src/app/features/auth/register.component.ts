@@ -27,6 +27,9 @@ export class RegisterComponent {
 	readonly email = signal('');
 	readonly password = signal('');
 
+	/** Required: the server refuses the registration without it, and records the version accepted. */
+	readonly acceptedTerms = signal(false);
+
 	/** Set once a field has been left, so a rule is not shown while the user is still typing. */
 	readonly touchedUsername = signal(false);
 	readonly touchedPassword = signal(false);
@@ -64,6 +67,7 @@ export class RegisterComponent {
 			this.username().trim().length >= 3 &&
 			this.email().trim().length > 0 &&
 			this.password().length >= 8 &&
+			this.acceptedTerms() &&
 			this.usernameProblem() === null &&
 			this.passwordProblem() === null &&
 			!this.submitting(),
@@ -100,23 +104,31 @@ export class RegisterComponent {
 		this.error.set(null);
 		this.submitting.set(true);
 
-		this.auth.register(this.username().trim(), this.email().trim(), this.password(), this.botCheck.take()).subscribe({
-			next: (created) => {
-				/** verificationSent is false when the mail provider refused. */
-				if (!created.verificationSent) {
-					this.notices.error(
-						'Your account was created, but we could not send the confirmation email. Try sending it again.',
-					);
-				}
-				this.router.navigateByUrl('/verify-email', { state: { email: created.email } });
-			},
-			error: (err: Error) => {
-				this.submitting.set(false);
-				if (this.botCheck.adopt(err)) {
-					return;
-				}
-				this.error.set(err.message);
-			},
-		});
+		this.auth
+			.register(
+				this.username().trim(),
+				this.email().trim(),
+				this.password(),
+				this.acceptedTerms(),
+				this.botCheck.take(),
+			)
+			.subscribe({
+				next: (created) => {
+					/** verificationSent is false when the mail provider refused. */
+					if (!created.verificationSent) {
+						this.notices.error(
+							'Your account was created, but we could not send the confirmation email. Try sending it again.',
+						);
+					}
+					this.router.navigateByUrl('/verify-email', { state: { email: created.email } });
+				},
+				error: (err: Error) => {
+					this.submitting.set(false);
+					if (this.botCheck.adopt(err)) {
+						return;
+					}
+					this.error.set(err.message);
+				},
+			});
 	}
 }

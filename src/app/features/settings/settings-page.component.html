@@ -77,8 +77,8 @@
 						</span>
 						@if (storageLevel() === 'full') {
 							<span class="field-note">
-								Full. Existing games are safe and nothing was lost — but nothing new can be saved until you
-								make room, or
+								Full. Existing games are safe and nothing was lost — but nothing new can be saved until you make room,
+								or
 								<a routerLink="/" fragment="account">use your own disk</a>
 								instead.
 							</span>
@@ -153,9 +153,46 @@
 			@if (passwordDone()) {
 				<p class="line-note">{{ passwordDone() }}</p>
 			}
+
+			<div class="danger">
+				<h3 class="group-title">Delete account</h3>
+				<p class="group-hint">
+					Your collections, your saved games, your sessions and your agent keys go with it, immediately and for good.
+					The username <strong>{{ user.username }}</strong> becomes free for someone else to take. There is no undo and
+					no copy kept.
+				</p>
+
+				@if (deleting()) {
+					<form class="delete-form" (submit)="$event.preventDefault(); confirmDelete()">
+						<label class="field">
+							<span class="field-label">Type {{ user.username }} to confirm</span>
+							<input
+								type="text"
+								autocomplete="off"
+								autocapitalize="none"
+								spellcheck="false"
+								[value]="deleteConfirm()"
+								(input)="deleteConfirm.set($any($event.target).value); deleteError.set('')"
+								(keydown.escape)="cancelDelete()"
+							/>
+						</label>
+						<div class="form-foot">
+							<button type="submit" class="danger-btn" [disabled]="!deleteReady() || deleteBusy()">
+								{{ deleteBusy() ? 'Deleting…' : 'Delete for good' }}
+							</button>
+							<button type="button" class="ghost-btn" (click)="cancelDelete()">Cancel</button>
+						</div>
+						@if (deleteError()) {
+							<p class="line-problem">{{ deleteError() }}</p>
+						}
+					</form>
+				} @else {
+					<button type="button" class="danger-btn" (click)="startDelete()">Delete account</button>
+				}
+			</div>
 		} @else {
 			<p class="empty">
-				You are not signed in. 
+				You are not signed in.
 				<a routerLink="/login">Sign in</a> to save your preferences into your account and access all features.
 			</p>
 		}
@@ -400,4 +437,10 @@
 			</div>
 		</div>
 	</section>
+
+	<footer class="settings-footer">
+		<a routerLink="/terms">Terms and Conditions</a>
+		<span aria-hidden="true">·</span>
+		<a routerLink="/privacy">Privacy Policy</a>
+	</footer>
 </div>

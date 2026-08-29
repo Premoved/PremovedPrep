@@ -49,6 +49,22 @@
 				/>
 				<p class="hint">{{ passwordHint() }}</p>
 
+				<div class="consent">
+					<label class="consent-row">
+						<input
+							type="checkbox"
+							[checked]="acceptedTerms()"
+							(change)="acceptedTerms.set($any($event.target).checked)"
+						/>
+						<span>
+							I agree to the
+							<a routerLink="/terms" target="_blank" rel="noopener">Terms and Conditions</a>
+							and I have read the
+							<a routerLink="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+						</span>
+					</label>
+				</div>
+
 				@if (error(); as message) {
 					<div class="error" role="alert">{{ message }}</div>
 				}

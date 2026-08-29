@@ -1,4 +1,4 @@
-/** Event names sent to PostHog. */
+/** Event names for product analytics. Nothing sends them today - see AnalyticsService. */
 export const AnalyticsEvent = {
 	pageView: '$pageview',
 	userRegistered: 'user_registered',

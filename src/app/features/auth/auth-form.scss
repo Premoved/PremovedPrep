@@ -184,3 +184,38 @@ button.primary:disabled {
 	color: var(--text-main);
 	text-decoration: underline;
 }
+
+/* Consent, on the registration form only */
+
+.consent {
+	margin: 0.9rem 0 0.2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.consent-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.55rem;
+	font-size: 0.82rem;
+	line-height: 1.4;
+	color: var(--text-muted);
+	cursor: default;
+}
+
+.consent-row input {
+	width: auto;
+	margin: 0.15rem 0 0;
+	flex-shrink: 0;
+	accent-color: var(--glow-blue);
+}
+
+.consent-row a {
+	color: var(--glow-blue);
+	text-decoration: none;
+}
+
+.consent-row a:hover {
+	text-decoration: underline;
+}

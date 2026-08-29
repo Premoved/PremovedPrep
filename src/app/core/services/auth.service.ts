@@ -25,10 +25,10 @@ export class AuthService {
 		return this._currentUser() !== null;
 	}
 
-	/** Creates the account. Does not sign in. */
-	register(username: string, email: string, password: string, captcha?: CaptchaAnswer) {
+	/** Creates the account. Does not sign in. The server refuses a registration with acceptedTerms false. */
+	register(username: string, email: string, password: string, acceptedTerms: boolean, captcha?: CaptchaAnswer) {
 		return this.http
-			.post<RegisterResponse>(`${this.baseUrl}/register`, { username, email, password, captcha })
+			.post<RegisterResponse>(`${this.baseUrl}/register`, { username, email, password, acceptedTerms, captcha })
 			.pipe(tap(() => this.analytics.capture(AnalyticsEvent.userRegistered)));
 	}
 
@@ -71,6 +71,14 @@ export class AuthService {
 		return this.http
 			.patch<UserSummary>(`${this.baseUrl}/me/username`, { username })
 			.pipe(tap((user) => this._currentUser.set(user)));
+	}
+
+	/**
+	 * Irreversible, and the reason the caller types their own username: the server checks it again
+	 * before deleting anything.
+	 */
+	deleteAccount(username: string) {
+		return this.http.delete<void>(`${this.baseUrl}/me`, { body: { username } });
 	}
 
 	changePassword(currentPassword: string, newPassword: string) {

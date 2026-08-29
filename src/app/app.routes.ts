@@ -118,6 +118,16 @@ export const routes: Routes = [
 				path: 'settings',
 				loadComponent: () => import('./features/settings/settings-page.component').then((m) => m.SettingsPageComponent),
 			},
+
+			// Reachable signed out, and linked from the registration form and from Settings.
+			{
+				path: 'terms',
+				loadComponent: () => import('./features/legal/terms.component').then((m) => m.TermsComponent),
+			},
+			{
+				path: 'privacy',
+				loadComponent: () => import('./features/legal/privacy.component').then((m) => m.PrivacyComponent),
+			},
 		],
 	},
 	{ path: '**', redirectTo: 'home' },

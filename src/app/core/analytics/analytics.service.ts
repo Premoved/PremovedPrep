@@ -1,122 +1,40 @@
-import { Injectable, inject } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { Injectable } from '@angular/core';
 import { AnalyticsEventName } from './analytics.events';
 
 type Props = Record<string, unknown>;
 
-interface PostHog {
-	init(key: string, config: Props): void;
-	capture(event: string, properties?: Props): void;
-	identify(distinctId: string, properties?: Props): void;
-	reset(): void;
-}
-
-declare global {
-	interface Window {
-		posthog?: PostHog;
-	}
-}
-
-const MAX_QUEUE = 50;
-
 /**
- * Product analytics over PostHog's browser snippet. Loaded lazily; every method is a no-op without a
- * configured key.
+ * The instrumentation points, with no transport behind them.
+ *
+ * Product analytics is off, and off structurally rather than by an empty configuration value: the
+ * built bundle contains no vendor script, no endpoint and no project key, so anyone can check the
+ * claim in the privacy notice by searching the JavaScript the site actually serves. A key removed
+ * from the source but still in the bundle would prove nothing, which is the whole reason this is a
+ * deletion rather than a setting.
+ *
+ * The call sites stay because they mark what would be worth measuring. Turning measurement back on
+ * means adding a transport here, asking for consent before it loads, recording that consent,
+ * offering a way to withdraw it, and describing all of it in the privacy notice.
  */
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-	private readonly router = inject(Router);
-
-	private ph: PostHog | null = null;
-	private disabled = false;
-	private queue: ((ph: PostHog) => void)[] = [];
-	private lastPath: string | null = null;
-
 	init(): void {
-		if (!environment.posthogKey) {
-			this.disabled = true;
-			if (environment.production) {
-				console.warn('Analytics disabled: environment.posthogKey is empty.');
-			}
-			return;
-		}
-
-		const script = document.createElement('script');
-		script.src = `${environment.posthogHost}/static/array.js`;
-		script.async = true;
-		/** Required by COEP: a cross-origin script only loads when requested in CORS mode. */
-		script.crossOrigin = 'anonymous';
-		script.onload = () => this.start();
-		script.onerror = () => this.stop();
-		document.head.appendChild(script);
-
-		this.router.events.subscribe((event) => {
-			if (event instanceof NavigationEnd) {
-				this.pageView(event.urlAfterRedirects);
-			}
-		});
+		/** Nothing to start. */
 	}
 
 	identify(userId: number | string, properties?: Props): void {
-		this.run((ph) => ph.identify(String(userId), properties));
+		/** Nobody is being identified to anybody. */
+		void userId;
+		void properties;
 	}
 
 	reset(): void {
-		this.run((ph) => ph.reset());
+		/** No identity to clear. */
 	}
 
 	capture(event: AnalyticsEventName, properties?: Props): void {
-		this.run((ph) => ph.capture(event, properties));
-	}
-
-	/** Path only: query strings carry player names, FIDE ids and FENs. */
-	private pageView(url: string): void {
-		const path = url.split('?')[0].split('#')[0];
-		if (path === this.lastPath) {
-			return;
-		}
-		this.lastPath = path;
-		this.run((ph) => ph.capture('$pageview', { $pathname: path }));
-	}
-
-	private start(): void {
-		const ph = window.posthog;
-		if (!ph) {
-			this.stop();
-			return;
-		}
-		ph.init(environment.posthogKey, {
-			api_host: environment.posthogHost,
-			capture_pageview: false,
-			capture_pageleave: true,
-			autocapture: false,
-			disable_session_recording: true,
-			persistence: 'localStorage+cookie',
-		});
-		this.ph = ph;
-		const pending = this.queue;
-		this.queue = [];
-		for (const call of pending) {
-			call(ph);
-		}
-	}
-
-	private stop(): void {
-		this.disabled = true;
-		this.queue = [];
-	}
-
-	private run(call: (ph: PostHog) => void): void {
-		if (this.disabled) {
-			return;
-		}
-		if (this.ph) {
-			call(this.ph);
-			return;
-		}
-		if (this.queue.length < MAX_QUEUE) {
-			this.queue.push(call);
-		}
+		/** Recorded nowhere, sent nowhere. The signature stays so the call sites keep type-checking. */
+		void event;
+		void properties;
 	}
 }
