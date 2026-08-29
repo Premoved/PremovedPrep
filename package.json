@@ -30,7 +30,6 @@
     "prebuild": "npm run assets"
   },
   "private": true,
-  "packageManager": "npm@12.0.2",
   "dependencies": {
     "@angular/common": "^21.2.0",
     "@angular/compiler": "^21.2.0",
