@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Allows re-running the ci manually.
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      # npm clean install from package-lock.json
+      - run: npm ci
+
+      # Fail-fast
+      - name: Formatting
+        run: npx prettier --check "src/**/*.{ts,scss,css}" "tools/*.mjs"
+
+      - name: Signal calls in templates
+        run: npm run check:signals
+
+      - name: Types (app)
+        run: npx tsc -p tsconfig.app.json --noEmit
+
+      - name: Types (specs)
+        run: npx tsc -p tsconfig.spec.json --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test -- --watch=false
+
+      # Type checks templates & enforces budgets. The piece and sound assets are a deploy concern,
+      # not a build one - the bundle is identical without them - so CI does not pull 200 files from
+      # raw.githubusercontent on every push. Cloudflare Pages does not set this variable.
+      - name: Production build
+        run: npm run build
+        env:
+          PREMOVEDPREP_SKIP_ASSETS: '1'
+
+      # Vulnerability warnings
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true

@@ -1,0 +1,130 @@
+.local-view {
+	padding: 1.5rem 2rem 3rem;
+	max-width: 1100px;
+}
+
+.view-header {
+	display: flex;
+	align-items: baseline;
+	gap: 1rem;
+	margin-bottom: 0.5rem;
+}
+
+.back {
+	color: var(--text-muted);
+	font-size: 0.85rem;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.back:hover {
+	color: var(--text-main);
+}
+
+.titles h1 {
+	margin: 0;
+	font-size: 1.4rem;
+	color: var(--text-strong);
+}
+
+.subtitle {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.45rem;
+	margin: 0.25rem 0 0;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+
+	code {
+		font-family: 'Consolas', 'Menlo', monospace;
+		word-break: break-all;
+	}
+}
+
+.read-only {
+	margin: 1.1rem 0 1.4rem;
+	padding: 0.55rem 0.75rem;
+	border-left: 3px solid var(--accent-blue);
+	border-radius: 0 4px 4px 0;
+	background: var(--bg-hover);
+	font-size: 0.84rem;
+	line-height: 1.5;
+	color: var(--text-main);
+}
+
+.notice {
+	margin: 1rem 0;
+	font-size: 0.88rem;
+	color: var(--text-muted);
+
+	a {
+		color: var(--glow-blue);
+	}
+}
+
+.entries {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.88rem;
+}
+
+.entries th {
+	padding: 0.4rem 0.6rem;
+	border-bottom: 1px solid var(--bg-border);
+	text-align: left;
+	font-size: 0.72rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+}
+
+.entries td {
+	padding: 0.45rem 0.6rem;
+	border-bottom: 1px solid var(--bg-border);
+	vertical-align: baseline;
+}
+
+.entries tbody tr {
+	cursor: default;
+}
+
+.entries tbody tr:hover,
+.entries tbody tr:focus-visible {
+	outline: none;
+	background: var(--bg-hover);
+}
+
+.entries .num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.entries .name {
+	color: var(--text-main);
+	font-weight: 500;
+}
+
+.entries .muted {
+	color: var(--text-muted);
+}
+
+.elo {
+	margin-left: 0.5rem;
+	font-size: 0.75rem;
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+.badge {
+	display: inline-block;
+	padding: 0.05rem 0.4rem;
+	border: 1px solid var(--bg-border);
+	border-radius: 4px;
+	background: var(--bg-elevated);
+	font-size: 0.7rem;
+	color: var(--text-muted);
+	white-space: nowrap;
+}

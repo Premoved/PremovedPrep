@@ -1,0 +1,355 @@
+<section class="page">
+	<header class="intro">
+		<app-desktop-agent-logo class="mark"></app-desktop-agent-logo>
+		<div>
+			<h1>Desktop agent</h1>
+			<p>
+				A small application that runs on your own computer and acts as a bridge between this site and your local device:
+				enables you to use your own game archive as the Database, your own chess engine for analysis, and as much storage as your
+				disk has.
+			</p>
+		</div>
+	</header>
+
+	@if (gate() === 'signed-out') {
+		<app-signed-out-notice what="an agent is linked to your account" />
+	} @else if (gate() === 'preview') {
+		<div class="card plan">
+			<h2>Coming soon...</h2>
+			<p>
+				The agent is currently under development. 
+			</p>
+			<p class="muted small">
+				The rest of this site in its current form will be unaffected by the agent's release, and all currently available features of the site will remain free to use.
+			</p>
+		</div>
+	} @else if (gate() === 'plan') {
+		<div class="card plan">
+		</div>
+	} @else {
+		@if (access.insider() && access.stage() !== 'BETA') {
+			<p class="insider">
+				<strong>Insider access.</strong> This deployment is in
+				<code>{{ access.stage() }}</code>
+				— everybody else sees
+				@if (access.stage() === 'PREVIEW') {
+					<em>Beta version coming soon</em>
+				} @else {
+					<em>the plan</em>
+				}
+				here. Your account is exempt because of its e-mail domain.
+			</p>
+		}
+
+		<div class="card status" [class]="bridge.state()">
+			<div class="status-line">
+				<span class="dot" aria-hidden="true"></span>
+				<strong>{{ headline() }}</strong>
+				@if (bridge.hello(); as hello) {
+					<span class="muted">agent {{ hello.version }}</span>
+				}
+				<span class="spacer"></span>
+				@if (bridge.state() === 'connected') {
+					<button type="button" (click)="refreshLists()">Refresh</button>
+				} @else if (bridge.state() === 'searching' || bridge.state() === 'connecting') {
+					<button type="button" disabled>Searching…</button>
+				} @else if (canSearch()) {
+					<button type="button" (click)="retry()">Look again</button>
+				}
+			</div>
+
+			@switch (bridge.state()) {
+				@case ('offline') {
+					<p class="muted">
+						Nothing answered on the loopback ports in the last {{ searchSeconds }} seconds. Start the agent — check the
+						icon in your system tray if you think it is already running — and then press <strong>Look again</strong>.
+					</p>
+				}
+				@case ('unlinked') {
+					<p class="muted">
+						Generate an access key below and paste it into the agent on the computer you want to use. Until a computer
+						is linked there is nothing for this page to look for, so it does not look.
+					</p>
+				}
+				@case ('unpaired') {
+					<p class="muted">
+						The agent is running on this computer and holds no key. Generate one below, then paste it into the agent's
+						Pairing screen. You only ever do this once per computer.
+					</p>
+				}
+				@case ('refused') {
+					<p class="muted">
+						It is paired to another PremovedPrep account. Either sign in as that account, or open the agent and pair it
+						again with a key generated here.
+					</p>
+				}
+				@case ('connected') {
+					<p class="muted">
+						Paired as <strong>{{ bridge.session()?.username }}</strong> with the key “{{ bridge.session()?.keyLabel }}”.
+					</p>
+				}
+			}
+
+			@if (bridge.error(); as message) {
+				<p class="warn">{{ message }}</p>
+			}
+		</div>
+
+		@if (bridge.state() === 'connected') {
+			<div class="choices">
+				<div class="card choice">
+					<div class="choice-head">
+						<app-knight-logo class="piece"></app-knight-logo>
+						<div>
+							<h2>Game database</h2>
+							<p class="muted">Choose a local database to use.</p>
+						</div>
+					</div>
+
+					<select
+						[ngModel]="selection.databaseId()"
+						(ngModelChange)="selection.selectDatabase($event)"
+						aria-label="Game database"
+					>
+						<option [ngValue]="null">PremovedPrep archive (default)</option>
+						@for (database of bridge.databases(); track database.id) {
+							<option [ngValue]="database.id">{{ database.name }}</option>
+						}
+					</select>
+
+					@if (selection.database(); as database) {
+						<dl class="facts">
+							<div>
+								<dt>Games</dt>
+								<dd>{{ database.games | number }}</dd>
+							</div>
+							<div>
+								<dt>Positions</dt>
+								<dd>{{ database.positions | number }}</dd>
+							</div>
+							<div>
+								<dt>Indexed to</dt>
+								<dd>{{ indexedTo(database.maxPly) }}</dd>
+							</div>
+							<div>
+								<dt>On disk</dt>
+								<dd>{{ size(database.bytes) }}</dd>
+							</div>
+						</dl>
+						@if (database.maxPly > 0) {
+							<p class="note">
+								The board is reading from this database. Past move {{ moves(database.maxPly) }} it has nothing indexed,
+								and the Openings Book will say so rather than showing an empty panel.
+							</p>
+						} @else {
+							<p class="note">
+								The board is reading from this database. Every game is indexed to its last move, so the Openings Book
+								and the Games list answer from it at any depth.
+							</p>
+						}
+					} @else if (bridge.databases().length === 0) {
+						<p class="note">No databases on this computer yet. Open the agent and create a Database from pgn files.</p>
+					} @else {
+						<p class="note">Using the shared archive. Pick one of yours to read from your own disk instead.</p>
+					}
+				</div>
+
+				<div class="card choice">
+					<div class="choice-head">
+						<app-queen-logo class="piece"></app-queen-logo>
+						<div>
+							<h2>Engine</h2>
+							<p class="muted">Choose a local engine to use.</p>
+						</div>
+					</div>
+
+					<select [ngModel]="selection.engineId()" (ngModelChange)="selection.selectEngine($event)" aria-label="Engine">
+						<option [ngValue]="null">None — use the engines that run in the page</option>
+						@for (engine of bridge.engines(); track engine.id) {
+							<option [ngValue]="engine.id">{{ engine.name }}</option>
+						}
+					</select>
+
+					@if (selection.engine(); as engine) {
+						<dl class="facts">
+							<div>
+								<dt>Reports as</dt>
+								<dd>{{ engine.reportedName || '—' }}</dd>
+							</div>
+							<div>
+								<dt>Threads</dt>
+								<dd>{{ engine.threads ? 'up to ' + (engine.maxThreads ?? '?') : 'single' }}</dd>
+							</div>
+							<div>
+								<dt>Hash</dt>
+								<dd>{{ engine.maxHashMb ? engine.maxHashMb + ' MB' : '—' }}</dd>
+							</div>
+							<div>
+								<dt>MultiPV</dt>
+								<dd>{{ engine.multiPv ? 'yes' : 'no' }}</dd>
+							</div>
+						</dl>
+						<p class="note">
+							Select <strong>Your own engine</strong> in the analysis board's engine settings to use it. It runs as a
+							real process on your computer, so it is not limited by what a browser tab can allocate.
+						</p>
+					} @else if (bridge.engines().length === 0) {
+						<p class="note">No engines registered yet. Open the agent and point it at any UCI engine you own.</p>
+					} @else {
+						<p class="note">Using Stockfish 18 WASM as default. Pick a local engine to use instead.</p>
+					}
+				</div>
+
+				<div class="card choice wide">
+					<div class="choice-head">
+						<app-king-logo class="piece"></app-king-logo>
+						<div>
+							<h2>Storage</h2>
+							<p class="muted">Your Library and Repertoire are kept on this computer as well as in your account.</p>
+						</div>
+					</div>
+					<p class="note">
+						There is nothing to choose here. Whatever fits in your account's allowance of 5 MB stays in the cloud so you
+						have it anywhere; anything past it lives on your computer disk and appears in your Library and Repertoire
+						while the agent is running. Which entries stay in the cloud is decided in the agent, on its
+						<strong>Local backup</strong> screen.
+					</p>
+
+					@if (folderPath(); as path) {
+						<dl class="facts folder">
+							<div class="wide">
+								<dt>Linked folder</dt>
+								<dd>
+									<code>{{ path }}</code>
+								</dd>
+							</div>
+						</dl>
+						@if (folderExists()) {
+							<p class="note">
+								Every <code>.pgn</code> in here shows up in your Library and Repertoire under
+								<strong>On this computer</strong> — including files you put there yourself. Change the folder on the
+								agent's <strong>Local backup</strong> screen and this page reads the new one straight away.
+							</p>
+						} @else {
+							<p class="warn">
+								That folder is not on disk at the moment. If it is on a drive that is unplugged, connect it; otherwise
+								open the agent's <strong>Local backup</strong> screen and let it build the folder again.
+							</p>
+						}
+					}
+				</div>
+			</div>
+		}
+
+		<div class="card">
+			<h2>Linked computers</h2>
+			<p class="muted">
+				Each computer you link holds one access key. Generate a key here, paste it into that computer's agent, and it
+				stays linked — you are not asked again unless you unlink it. Your account is the constant; a linked computer is
+				a session attached to it.
+			</p>
+
+			@if (freshKey(); as fresh) {
+				<div class="fresh">
+					<p><strong>Copy this now.</strong> It is shown once and cannot be shown again.</p>
+					<div class="key-row">
+						<code>{{ fresh.key }}</code>
+						<button type="button" class="primary" (click)="copyKey()">Copy</button>
+					</div>
+					<p class="muted small">
+						Paste it into the agent's Pairing screen on the computer you want to connect. If you lose it, revoke this
+						key and generate another — nothing is lost but the pairing.
+					</p>
+					<button type="button" (click)="dismissKey()">Done</button>
+				</div>
+			} @else {
+				<div class="generate">
+					<input
+						type="text"
+						[(ngModel)]="newLabel"
+						placeholder="Name this computer — “Laptop”, “Desktop at home”"
+						maxlength="60"
+						(keydown.enter)="generate()"
+					/>
+					<button type="button" class="primary" (click)="generate()" [disabled]="busy()">
+						{{ busy() ? 'Generating…' : 'Generate a key' }}
+					</button>
+				</div>
+			}
+
+			@if (error(); as message) {
+				<p class="warn">{{ message }}</p>
+			}
+
+			@if (liveKeys().length > 0) {
+				<table class="keys">
+					<thead>
+						<tr>
+							<th>Computer</th>
+							<th>Key</th>
+							<th>Created</th>
+							<th>Last used</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						@for (key of liveKeys(); track key.id) {
+							<tr [class.this-computer]="isThisComputer(key)">
+								<td>
+									{{ key.label }}
+									@if (isThisComputer(key)) {
+										<span class="here">This computer · connected</span>
+									}
+								</td>
+								<td>
+									<code class="prefix">{{ key.prefix }}…</code>
+								</td>
+								<td class="muted">{{ key.createdAt | date: 'mediumDate' }}</td>
+								<td class="muted">
+									@if (isThisComputer(key)) {
+										now
+									} @else if (key.lastSeenAt) {
+										{{ key.lastSeenAt | date: 'short' }}
+									} @else {
+										never
+									}
+								</td>
+								<td>
+									<button type="button" class="danger small" (click)="revoke(key)">
+										{{ isThisComputer(key) ? 'Unlink this computer' : 'Unlink' }}
+									</button>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+
+			@if (revokedKeys().length > 0) {
+				<details class="revoked">
+					<summary>{{ revokedKeys().length }} revoked</summary>
+					<table class="keys">
+						<tbody>
+							@for (key of revokedKeys(); track key.id) {
+								<tr>
+									<td>{{ key.label }}</td>
+									<td>
+										<code class="prefix">{{ key.prefix }}…</code>
+									</td>
+									<td class="muted">revoked {{ key.revokedAt | date: 'mediumDate' }}</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</details>
+			}
+
+			<p class="muted small">
+				Unlinking <strong>this computer</strong> ends its session immediately — this page is connected to it and passes
+				the message along. Unlinking <strong>another</strong> computer takes effect when its agent next starts: the site
+				has no route to a machine on somebody else's desk, so it cannot reach in and stop it. Either way the key is dead
+				from this moment and cannot pair anything again.
+			</p>
+		</div>
+	}
+</section>

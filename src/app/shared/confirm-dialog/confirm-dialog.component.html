@@ -1,0 +1,21 @@
+@if (confirm.request(); as req) {
+	<div class="modal-backdrop">
+		<div
+			class="modal"
+			[class.anchored]="anchorStyle()"
+			[style.left]="anchorStyle()?.left ?? null"
+			[style.top]="anchorStyle()?.top ?? null"
+			role="alertdialog"
+			aria-modal="true"
+			aria-label="Confirm"
+		>
+			<p class="message">{{ req.message }}</p>
+			<div class="modal-actions">
+				<button type="button" class="ghost" (click)="answer(false)">{{ req.cancelLabel }}</button>
+				<button type="button" class="primary" [class.danger]="req.danger" (click)="answer(true)">
+					{{ req.confirmLabel }}
+				</button>
+			</div>
+		</div>
+	</div>
+}

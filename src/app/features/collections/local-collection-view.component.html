@@ -1,0 +1,82 @@
+<div class="local-view">
+	<header class="view-header">
+		<a class="back" [routerLink]="backLink()">&larr; Back</a>
+		<div class="titles">
+			<h1>{{ title() }}</h1>
+			@if (collection(); as file) {
+				<p class="subtitle">
+					<code>{{ file.relativePath }}</code>
+					<span class="dot" aria-hidden="true">·</span>
+					{{ file.itemCount | number }}{{ file.truncated ? '+' : '' }}
+					{{ file.itemCount === 1 ? 'entry' : 'entries' }}
+				</p>
+			}
+		</div>
+	</header>
+
+	@if (auth.isLoggedIn()) {
+		<p class="read-only">
+			This file lives in your linked folder, so the site reads it and never writes to it. Open an entry to study it; to
+			edit one, save it from the board into a collection of your own.
+		</p>
+	}
+
+	@if (!auth.isLoggedIn()) {
+		<app-signed-out-notice what="the agent is linked to your account" />
+	} @else if (!bridge.connected()) {
+		<p class="notice">
+			The agent is not connected, so there is nothing to read. Open the
+			<a routerLink="/agent">Desktop agent</a> page to connect it.
+		</p>
+	} @else if (loading() && entries().length === 0) {
+		<p class="notice">Reading the file&hellip;</p>
+	} @else if (missing()) {
+		<p class="notice">
+			That file is not in the linked folder any more. It may have been renamed, moved or deleted since this list was
+			drawn — go <a [routerLink]="backLink()">back</a> to see what is there now.
+		</p>
+	} @else if (entries().length === 0) {
+		<p class="notice">This file holds no games that could be read.</p>
+	} @else {
+		<table class="entries">
+			<thead>
+				<tr>
+					<th>Type</th>
+					<th>Entry</th>
+					<th>Result</th>
+					<th>ECO</th>
+					<th class="num">Moves</th>
+					<th>Event</th>
+					<th>Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				@for (entry of entries(); track entry.id) {
+					<tr (click)="open(entry)" (keydown.enter)="open(entry)" tabindex="0">
+						<td>
+							<span class="badge">{{ label(entry.itemType) }}</span>
+						</td>
+						<td class="name">
+							{{ rowName(entry) }}
+							@if (entry.shape === 'GAME' && (entry.whiteElo || entry.blackElo)) {
+								<span class="elo">{{ entry.whiteElo ?? '?' }} / {{ entry.blackElo ?? '?' }}</span>
+							}
+						</td>
+						<td>{{ entry.result ?? '' }}</td>
+						<td>{{ entry.eco ?? '' }}</td>
+						<td class="num">{{ entry.plyCount / 2 | number: '1.0-0' }}</td>
+						<td class="muted">{{ entry.event ?? '' }}</td>
+						<td class="muted">{{ entry.date ?? (entry.year ? entry.year : '') }}</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+
+		@if (collection()?.truncated) {
+			<p class="notice">
+				Only the first {{ entries().length | number }} entries of this file are listed. A file this size is what a local
+				<strong>Database</strong> is for — index it in the agent and the whole of it becomes searchable from the board.
+			</p>
+		}
+	}
+</div>

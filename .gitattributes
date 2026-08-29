@@ -1,0 +1,13 @@
+# One line ending in the repository, whatever the machine that committed. Without this a Windows
+# checkout can commit CRLF, and `prettier --check` on the Linux CI runner fails on files nobody
+# edited.
+* text=auto eol=lf
+
+# Binary, never converted.
+*.png binary
+*.svg text eol=lf
+*.woff binary
+*.woff2 binary
+*.mp3 binary
+*.ogg binary
+*.wasm binary

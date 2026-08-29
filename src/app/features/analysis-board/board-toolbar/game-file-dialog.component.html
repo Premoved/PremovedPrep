@@ -1,0 +1,293 @@
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Backdrop. The keyboard route is Escape, on the host in game-file-dialog.component.ts. -->
+<div class="backdrop" (click)="closed.emit()">
+	<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -- The click only stops the backdrop from closing the dialog behind it. -->
+	<div
+		class="dialog"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="game-file-title"
+		(click)="$event.stopPropagation()"
+	>
+		<div class="titlebar">
+			<div class="tabs" role="tablist" aria-label="Game file">
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					[class.active]="activePanel() === 'data'"
+					[attr.aria-selected]="activePanel() === 'data'"
+					(click)="show('data')"
+				>
+					Enter game data
+				</button>
+				<button
+					type="button"
+					role="tab"
+					class="tab"
+					[class.active]="activePanel() === 'location'"
+					[attr.aria-selected]="activePanel() === 'location'"
+					(click)="show('location')"
+				>
+					Choose location
+				</button>
+			</div>
+			<h2 id="game-file-title" class="sr-only">Game file</h2>
+			<button type="button" class="icon-btn" (click)="closed.emit()" aria-label="Close">&times;</button>
+		</div>
+
+		@if (activePanel() === 'data') {
+			<form class="panel data" (submit)="applyData($event)">
+				<div class="form">
+					<div class="line">
+						<label class="field grow">
+							<span class="field-label">{{ firstLabel() }}</span>
+							<input type="text" [value]="valueOf('first')" placeholder="?" (input)="onField('first', $event)" />
+						</label>
+
+						<label class="field narrow">
+							<span class="field-label">Elo</span>
+							<input
+								type="text"
+								inputmode="numeric"
+								[value]="valueOf('firstElo')"
+								placeholder="—"
+								(input)="onField('firstElo', $event)"
+							/>
+						</label>
+					</div>
+
+					<div class="line">
+						<label class="field grow">
+							<span class="field-label">{{ secondLabel() }}</span>
+							<input type="text" [value]="valueOf('second')" placeholder="?" (input)="onField('second', $event)" />
+						</label>
+
+						<label class="field narrow">
+							<span class="field-label">Elo</span>
+							<input
+								type="text"
+								inputmode="numeric"
+								[value]="valueOf('secondElo')"
+								placeholder="—"
+								(input)="onField('secondElo', $event)"
+							/>
+						</label>
+					</div>
+
+					<div class="line">
+						<label class="field grow">
+							<span class="field-label">Event</span>
+							<input type="text" [value]="valueOf('event')" placeholder="?" (input)="onField('event', $event)" />
+						</label>
+
+						<label class="field narrow">
+							<span class="field-label">Result</span>
+							<select [value]="valueOf('result')" (change)="onField('result', $event)">
+								@for (result of results; track result) {
+									<option [value]="result" [selected]="valueOf('result') === result">{{ result }}</option>
+								}
+							</select>
+						</label>
+					</div>
+
+					<div class="line">
+						<label class="field grow">
+							<span class="field-label">Site</span>
+							<input type="text" [value]="valueOf('site')" placeholder="?" (input)="onField('site', $event)" />
+						</label>
+
+						<label class="field date">
+							<span class="field-label">Date</span>
+							<input type="text" [value]="valueOf('date')" placeholder="????.??.??" (input)="onField('date', $event)" />
+						</label>
+
+						<label class="field narrow">
+							<span class="field-label">Round</span>
+							<input type="text" [value]="valueOf('round')" placeholder="?" (input)="onField('round', $event)" />
+						</label>
+					</div>
+
+					<div class="line">
+						<label class="field date">
+							<span class="field-label">Time control</span>
+							<input
+								type="text"
+								[value]="valueOf('timeControl')"
+								placeholder="300+3"
+								(input)="onField('timeControl', $event)"
+							/>
+						</label>
+
+						<label class="field grow">
+							<span class="field-label">Termination</span>
+							<input
+								type="text"
+								[value]="valueOf('termination')"
+								placeholder="normal"
+								(input)="onField('termination', $event)"
+							/>
+						</label>
+					</div>
+
+					<div class="line">
+						<label class="field grow">
+							<span class="field-label">Annotator</span>
+							<input
+								type="text"
+								[value]="valueOf('annotator')"
+								placeholder="—"
+								(input)="onField('annotator', $event)"
+							/>
+						</label>
+					</div>
+
+					<div class="line">
+						<div class="field grow">
+							<span class="field-label">Type</span>
+							<div class="type-picker">
+								@for (type of types(); track type) {
+									<button
+										type="button"
+										class="type-option"
+										[class.selected]="itemType() === type"
+										[attr.aria-pressed]="itemType() === type"
+										(click)="chooseType(type)"
+									>
+										{{ labelFor(type) }}
+									</button>
+								}
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="actions">
+					<button type="button" class="ghost" (click)="closed.emit()">Close</button>
+					<button type="submit" class="primary">Apply</button>
+				</div>
+			</form>
+		} @else {
+			<div class="panel location">
+				<div class="shelf-tabs" role="tablist" aria-label="Shelves">
+					@for (shelf of shelves; track shelf) {
+						<button
+							type="button"
+							role="tab"
+							class="shelf-tab"
+							[class.active]="kind() === shelf"
+							[attr.aria-selected]="kind() === shelf"
+							(click)="selectShelf(shelf)"
+						>
+							{{ shelfLabel(shelf) }}
+						</button>
+					}
+
+					@if (kind() === 'REPERTOIRE') {
+						<span class="shelf-divider"></span>
+						@for (side of colors; track side) {
+							<button
+								type="button"
+								class="shelf-tab colour"
+								[class.active]="color() === side"
+								(click)="selectColor(side)"
+							>
+								{{ colorLabel(side) }}
+							</button>
+						}
+					}
+
+					<span class="shelf-spacer"></span>
+
+					<button type="button" class="ghost" (click)="startFolder()">New collection</button>
+				</div>
+
+				<div class="folder-grid">
+					@if (loading()) {
+						<p class="hint">Loading&hellip;</p>
+					} @else {
+						@for (folder of folders(); track folder.id) {
+							<button
+								type="button"
+								class="folder"
+								[class.selected]="selectedId() === folder.id"
+								(click)="select(folder)"
+								(dblclick)="save($event)"
+							>
+								<app-collection-icon class="folder-icon" [icon]="folder.icon"></app-collection-icon>
+								<span class="folder-name">{{ folder.name }}</span>
+								<span class="folder-count">{{ folder.itemCount }}</span>
+							</button>
+						} @empty {
+							<p class="hint">No collections here yet. Make one.</p>
+						}
+					}
+				</div>
+
+				@if (creatingFolder()) {
+					<form class="new-folder" (submit)="createFolder($event)">
+						<div class="icon-picker">
+							@for (icon of icons; track icon) {
+								<button
+									type="button"
+									class="icon-option"
+									[class.selected]="newFolderIcon() === icon"
+									[attr.aria-label]="icon"
+									(click)="chooseIcon(icon)"
+								>
+									<app-collection-icon [icon]="icon"></app-collection-icon>
+								</button>
+							}
+						</div>
+						<div class="new-folder-fields">
+							<input
+								type="text"
+								placeholder="Collection name"
+								[value]="newFolderName()"
+								(input)="onNewFolderName($event)"
+							/>
+							<div class="new-folder-actions">
+								<button type="button" class="ghost" (click)="cancelFolder()">Cancel</button>
+								<button type="submit" class="primary" [disabled]="!newFolderName().trim()">Create</button>
+							</div>
+						</div>
+					</form>
+				}
+
+				<form class="footer" (submit)="save($event)">
+					<div class="row">
+						<span class="row-label">Path</span>
+						<span class="path">
+							<span class="user">{{ userName() }}</span>
+							@for (part of path(); track $index) {
+								<span class="sep" aria-hidden="true">/</span>
+								<span class="part">{{ part }}</span>
+							}
+						</span>
+					</div>
+
+					<div class="row">
+						<span class="row-label">Type</span>
+						<div class="type-picker">
+							@for (type of types(); track type) {
+								<button
+									type="button"
+									class="type-option"
+									[class.selected]="itemType() === type"
+									[attr.aria-pressed]="itemType() === type"
+									(click)="chooseType(type)"
+								>
+									{{ labelFor(type) }}
+								</button>
+							}
+						</div>
+
+						<div class="actions">
+							<button type="button" class="ghost" (click)="closed.emit()">Cancel</button>
+							<button type="submit" class="primary" [disabled]="!canSave()">{{ saveLabel() }}</button>
+						</div>
+					</div>
+				</form>
+			</div>
+		}
+	</div>
+</div>

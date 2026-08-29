@@ -1,0 +1,150 @@
+<div class="results-body" #bodyRef>
+	<div class="list-pane" [style.paddingRight.px]="listGutterRight()">
+		@if (loading() && rows().length === 0) {
+			<p class="notice">Searching&hellip;</p>
+		} @else if (rows().length === 0) {
+			<p class="notice">{{ placeholder() }}</p>
+		} @else {
+			<table class="results" [style.minWidth.px]="tableMinWidth">
+				<caption class="sr-only">
+					The games this search found
+				</caption>
+
+				<colgroup>
+					@for (column of columns; track column.key) {
+						<col [style.width.px]="column.width" />
+					}
+				</colgroup>
+
+				<thead>
+					<tr>
+						@for (column of columns; track column.key) {
+							<th
+								scope="col"
+								[class]="column.align"
+								[class.sorted]="ariaSort(column) !== null"
+								[attr.aria-sort]="ariaSort(column)"
+							>
+								@if (column.sort) {
+									<button type="button" (click)="onHeaderClick(column)">
+										<span class="label">{{ column.label }}</span>
+										<span class="arrow" aria-hidden="true">
+											@switch (ariaSort(column)) {
+												@case ('ascending') {
+													&#9650;
+												}
+												@case ('descending') {
+													&#9660;
+												}
+											}
+										</span>
+									</button>
+								} @else {
+									<span class="label">{{ column.label }}</span>
+								}
+							</th>
+						}
+					</tr>
+				</thead>
+
+				<tbody>
+					@for (row of rows(); track row.id) {
+						<tr
+							[class.selected]="selectedId() === row.id"
+							[attr.aria-current]="selectedId() === row.id ? 'true' : null"
+							tabindex="0"
+							(click)="select(row)"
+							(dblclick)="openInNewTab(row)"
+							(keydown.enter)="openInNewTab(row)"
+							(contextmenu)="onContextMenu($event, row)"
+						>
+							@for (column of columns; track column.key) {
+								<td
+									[class]="column.align"
+									[class.unknown]="isUnknown(row, column.key)"
+									[class.name]="column.key === 'white' || column.key === 'black' || column.key === 'result'"
+								>
+									{{ cellText(row, column.key) }}
+								</td>
+							}
+						</tr>
+					}
+				</tbody>
+			</table>
+
+			@if (hasMore()) {
+				<div class="more">
+					<button type="button" class="ghost" [disabled]="loading()" (click)="moreRequested.emit()">
+						{{ loading() ? 'Loading…' : 'Load more games' }}
+					</button>
+				</div>
+			}
+		}
+	</div>
+
+	@if (openMenu(); as menu) {
+		<app-game-context-menu
+			[anchor]="menu.anchor"
+			[showAddToAnalysis]="false"
+			(openRequested)="openInNewTab(menu.game)"
+		></app-game-context-menu>
+	}
+
+	@if (active() && selectedGame(); as game) {
+		<aside
+			class="preview"
+			[style.width.px]="viewport.isMobile() ? null : previewWidth()"
+			[style.transform]="sheetOffset() ? 'translateY(' + sheetOffset() + 'px)' : null"
+		>
+			<div
+				class="pane-divider"
+				(pointerdown)="startResize($event)"
+				(pointermove)="onResize($event, bodyRef)"
+				(pointerup)="stopResize()"
+				(pointercancel)="stopResize()"
+			>
+				<button
+					type="button"
+					class="divider-handle"
+					[class.active]="handleActive()"
+					[style.top]="handleOffset() !== null ? handleOffset() + 'px' : null"
+					[style.margin-top]="handleOffset() !== null ? '0px' : null"
+					(pointerdown)="onHandlePointerDown($event)"
+					(pointermove)="onHandleDrag($event, bodyRef)"
+					(pointerup)="onHandlePointerUp()"
+					(pointercancel)="onHandlePointerUp()"
+					aria-label="Drag to resize the preview; also moves up and down along the bar"
+				></button>
+			</div>
+
+			<div class="preview-panel">
+				<div
+					class="preview-strip"
+					(pointerdown)="onSheetPointerDown($event)"
+					(pointermove)="onSheetPointerMove($event)"
+					(pointerup)="onSheetPointerUp()"
+					(pointercancel)="onSheetPointerUp()"
+				>
+					<span class="preview-label">Preview:</span>
+					<span class="preview-side">
+						<span class="preview-name" [attr.title]="game.white">{{ cellText(game, 'white') }}</span>
+						<span class="preview-elo">{{ cellText(game, 'whiteElo') }}</span>
+					</span>
+					<span class="preview-result">{{ cellText(game, 'result') }}</span>
+					<span class="preview-side">
+						<span class="preview-name" [attr.title]="game.black">{{ cellText(game, 'black') }}</span>
+						<span class="preview-elo">{{ cellText(game, 'blackElo') }}</span>
+					</span>
+					<button type="button" class="icon-btn" (click)="closePreview()" aria-label="Close preview">&times;</button>
+				</div>
+
+				<app-preview-board
+					[pgn]="previewPgn()"
+					[itemType]="'GAME'"
+					(previousRequested)="selectPrevious()"
+					(nextRequested)="selectNext()"
+				></app-preview-board>
+			</div>
+		</aside>
+	}
+</div>

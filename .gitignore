@@ -1,0 +1,52 @@
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# Angular
+/.angular
+.sass-cache/
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.history/*
+
+# Visual Studio Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/mcp.json
+!.vscode/tasks.json
+
+# Test and coverage output
+/coverage
+testem.log
+__screenshots__/
+
+# Local environment overrides
+.env
+.env.local
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Other
+/docs
+
+# Third-party artwork and sound, fetched by `npm run assets` (prebuild/prestart).
+# Not committed: the licences are per-set and belong to their authors, not to this repository.
+/public/piece
+/public/sound

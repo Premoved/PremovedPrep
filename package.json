@@ -1,0 +1,68 @@
+{
+  "name": "premoved-prep-frontend",
+  "version": "1.0.0",
+  "description": "Chess preparation on the web: analysis board, opening archive, opponent research and repertoires.",
+  "homepage": "https://premovedprep.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Premoved/PremovedPrep.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Premoved/PremovedPrep/issues"
+  },
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "ng": "ng",
+    "prestart": "npm run assets",
+    "start": "ng serve",
+    "build": "ng build",
+    "postbuild": "node tools/collect-licenses.mjs",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "check:signals": "node tools/check-signal-calls.mjs",
+    "check:bindings": "node tools/check-bindings.mjs src",
+    "assets:pieces": "node tools/fetch-lichess-pieces.mjs",
+    "assets:sounds": "node tools/fetch-lichess-sounds.mjs",
+    "assets": "npm run assets:pieces && npm run assets:sounds",
+    "check": "npm run check:signals && npm run check:bindings && npm run check:uci && npm run lint && tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit",
+    "lint": "ng lint",
+    "check:uci": "tsc --strict --target ES2022 --module nodenext --moduleResolution nodenext --outDir dist/uci-check tools/uci-session-check.ts && node dist/uci-check/tools/uci-session-check.js",
+    "prebuild": "npm run assets"
+  },
+  "private": true,
+  "packageManager": "npm@12.0.2",
+  "dependencies": {
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/forms": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "@angular/router": "^21.2.0",
+    "@lichess-org/chessground": "^10.1.1",
+    "chess.js": "^1.4.0",
+    "rxjs": "~7.8.0",
+    "stockfish": "^18.0.8",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.10",
+    "@angular/cli": "^21.2.10",
+    "@angular/compiler-cli": "^21.2.0",
+    "@eslint/js": "^10.0.1",
+    "@types/chess.js": "^0.13.7",
+    "angular-eslint": "21.4.0",
+    "eslint": "^10.3.0",
+    "jsdom": "^28.0.0",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "8.59.2",
+    "vitest": "^4.0.8"
+  },
+  "allowScripts": {
+    "stockfish@18.0.8": true,
+    "@parcel/watcher@2.6.0": true,
+    "esbuild@0.28.1": true,
+    "lmdb@3.5.1": true,
+    "msgpackr-extract@3.0.4": true
+  }
+}

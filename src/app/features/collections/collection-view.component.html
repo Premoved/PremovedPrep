@@ -1,0 +1,255 @@
+<div class="collection-view">
+	@if (!auth.isLoggedIn()) {
+		<app-signed-out-notice what="this collection is in your account" />
+	} @else {
+		<div class="collection-toolbar">
+			@if (collection(); as folder) {
+				<app-collection-icon class="toolbar-icon" [icon]="folder.icon"></app-collection-icon>
+				<h1>{{ folder.name }}</h1>
+				<span class="count">{{ folder.itemCount }} {{ folder.itemCount === 1 ? 'game' : 'games' }}</span>
+			}
+
+			<div class="toolbar-actions">
+				@if (actionCount() > 0) {
+					@if (retagTarget(); as target) {
+						<button type="button" class="ghost" (click)="retagSelected()">
+							Change to &ldquo;{{ labelFor(target) }}&rdquo;
+						</button>
+					}
+					<button type="button" class="ghost" (click)="copySelection(true)">Copy{{ countSuffix() }}</button>
+					<button type="button" class="ghost danger" (click)="deleteSelected()">Delete{{ countSuffix() }}</button>
+					<span class="toolbar-separator"></span>
+				} @else if (canPaste()) {
+					<button type="button" class="ghost" (click)="paste()">Paste{{ pasteSuffix() }}</button>
+					<span class="toolbar-separator"></span>
+				}
+
+				<label class="ghost import">
+					Import PGN
+					<input type="file" accept=".pgn,application/x-chess-pgn,text/plain" (change)="onImportFile($event)" />
+				</label>
+				<button
+					type="button"
+					class="ghost"
+					(click)="exportCollection()"
+					[appTooltip]="'Download this collection as a PGN file'"
+				>
+					Export PGN
+				</button>
+				<button type="button" class="primary" (click)="startDraft()">New</button>
+			</div>
+		</div>
+
+		@if (error(); as message) {
+			<div class="load-failed" role="alert">
+				<span class="mark" aria-hidden="true">!</span>
+				<p class="text">{{ message }}</p>
+				<button type="button" class="ghost" (click)="retry()">Try again</button>
+			</div>
+		}
+
+		<div class="body" #bodyRef>
+			<div class="list-pane" [style.paddingRight.px]="listGutterRight()">
+				@if (loading() && rows().length === 0) {
+					<p class="notice">Loading&hellip;</p>
+				} @else if (isEmpty()) {
+					<p class="notice">Nothing filed here yet. Create a game, or import a PGN.</p>
+				} @else {
+					<table class="entries" [style.minWidth.px]="tableMinWidth">
+						<caption class="sr-only">
+							The games in this collection
+						</caption>
+
+						<colgroup>
+							@for (column of columns(); track column.key) {
+								<col [style.width.px]="column.width" />
+							}
+						</colgroup>
+
+						<thead>
+							<tr>
+								@for (column of columns(); track column.key; let c = $index) {
+									<th
+										scope="col"
+										[attr.draggable]="column.pinned ? null : 'true'"
+										[class]="column.align"
+										[class.sorted]="ariaSort(column.sort) !== null"
+										[class.dragging]="columnDragIndex() === c"
+										[class.drop-before]="columnDropIndex() === c"
+										[class.drop-after]="columnDropIndex() === c + 1"
+										[attr.aria-sort]="ariaSort(column.sort)"
+										(dragstart)="onColumnDragStart($event, c)"
+										(dragover)="onColumnDragOver($event, c)"
+										(dragend)="onColumnDragEnd()"
+										(drop)="onColumnDrop($event)"
+									>
+										@if (column.sort) {
+											<button type="button" [attr.title]="headerHint(column.key)" (click)="sortBy(column.sort)">
+												<span class="label">{{ column.label }}</span>
+												<span class="arrow" aria-hidden="true">
+													@switch (ariaSort(column.sort)) {
+														@case ('ascending') {
+															&#9650;
+														}
+														@case ('descending') {
+															&#9660;
+														}
+														@case ('other') {
+															&#9679;
+														}
+													}
+												</span>
+											</button>
+										} @else {
+											<span class="label">{{ column.label }}</span>
+										}
+									</th>
+								}
+							</tr>
+						</thead>
+
+						<tbody>
+							@for (row of rows(); track row.id; let i = $index) {
+								<tr
+									[attr.data-item-id]="row.id"
+									[attr.draggable]="canReorder() ? 'true' : null"
+									[class.selected]="isPicked(row.id)"
+									[class.document]="row.isDocument"
+									[class.dragging]="dragIndex() === i"
+									[class.drop-before]="dropIndex() === i"
+									[class.drop-after]="dropIndex() === lastIndex() + 1 && i === lastIndex()"
+									[attr.aria-current]="selectedId() === row.id ? 'true' : null"
+									[attr.aria-selected]="isPicked(row.id) ? 'true' : null"
+									tabindex="0"
+									(click)="onRowClick($event, row)"
+									(dblclick)="openItem(row.id)"
+									(keydown.enter)="openItem(row.id)"
+									(contextmenu)="openMenu($event, row)"
+									(dragstart)="onDragStart($event, i)"
+									(dragover)="onDragOver($event, i)"
+									(dragend)="onDragEnd()"
+									(drop)="onDrop($event)"
+								>
+									@for (cell of row.cells; track cell.key) {
+										<td [class]="cell.classes" [attr.colspan]="cell.colspan">
+											@if (cell.key === 'type') {
+												<span class="badge" [class.doc]="row.isDocument">{{ row.badge }}</span>
+											} @else {
+												{{ cell.text }}
+											}
+										</td>
+									}
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+
+			@if (viewport.isMobile() ? null : selected(); as entry) {
+				<aside class="preview" [style.width.px]="previewWidth()">
+					<div
+						class="pane-divider"
+						(pointerdown)="startResize($event)"
+						(pointermove)="onResize($event, bodyRef)"
+						(pointerup)="stopResize()"
+						(pointercancel)="stopResize()"
+					>
+						<button
+							type="button"
+							class="divider-handle"
+							[class.active]="handleActive()"
+							[style.top]="handleOffset() !== null ? handleOffset() + 'px' : null"
+							[style.margin-top]="handleOffset() !== null ? '0px' : null"
+							(pointerdown)="onHandlePointerDown($event)"
+							(pointermove)="onHandleDrag($event, bodyRef)"
+							(pointerup)="onHandlePointerUp()"
+							(pointercancel)="onHandlePointerUp()"
+							aria-label="Drag to resize the preview; also moves up and down along the bar"
+						></button>
+					</div>
+
+					<div class="preview-panel">
+						<div class="preview-strip">
+							<span class="preview-label">Preview:</span>
+							@if (selectedRow(); as row) {
+								<span class="preview-name" [attr.title]="row.first">{{ row.first }}</span>
+								@if (row.result) {
+									<span class="preview-result">{{ row.result }}</span>
+								}
+								@if (row.second) {
+									<span class="preview-name" [attr.title]="row.second">{{ row.second }}</span>
+								}
+							}
+							<button type="button" class="icon-btn" (click)="closePreview()" aria-label="Close preview">
+								&times;
+							</button>
+						</div>
+
+						<app-preview-board
+							[pgn]="entry.pgn"
+							[itemType]="entry.itemType"
+							[itemId]="entry.id"
+							(previousRequested)="selectPrevious()"
+							(nextRequested)="selectNext()"
+						></app-preview-board>
+					</div>
+				</aside>
+			}
+		</div>
+	}
+</div>
+
+@if (menu(); as ctx) {
+	<div class="context-menu" [style.left.px]="ctx.x" [style.top.px]="ctx.y">
+		<button type="button" (click)="openItem(ctx.item.id)">Open game in new tab</button>
+	</div>
+}
+
+@if (draft(); as entry) {
+	<div class="modal-backdrop">
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="entry-draft-title">
+			<h2 id="entry-draft-title">New {{ labelFor(entry.itemType) }}</h2>
+
+			<form (submit)="saveDraft($event)">
+				<span class="field-label">Type</span>
+				<div class="type-picker">
+					@for (option of availableTypes(); track option) {
+						<button
+							type="button"
+							class="type-option"
+							[class.selected]="entry.itemType === option"
+							[attr.aria-pressed]="entry.itemType === option"
+							(click)="chooseType(option)"
+						>
+							{{ labelFor(option) }}
+						</button>
+					}
+				</div>
+
+				@if (isDocumentType(entry.itemType)) {
+					<label for="entry-title">Title</label>
+					<input id="entry-title" type="text" [value]="entry.title" (input)="onDraftTitle($event)" />
+				}
+
+				<label for="entry-pgn">PGN <span class="optional">— leave empty to start from initial position</span></label>
+				<textarea
+					id="entry-pgn"
+					[attr.rows]="isFenType(entry.itemType) ? 4 : 7"
+					[value]="entry.pgn"
+					(input)="onDraftPgn($event)"
+				></textarea>
+
+				@if (isFenType(entry.itemType)) {
+					<label for="entry-fen">FEN <span class="optional">— leave empty to start from initial position</span></label>
+					<input id="entry-fen" type="text" [value]="entry.fen" (input)="onDraftFen($event)" spellcheck="false" />
+				}
+
+				<div class="modal-actions">
+					<button type="button" class="ghost" (click)="closeDraft()">Cancel</button>
+					<button type="submit" class="primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Create' }}</button>
+				</div>
+			</form>
+		</div>
+	</div>
+}
