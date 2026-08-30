@@ -594,40 +594,23 @@
 	color: var(--text-main);
 }
 
-/* Deleting the account, and the two documents at the foot of the page */
+/* Deleting the account, and the two documents, at the foot of the page */
 
-.danger {
-	max-width: 34rem;
-	margin-top: 1.75rem;
-	padding: 1rem 1.1rem;
-	border: 1px solid var(--bg-border);
-	border-left: 3px solid var(--accent-red);
-	border-radius: 8px;
-	background: var(--bg-elevated);
+.account-danger {
+	margin-top: 2.5rem;
 }
 
-.delete-form {
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
-	margin-top: 0.5rem;
-}
-
-.danger-btn {
-	align-self: flex-start;
-	padding: 0.5rem 1.1rem;
-	border-radius: 8px;
-	border: 1px solid var(--accent-red);
+.danger-link {
+	padding: 0;
+	border: none;
 	background: none;
 	color: var(--accent-red);
 	font-family: inherit;
 	font-size: 0.85rem;
-	font-weight: 600;
 	cursor: default;
 
 	&:hover:not(:disabled) {
-		background: var(--accent-red);
-		color: #ffffff;
+		text-decoration: underline;
 	}
 
 	&:disabled {
@@ -635,13 +618,32 @@
 	}
 }
 
+.delete-form {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.75rem;
+	max-width: 26rem;
+}
+
+.delete-warning {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--text-main);
+}
+
+.delete-actions {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
 .settings-footer {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
 	align-items: center;
 	gap: 0.5rem;
-	margin-top: 2.5rem;
+	margin-top: 1.25rem;
 	padding-top: 1.25rem;
 	border-top: 1px solid var(--bg-border);
 	font-size: 0.8rem;
