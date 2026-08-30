@@ -266,7 +266,13 @@ export class SettingsPageComponent {
 		if (this.prefs.customColors()) {
 			return;
 		}
-		this.prefs.update('customColors', [...this.baseSurfaces()]);
+		/**
+		 * Read at the click, not from baseSurfaces(): that signal only refreshes when the theme changes,
+		 * so it can hold the palette of a mode the user has since left.
+		 */
+		const base = this.customTheme.baseColors();
+		this.baseSurfaces.set(base);
+		this.prefs.update('customColors', [...base]);
 	}
 
 	choosePieceSet(id: string): void {

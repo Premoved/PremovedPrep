@@ -1,6 +1,13 @@
 .auth-page {
 	display: flex;
 	justify-content: center;
+	/*
+	 * "safe" matters: plain centring keeps the box centred once it outgrows the viewport, which puts
+	 * part of it above the scroll origin where no gesture can reach it. Safe centring falls back to
+	 * the start edge instead, so the bot check can make the page as tall as it likes and the submit
+	 * button stays reachable.
+	 */
+	align-items: safe center;
 	min-height: 100dvh;
 	padding: 24px 16px;
 	background: var(--bg-main);
@@ -12,7 +19,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	margin: auto;
+	/* Horizontal only: the vertical placement is align-items on the page, so it can be "safe". */
+	margin: 0 auto;
 	width: 100%;
 	max-width: 380px;
 	box-sizing: border-box;

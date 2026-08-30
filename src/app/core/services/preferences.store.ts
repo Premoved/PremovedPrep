@@ -146,8 +146,20 @@ export class PreferencesStore {
 			this.theme.set(user.themePreference);
 		}
 
-		/** The account had nothing stored, so this machine's copy becomes the account's. */
+		/**
+		 * A new account. The board setup this machine was left in carries over, because someone who
+		 * arranged their pieces before registering should keep them. The custom surface colours do not:
+		 * an account that opens for the first time inside somebody else's colour experiment looks
+		 * broken, and the product's own light theme is the honest thing to start from.
+		 */
 		if (!user.boardPreferences) {
+			if (this.draft().customColors) {
+				this.update('customColors', null);
+			}
+			if (user.themePreference !== 'light' && user.themePreference !== 'dark') {
+				this.theme.set('light');
+			}
+			this.save();
 			this.scheduleSync();
 		}
 	}

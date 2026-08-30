@@ -646,12 +646,17 @@ nav {
 }
 
 /* The rail, as a drawer. */
+/*
+ * Above every overlay a page can raise - the setup-board and import dialogs sit at 2000, the
+ * context menus at 99999, the confirm dialog at 100000. The drawer belongs to the frame, not to
+ * the page, so nothing the page draws may cover it.
+ */
 .shell.mobile .sidebar {
 	position: fixed;
 	top: 0;
 	bottom: 0;
 	left: 0;
-	z-index: 60;
+	z-index: 100011;
 	width: min(17rem, 82vw);
 	max-width: 100%;
 	height: 100%;
@@ -677,7 +682,7 @@ nav {
 .drawer-backdrop {
 	position: fixed;
 	inset: 0;
-	z-index: 50;
+	z-index: 100010;
 	background: rgba(0, 0, 0, 0.45);
 	animation: drawer-backdrop-in 0.24s ease;
 }
