@@ -10,6 +10,7 @@
 }
 
 .modal {
+	position: relative;
 	width: 100%;
 	max-width: 320px;
 	padding: 18px 20px;
@@ -26,8 +27,36 @@
 	transform: translate(-50%, -50%);
 }
 
+.modal-close {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	border-radius: 6px;
+	background: none;
+	color: var(--text-muted);
+	cursor: default;
+}
+
+.modal-close:hover {
+	background: var(--bg-hover);
+	color: var(--text-main);
+}
+
+.modal-close svg {
+	width: 14px;
+	height: 14px;
+}
+
 .message {
 	margin: 0;
+	padding-right: 22px;
 	color: var(--text-strong);
 	font-size: 0.9rem;
 	line-height: 1.45;

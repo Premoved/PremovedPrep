@@ -13,6 +13,8 @@ export interface CastlingRights {
 
 export const FULL_CASTLING_RIGHTS: CastlingRights = { wK: true, wQ: true, bK: true, bQ: true };
 
+export const NO_CASTLING_RIGHTS: CastlingRights = { wK: false, wQ: false, bK: false, bQ: false };
+
 export function activeColor(fen: string): Color {
 	return fen.split(' ')[1] === 'b' ? Color.BLACK : Color.WHITE;
 }

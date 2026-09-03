@@ -75,10 +75,12 @@
 					</div>
 
 					<div class="line">
-						<label class="field grow">
-							<span class="field-label">Event</span>
-							<input type="text" [value]="valueOf('event')" placeholder="?" (input)="onField('event', $event)" />
-						</label>
+						@if (!isDocument()) {
+							<label class="field grow">
+								<span class="field-label">Event</span>
+								<input type="text" [value]="valueOf('event')" placeholder="?" (input)="onField('event', $event)" />
+							</label>
+						}
 
 						<label class="field narrow">
 							<span class="field-label">Result</span>
@@ -96,10 +98,16 @@
 							<input type="text" [value]="valueOf('site')" placeholder="?" (input)="onField('site', $event)" />
 						</label>
 
-						<label class="field date">
+						<div class="field date">
 							<span class="field-label">Date</span>
-							<input type="text" [value]="valueOf('date')" placeholder="????.??.??" (input)="onField('date', $event)" />
-						</label>
+							<app-date-picker
+								[value]="valueOf('date')"
+								format="pgn"
+								max="today"
+								placeholder="????.??.??"
+								(valueChange)="setField('date', $event)"
+							></app-date-picker>
+						</div>
 
 						<label class="field narrow">
 							<span class="field-label">Round</span>
@@ -108,7 +116,7 @@
 					</div>
 
 					<div class="line">
-						<label class="field date">
+						<label class="field grow">
 							<span class="field-label">Time control</span>
 							<input
 								type="text"
@@ -117,29 +125,21 @@
 								(input)="onField('timeControl', $event)"
 							/>
 						</label>
-
-						<label class="field grow">
-							<span class="field-label">Termination</span>
-							<input
-								type="text"
-								[value]="valueOf('termination')"
-								placeholder="normal"
-								(input)="onField('termination', $event)"
-							/>
-						</label>
 					</div>
 
-					<div class="line">
-						<label class="field grow">
-							<span class="field-label">Annotator</span>
-							<input
-								type="text"
-								[value]="valueOf('annotator')"
-								placeholder="—"
-								(input)="onField('annotator', $event)"
-							/>
-						</label>
-					</div>
+					@if (!isDocument()) {
+						<div class="line">
+							<label class="field grow">
+								<span class="field-label">Annotator</span>
+								<input
+									type="text"
+									[value]="valueOf('annotator')"
+									placeholder="—"
+									(input)="onField('annotator', $event)"
+								/>
+							</label>
+						</div>
+					}
 
 					<div class="line">
 						<div class="field grow">

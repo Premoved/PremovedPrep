@@ -20,8 +20,9 @@ import { Key, Pieces } from '@lichess-org/chessground/types';
 import {
 	CastlingRights,
 	FULL_CASTLING_RIGHTS,
-	castlingField,
+	NO_CASTLING_RIGHTS,
 	castlingRightsFrom,
+	castlingField,
 	enPassantCandidates,
 	findStructuralPositionError,
 	isLoadableFen,
@@ -74,7 +75,7 @@ export class SetupBoardComponent implements AfterViewInit {
 	protected readonly error = signal(false);
 
 	/** Plain fields, not signals: both are [(ngModel)] targets. */
-	protected castling: CastlingRights = { ...FULL_CASTLING_RIGHTS };
+	protected castling: CastlingRights = { ...NO_CASTLING_RIGHTS };
 	protected enPassantSquare = '-';
 
 	private isFlipped = false;
@@ -140,6 +141,8 @@ export class SetupBoardComponent implements AfterViewInit {
 
 	protected clearBoard(): void {
 		this.cgApi?.set({ pieces: new Map() } as SetupConfig);
+		/** No kings, no rooks, nobody to castle: leaving the ticks on would state the impossible. */
+		this.castling = { ...NO_CASTLING_RIGHTS };
 		this.refreshEnPassantOptions();
 	}
 

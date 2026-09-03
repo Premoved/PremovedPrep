@@ -138,6 +138,14 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 			turnColor: 'black' as const,
 			coordinates,
 			autoCastle: false,
+			/**
+			 * 0, not the default 1. Chessground calls preventDefault on touchstart whenever the touch
+			 * lands within that radius of any piece, which on a phone is most of the board - and a
+			 * cancelled touchstart cancels the scroll with it, no matter what touch-action says. At 0
+			 * only a touch on an occupied square is claimed, so a swipe over empty squares scrolls the
+			 * page while tapping a piece still selects it.
+			 */
+			touchIgnoreRadius: 0,
 			movable: { free: false, color: 'white' as const, showDests: true, dests: new Map<Key, Key[]>() },
 			premovable: {
 				enabled: true,

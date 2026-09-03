@@ -2,11 +2,13 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	effect,
 	inject,
 	input,
 	linkedSignal,
 	output,
 	signal,
+	untracked,
 } from '@angular/core';
 import { map, switchMap } from 'rxjs';
 import { DEFAULT_FEN } from '../../../core/chess/fen.util';
@@ -26,6 +28,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { CollectionApiService } from '../../../core/services/collection-api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { CloudStorageService } from '../../../core/services/cloud-storage.service';
+import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
 import { CollectionIconComponent } from '../../collections/collection-icon.component';
 import { MoveTreeStore } from '../state/move-tree.store';
 
@@ -49,7 +52,7 @@ const COLOR_LABEL: Readonly<Record<RepertoireColor, string>> = { w: 'White', b: 
 @Component({
 	selector: 'app-game-file-dialog',
 	standalone: true,
-	imports: [CollectionIconComponent],
+	imports: [CollectionIconComponent, DatePickerComponent],
 	templateUrl: './game-file-dialog.component.html',
 	styleUrl: './game-file-dialog.component.scss',
 	host: {
@@ -79,7 +82,7 @@ export class GameFileDialogComponent {
 	readonly shelves: readonly CollectionKind[] = ['LIBRARY', 'REPERTOIRE'];
 	readonly colors: readonly RepertoireColor[] = ['w', 'b'];
 
-	readonly draft = signal<Draft>(this.draftOf(this.tree.headers()));
+	readonly draft = signal<Draft>(this.draftOf(this.tree.headers(), false));
 
 	readonly kind = signal<CollectionKind>('LIBRARY');
 	readonly color = signal<RepertoireColor>('w');
@@ -132,15 +135,25 @@ export class GameFileDialogComponent {
 
 	constructor() {
 		this.load();
-		this.locateOpenEntry();
+
+		/**
+		 * An effect rather than a call in the body: Angular writes an input after the component is
+		 * constructed, so openItemId() read here was null every time. That is why Save always filed a
+		 * copy instead of writing back, and why the type and the fields never came back as the open
+		 * entry's own.
+		 */
+		let located: number | null = null;
+		effect(() => {
+			const itemId = this.openItemId();
+			if (itemId === null || itemId === located) {
+				return;
+			}
+			located = itemId;
+			untracked(() => this.locateOpenEntry(itemId));
+		});
 	}
 
-	private locateOpenEntry(): void {
-		const itemId = this.openItemId();
-		if (itemId === null) {
-			return;
-		}
-
+	private locateOpenEntry(itemId: number): void {
 		this.api
 			.getItem(itemId)
 			.pipe(
@@ -157,11 +170,12 @@ export class GameFileDialogComponent {
 					}
 					this.selectedId.set(folder.id);
 
-					if (ITEM_TYPES_BY_KIND[folder.kind].includes(itemType)) {
-						this.itemType.set(itemType);
-					} else {
-						this.itemType.set(this.defaultTypeFor(folder.kind));
-					}
+					const type = ITEM_TYPES_BY_KIND[folder.kind].includes(itemType) ? itemType : this.defaultTypeFor(folder.kind);
+					this.itemType.set(type);
+
+					/** Re-seeded now that the type is known: a document keeps its title and author in
+					 * Event and Annotator, so those are the tags its first two fields have to show. */
+					this.draft.set(this.draftOf(this.tree.headers(), DOCUMENT_TYPES.includes(type)));
 
 					/** The constructor loads the Library, so only another shelf needs a reload. */
 					if (folder.kind !== 'LIBRARY') {
@@ -196,6 +210,10 @@ export class GameFileDialogComponent {
 
 	onField(key: string, event: Event): void {
 		const value = (event.target as HTMLInputElement | HTMLSelectElement).value;
+		this.setField(key, value);
+	}
+
+	setField(key: string, value: string): void {
 		this.draft.update((current) => ({ ...current, [key]: value }));
 	}
 
@@ -222,7 +240,6 @@ export class GameFileDialogComponent {
 			date: draft['date'] ?? '',
 			round: draft['round'] ?? '',
 			timeControl: draft['timeControl'] ?? '',
-			termination: draft['termination'] ?? '',
 			annotator: draft['annotator'] ?? '',
 			white: draft['first'] ?? '',
 			black: draft['second'] ?? '',
@@ -235,6 +252,11 @@ export class GameFileDialogComponent {
 			edited['black'] = '';
 		}
 
+		/**
+		 * The roster first, the form on top. Termination is not a field any more, and this is why it
+		 * survives: an imported game keeps the tag it arrived with instead of being blanked by a form
+		 * that no longer asks about it.
+		 */
 		const merged: Record<string, string> = { ...this.rosterOf(this.tree.headers()), ...edited };
 		const headers: Record<string, string> = {};
 		for (const [key, value] of Object.entries(merged)) {
@@ -246,20 +268,24 @@ export class GameFileDialogComponent {
 		return headers as GameHeaders;
 	}
 
-	private draftOf(headers: GameHeaders): Draft {
+	/**
+	 * `document` decides where the first two fields come from. A study or an analysis keeps its title
+	 * in Event and its author in Annotator - the same tags headers() writes them back to - so reading
+	 * them from white and black would show two empty boxes over a named document.
+	 */
+	private draftOf(headers: GameHeaders, document: boolean): Draft {
 		return {
-			first: headers.white ?? '',
-			second: headers.black ?? '',
+			first: (document ? headers.event : headers.white) ?? '',
+			second: (document ? headers.annotator : headers.black) ?? '',
 			firstElo: headers.whiteElo ?? '',
 			secondElo: headers.blackElo ?? '',
 			result: headers.result ?? '*',
-			event: headers.event ?? '',
+			event: document ? '' : (headers.event ?? ''),
 			site: headers.site ?? '',
 			date: headers.date ?? '',
 			round: headers.round ?? '',
 			timeControl: headers.timeControl ?? '',
-			termination: headers.termination ?? '',
-			annotator: headers.annotator ?? '',
+			annotator: document ? '' : (headers.annotator ?? ''),
 		};
 	}
 

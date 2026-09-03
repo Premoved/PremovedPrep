@@ -63,12 +63,6 @@
 .board {
 	width: 100%;
 	aspect-ratio: 1;
-	/*
-	 * Chessground cancels touchmove while it thinks a drag is running, which on a phone turns the
-	 * board into a dead zone the page cannot be scrolled through. The puzzle is solved by tapping
-	 * squares, so handing vertical panning back to the browser costs nothing.
-	 */
-	touch-action: pan-y;
 }
 
 .shield {

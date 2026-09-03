@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
-import { ConfirmService } from '../../core/services/confirm.service';
+import { ConfirmAnswer, ConfirmService } from '../../core/services/confirm.service';
 
 @Component({
 	selector: 'app-confirm-dialog',
@@ -31,14 +31,19 @@ export class ConfirmDialogComponent {
 		});
 	}
 
-	answer(value: boolean): void {
+	answer(value: ConfirmAnswer): void {
 		this.confirm.answer(value);
 	}
 
+	/**
+	 * Escape means "I did not mean to open this". Where a third answer exists it takes it, rather
+	 * than pressing Discard on the user's behalf.
+	 */
 	@HostListener('document:keydown.escape')
 	onEscape(): void {
-		if (this.confirm.request()) {
-			this.answer(false);
+		const request = this.confirm.request();
+		if (request) {
+			this.answer(request.dismissible ? 'dismiss' : 'cancel');
 		}
 	}
 }

@@ -442,8 +442,15 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 		if (!this.tree.isDirty()) {
 			return true;
 		}
-		const save = await this.confirmDialog.ask('Save changes?', { confirmLabel: 'Save', cancelLabel: 'Discard' });
-		if (save) {
+		const answer = await this.confirmDialog.askOrDismiss('Save changes?', {
+			confirmLabel: 'Save',
+			cancelLabel: 'Discard',
+		});
+		/** The cross, or Escape: stay where we are, with the work still unsaved and still there. */
+		if (answer === 'dismiss') {
+			return false;
+		}
+		if (answer === 'confirm') {
 			return await this.quickSave();
 		}
 		return true;

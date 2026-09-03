@@ -45,6 +45,7 @@ Thumbs.db
 
 # Other
 /docs
+test-out.txt
 
 # Third-party artwork and sound, fetched by `npm run assets` (prebuild/prestart).
 # Not committed: the licences are per-set and belong to their authors, not to this repository.
