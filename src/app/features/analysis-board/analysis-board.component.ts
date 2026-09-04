@@ -19,6 +19,8 @@ import { Observable, catchError, of, shareReplay } from 'rxjs';
 import { DEFAULT_FEN } from '../../core/chess/fen.util';
 import { composePgnFile } from '../../core/chess/pgn-file';
 import { PgnParserService } from '../../core/chess/pgn-parser.service';
+import { uciOf } from '../../core/chess/uci-notation';
+import { AnalysisDraftStore } from '../../core/services/analysis-draft.store';
 import { PgnSerializerService } from '../../core/chess/pgn-serializer.service';
 import { ItemType } from '../../core/models/collection.model';
 import { RepertoireTree } from '../../core/models/repertoire.model';
@@ -75,6 +77,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 	private readonly auth = inject(AuthService);
 	private readonly analytics = inject(AnalyticsService);
 	private readonly pgn = inject(PgnParserService);
+	private readonly drafts = inject(AnalysisDraftStore);
 	private readonly serializer = inject(PgnSerializerService);
 	private readonly notify = inject(NotificationService);
 	private readonly cloud = inject(CloudStorageService);
@@ -223,7 +226,90 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 
 	private dividerTouched = false;
 
+	private draftTimer: ReturnType<typeof setTimeout> | null = null;
+	private draftRestored = false;
+
+	/**
+	 * The board's work in progress, kept in this tab's own slot in the browser. Dirty work is written;
+	 * saving to the account clears it, because at that point the entry itself is the copy that counts.
+	 */
+	private scheduleDraft(): void {
+		if (this.draftTimer !== null) {
+			clearTimeout(this.draftTimer);
+		}
+		this.draftTimer = setTimeout(() => {
+			this.draftTimer = null;
+			if (!this.tree.isDirty()) {
+				this.drafts.clear();
+				return;
+			}
+			const headers = this.tree.headers();
+			const root = this.tree.root();
+			this.drafts.write({
+				pgn: composePgnFile({
+					headers,
+					startFen: root?.fen ?? DEFAULT_FEN,
+					movetext: this.serializer.movetext(root),
+					annotator: headers.annotator ?? null,
+				}),
+				line: this.cursorLine(),
+				isStudy: this.tree.isStudy(),
+				itemId: this.openItemId(),
+				savedAt: Date.now(),
+			});
+		}, 700);
+	}
+
+	/** Root to cursor, in the spelling ?line= and goToLine already share. */
+	private cursorLine(): string[] {
+		const line: string[] = [];
+		for (let node = this.tree.currentNode(); !node.isRoot; node = node.parent) {
+			line.unshift(uciOf(node));
+		}
+		return line;
+	}
+
+	/**
+	 * Puts a draft back on the board. It stays dirty on purpose: it was never saved, and saying
+	 * otherwise would let the next navigation discard it without asking.
+	 */
+	private restoreDraft(board: ChessBoardComponent, forItem: number | null): boolean {
+		const draft = this.drafts.read();
+		if (!draft || draft.itemId !== forItem) {
+			return false;
+		}
+		try {
+			const parsed = this.pgn.parse(draft.pgn);
+			this.tree.adopt(parsed.root, parsed.headers, draft.isStudy);
+			board.refresh();
+			this.tree.goToLine(draft.line);
+			board.refresh();
+			return true;
+		} catch {
+			/** Unreadable: a shape from an older build. Better dropped than shown as an empty board. */
+			this.drafts.clear();
+			return false;
+		}
+	}
+
 	constructor() {
+		effect(() => {
+			this.tree.revision();
+			this.tree.currentNode();
+			this.tree.isDirty();
+			untracked(() => this.scheduleDraft());
+		});
+
+		/** A board opened with nothing in the URL is this tab's own analysis, from where it left off. */
+		effect(() => {
+			const board = this.board();
+			if (!board || this.draftRestored || this.game() || this.item() || this.local()) {
+				return;
+			}
+			this.draftRestored = true;
+			untracked(() => this.restoreDraft(board, null));
+		});
+
 		effect(() => {
 			const preferred = this.board()?.layout.preferredPaneWidth();
 			if (this.dividerTouched || preferred == null) return;
@@ -323,6 +409,8 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 					board.refresh();
 					this.openAtPly(board);
 					this.tree.markSaved();
+					/** Unsaved work this tab left on the same entry is newer than what the server holds. */
+					this.restoreDraft(board, Number(id));
 					this.loadSiblings(detail.collectionId);
 
 					this.openItemType.set(detail.itemType);
@@ -567,6 +655,9 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 	};
 
 	ngOnDestroy(): void {
+		if (this.draftTimer !== null) {
+			clearTimeout(this.draftTimer);
+		}
 		window.removeEventListener('scroll', this.publishOverlayBounds);
 		this.resizeObserver?.disconnect();
 	}
