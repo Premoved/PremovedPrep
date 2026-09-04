@@ -505,9 +505,10 @@ nav {
 	overflow: auto;
 }
 
+/* Above the drawer it is opened from - a long press on a drawer item raises it. */
 .nav-context-menu {
 	position: fixed;
-	z-index: 99999;
+	z-index: 100012;
 	min-width: 11rem;
 	border: 1px solid var(--bg-border);
 	border-radius: 6px;

@@ -1,6 +1,6 @@
 import { Component, DestroyRef, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ViewportService } from '../../core/layout/viewport.service';
@@ -134,7 +134,15 @@ export class MainLayoutComponent {
 
 	constructor() {
 		const navigation = this.router.events.subscribe((event) => {
-			if (event instanceof NavigationEnd) this.drawerOpen.set(false);
+			/**
+			 * Start, not only End. The unsaved-changes guard asks its question during the navigation,
+			 * so waiting for the end put "Save changes?" underneath an open drawer - and if the guard
+			 * cancelled, the end never came at all. Collapsing on Start means the question is always
+			 * asked against the page it belongs to.
+			 */
+			if (event instanceof NavigationStart || event instanceof NavigationEnd) {
+				this.drawerOpen.set(false);
+			}
 		});
 		inject(DestroyRef).onDestroy(() => navigation.unsubscribe());
 

@@ -136,7 +136,7 @@
 								</button>
 
 								@if (tcOpen()) {
-									<div class="tc-menu" (click)="$event.stopPropagation()">
+									<div class="tc-menu">
 										<button
 											type="button"
 											class="tc-option"
@@ -168,7 +168,6 @@
 										type="text"
 										placeholder="300+3"
 										[value]="valueOf('timeControl')"
-										(click)="$event.stopPropagation()"
 										(input)="onField('timeControl', $event)"
 										(keydown.enter)="commitTimeControl()"
 										(blur)="commitTimeControl()"
