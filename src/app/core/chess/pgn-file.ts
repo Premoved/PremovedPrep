@@ -50,7 +50,7 @@ export function composePgnFile(options: PgnFileOptions): string {
 	}
 
 	const roster = tags.map(([name, value]) => `[${name} "${escapeTag(value)}"]`).join('\n');
-	return `${roster}\n\n${movetext}\n`;
+	return `${roster}\n\n${terminate(movetext, headers.result || UNFINISHED)}\n`;
 }
 
 export function pgnFileName(headers: GameHeaders, title?: string | null): string {
@@ -65,6 +65,15 @@ export function pgnFileName(headers: GameHeaders, title?: string | null): string
 			.replace(/\s+/g, '-')
 			.slice(0, 60) || 'analysis'
 	);
+}
+
+/**
+ * PGN ends the movetext with the game's result. The serialiser writes `*` because it does not know
+ * one; here we do, and a drawn game that ends in `*` reads to any other program as unfinished.
+ */
+function terminate(movetext: string, result: string): string {
+	const body = movetext.trimEnd();
+	return body.endsWith('*') && result !== UNFINISHED ? `${body.slice(0, -1)}${result}` : body;
 }
 
 /** A file's own variant wins, unless it only says Standard, which a set-up position is not. */

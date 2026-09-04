@@ -22,6 +22,7 @@ import { DrawShape } from '@lichess-org/chessground/draw';
 import { Color as CgColor, Key, Pieces } from '@lichess-org/chessground/types';
 import { Chess, Square } from 'chess.js';
 import { copyText } from '../../../core/browser/clipboard';
+import { composePgnFile, pgnFileName } from '../../../core/chess/pgn-file';
 import { PgnParserService } from '../../../core/chess/pgn-parser.service';
 import { PgnSerializerService } from '../../../core/chess/pgn-serializer.service';
 import { DEFAULT_FEN, activeColor } from '../../../core/chess/fen.util';
@@ -690,9 +691,28 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	copyPGN(): void {
-		const root = this.boardTree()?.root();
-		const pgn = root ? this.pgnSerializer.serialize(root) : '';
+		const pgn = this.exportPgn();
 		if (pgn) this.copyToClipboard(pgn, this.isPgnCopied);
+	}
+
+	/**
+	 * The file a reader outside this app has to be able to open: the seven-tag roster, everything the
+	 * game arrived with, and a FEN only when the position was set up rather than played.
+	 *
+	 * This is composePgnFile, not the serialiser's own serialize(): that one writes a bare FEN header
+	 * and no roster, which is why copied games used to arrive nameless.
+	 */
+	private exportPgn(): string {
+		const store = this.boardTree();
+		const root = store?.root();
+		if (!store || !root) {
+			return '';
+		}
+		return composePgnFile({
+			headers: store.headers(),
+			startFen: root.fen ?? DEFAULT_FEN,
+			movetext: this.pgnSerializer.movetext(root),
+		});
 	}
 
 	private copyToClipboard(text: string, flag: { set(value: boolean): void }): void {
@@ -707,16 +727,15 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	savePGN(): void {
-		const root = this.boardTree()?.root();
-		const pgn = root ? this.pgnSerializer.serialize(root) : '';
+		const pgn = this.exportPgn();
 		if (!pgn) return;
 
 		const blob = new Blob([pgn], { type: 'text/plain' });
 		const url = window.URL.createObjectURL(blob);
 		const link = document.createElement('a');
-		const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+		const headers = this.boardTree()?.headers() ?? {};
 
-		link.download = `chess-game-${timestamp}.pgn`;
+		link.download = `${pgnFileName(headers)}.pgn`;
 		link.href = url;
 		link.click();
 

@@ -7,6 +7,11 @@ import { nagFromAnnotation } from './nag-codec';
 
 @Injectable({ providedIn: 'root' })
 export class PgnSerializerService {
+	/**
+	 * Movetext with just enough of a header to be parsed back. Not the export format - that is
+	 * composePgnFile, which writes the roster and omits the FEN unless the position was set up.
+	 * Kept because the round-trip tests need a parseable string and nothing else.
+	 */
 	serialize(root: RootNode | null): string {
 		if (!root) return '';
 

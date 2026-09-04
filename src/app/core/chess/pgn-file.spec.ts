@@ -74,6 +74,26 @@ describe('composePgnFile', () => {
 		expect(tags['Variant']).toBe('Chess960');
 	});
 
+	it('ends the movetext with the result rather than an unfinished marker', () => {
+		const pgn = composePgnFile({
+			headers: gameHeadersFromTags(IMPORTED),
+			startFen: DEFAULT_FEN,
+			movetext: '1. d4 g6 *',
+		});
+
+		expect(pgn.trimEnd().endsWith('1-0')).toBe(true);
+	});
+
+	it('leaves the unfinished marker alone when there is no result', () => {
+		const pgn = composePgnFile({
+			headers: gameHeadersFromTags({ ...IMPORTED, Result: '*' }),
+			startFen: DEFAULT_FEN,
+			movetext: '1. d4 g6 *',
+		});
+
+		expect(pgn.trimEnd().endsWith('*')).toBe(true);
+	});
+
 	it('does not carry a stale FEN from the file it read', () => {
 		const headers = gameHeadersFromTags({ ...IMPORTED, FEN: CUSTOM_FEN, SetUp: '1' });
 		const tags = tagsOf(composePgnFile({ headers, startFen: DEFAULT_FEN, movetext: '*' }));
