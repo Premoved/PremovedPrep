@@ -3,20 +3,18 @@ import { Injectable } from '@angular/core';
 const LONG_PRESS_MS = 450;
 const MOVE_TOLERANCE_PX = 10;
 const TEXT_ENTRY = 'input, textarea, select, [contenteditable]';
-/** Window after touchstart in which a native contextmenu still belongs to that press. */
+/** Window after our synthetic contextmenu in which a native one is a duplicate of it. */
 const NATIVE_WINDOW_MS = 1500;
 
-/** Turns a touch long press into a contextmenu event, unless the browser already does. */
+/** Turns a touch long press into a contextmenu event, unless the browser produced one itself. */
 @Injectable({ providedIn: 'root' })
 export class LongPressService {
 	private timer: ReturnType<typeof setTimeout> | null = null;
 	private startX = 0;
 	private startY = 0;
 	private target: HTMLElement | null = null;
-	private touchPressAt = 0;
 	private firedAt = 0;
 
-	private browserHasItsOwn = false;
 	private dispatching = false;
 	private swallowClick = false;
 
@@ -34,13 +32,11 @@ export class LongPressService {
 		this.cancel();
 		this.swallowClick = false;
 		if (event.pointerType === 'mouse') return;
-		if (this.browserHasItsOwn) return;
 
 		const target = event.target as HTMLElement | null;
 		if (!target || target.closest(TEXT_ENTRY)) return;
 
 		this.target = target;
-		this.touchPressAt = Date.now();
 		this.startX = event.clientX;
 		this.startY = event.clientY;
 		this.timer = setTimeout(() => this.fire(), LONG_PRESS_MS);
@@ -88,12 +84,18 @@ export class LongPressService {
 		if (this.dispatching) return;
 		if (!event.isTrusted) return;
 
-		/** Native contextmenu from a touch press: this browser has its own long press. */
-		if (Date.now() - this.touchPressAt >= NATIVE_WINDOW_MS) return;
-
-		this.browserHasItsOwn = true;
+		/**
+		 * The browser produced one itself for this press, so there is nothing left to synthesise.
+		 *
+		 * This used to latch a `browserHasItsOwn` flag and stop synthesising for the rest of the
+		 * session. One native contextmenu anywhere - long-pressing the board to draw an arrow is
+		 * enough - then killed long-press everywhere else, which is why holding a utility button
+		 * showed no tooltip. Whether a browser has its own long press is not a fact worth inferring
+		 * once and keeping.
+		 */
 		this.cancel();
 
+		/** Ours went out a moment ago: a second one would open the same menu twice. */
 		if (Date.now() - this.firedAt < NATIVE_WINDOW_MS) {
 			event.preventDefault();
 			event.stopPropagation();

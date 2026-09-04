@@ -2,13 +2,19 @@
 	display: flex;
 	justify-content: center;
 	/*
-	 * "safe" matters: plain centring keeps the box centred once it outgrows the viewport, which puts
-	 * part of it above the scroll origin where no gesture can reach it. Safe centring falls back to
-	 * the start edge instead, so the bot check can make the page as tall as it likes and the submit
-	 * button stays reachable.
+	 * Its own scroller, on purpose. As a plain tall block this page depended on the document
+	 * scrolling, and the document is shared: `html, body { height: 100% }`, whatever the layout left
+	 * on `body.style.overflow`, and the browser's own viewport rules all get a say. A fixed height
+	 * with overflow-y here answers the question locally - when the bot check makes the content
+	 * taller than the screen, this element scrolls, and nothing outside it can take that away.
+	 *
+	 * "safe" centring is what keeps it usable: plain centring keeps the box centred once it outgrows
+	 * its scroller, which puts the top of it above the scroll origin where no gesture can reach.
 	 */
 	align-items: safe center;
-	min-height: 100dvh;
+	height: 100dvh;
+	overflow-y: auto;
+	overscroll-behavior: contain;
 	padding: 24px 16px;
 	background: var(--bg-main);
 	color: var(--text-main);

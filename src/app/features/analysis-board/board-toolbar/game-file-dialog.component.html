@@ -116,19 +116,7 @@
 					</div>
 
 					<div class="line">
-						<label class="field grow">
-							<span class="field-label">Time control</span>
-							<input
-								type="text"
-								[value]="valueOf('timeControl')"
-								placeholder="300+3"
-								(input)="onField('timeControl', $event)"
-							/>
-						</label>
-					</div>
-
-					@if (!isDocument()) {
-						<div class="line">
+						@if (!isDocument()) {
 							<label class="field grow">
 								<span class="field-label">Annotator</span>
 								<input
@@ -138,8 +126,57 @@
 									(input)="onField('annotator', $event)"
 								/>
 							</label>
+						}
+
+						<div class="field grow">
+							<span class="field-label">Time control</span>
+							<div class="tc-select">
+								<button type="button" class="tc-trigger" (click)="toggleTimeMenu($event)">
+									{{ valueOf('timeControl') || '—' }}
+								</button>
+
+								@if (tcOpen()) {
+									<div class="tc-menu" (click)="$event.stopPropagation()">
+										<button
+											type="button"
+											class="tc-option"
+											[class.selected]="valueOf('timeControl') === ''"
+											(click)="pickTimeControl('')"
+										>
+											—
+										</button>
+										@for (option of timeControlOptions(); track option.value) {
+											<button
+												type="button"
+												class="tc-option"
+												[class.selected]="valueOf('timeControl') === option.value"
+												(click)="pickTimeControl(option.value)"
+											>
+												{{ option.value }}
+												@if (option.mine) {
+													<span class="tc-mine" title="Saved on your account">&#9679;</span>
+												}
+											</button>
+										}
+										<button type="button" class="tc-option" (click)="startOtherTimeControl()">Other…</button>
+									</div>
+								}
+
+								@if (tcOther()) {
+									<input
+										class="tc-other"
+										type="text"
+										placeholder="300+3"
+										[value]="valueOf('timeControl')"
+										(click)="$event.stopPropagation()"
+										(input)="onField('timeControl', $event)"
+										(keydown.enter)="commitTimeControl()"
+										(blur)="commitTimeControl()"
+									/>
+								}
+							</div>
 						</div>
-					}
+					</div>
 
 					<div class="line">
 						<div class="field grow">

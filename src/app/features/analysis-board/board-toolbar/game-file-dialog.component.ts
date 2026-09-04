@@ -26,6 +26,7 @@ import {
 } from '../../../core/models/collection.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { CollectionApiService } from '../../../core/services/collection-api.service';
+import { TimeControlApiService } from '../../../core/services/time-control-api.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { CloudStorageService } from '../../../core/services/cloud-storage.service';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
@@ -43,6 +44,15 @@ type Draft = Record<string, string>;
 
 const RESULTS: readonly string[] = ['1-0', '1/2-1/2', '0-1', '*'];
 
+/** The PGN TimeControl spellings everyone starts with, before an account teaches it its own. */
+const BUILT_IN_TIME_CONTROLS: readonly string[] = ['5400+30', '1800+10', '900+10', '600+0', '180+2'];
+
+interface TimeControlOption {
+	readonly value: string;
+	/** Saved on this account rather than built in, which is what the marker in the list means. */
+	readonly mine: boolean;
+}
+
 /** Types identified by a title and an author rather than by two players. */
 const DOCUMENT_TYPES: readonly ItemType[] = ['ANALYSIS', 'STUDY', 'MAIN_LINE'];
 
@@ -57,6 +67,7 @@ const COLOR_LABEL: Readonly<Record<RepertoireColor, string>> = { w: 'White', b: 
 	styleUrl: './game-file-dialog.component.scss',
 	host: {
 		'(document:keydown.escape)': 'closed.emit()',
+		'(document:click)': 'closeTimeMenu()',
 	},
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,6 +78,7 @@ export class GameFileDialogComponent {
 	private readonly cloud = inject(CloudStorageService);
 	private readonly serializer = inject(PgnSerializerService);
 	private readonly tree = inject(MoveTreeStore);
+	private readonly timeControls = inject(TimeControlApiService);
 
 	readonly panel = input<GameFilePanel>('data');
 
@@ -83,6 +95,21 @@ export class GameFileDialogComponent {
 	readonly colors: readonly RepertoireColor[] = ['w', 'b'];
 
 	readonly draft = signal<Draft>(this.draftOf(this.tree.headers(), false));
+
+	private readonly savedTimeControls = signal<readonly string[]>([]);
+
+	readonly tcOpen = signal(false);
+
+	/** True while a spelling the list does not hold is being typed. */
+	readonly tcOther = signal(false);
+
+	readonly timeControlOptions = computed<readonly TimeControlOption[]>(() => {
+		const mine = this.savedTimeControls();
+		const current = (this.draft()['timeControl'] ?? '').trim();
+		/** An imported game can carry a spelling nobody saved; it still has to be selectable. */
+		const values = [...new Set([...(current.length > 0 ? [current] : []), ...BUILT_IN_TIME_CONTROLS, ...mine])];
+		return values.map((value) => ({ value, mine: mine.includes(value) }));
+	});
 
 	readonly kind = signal<CollectionKind>('LIBRARY');
 	readonly color = signal<RepertoireColor>('w');
@@ -135,6 +162,7 @@ export class GameFileDialogComponent {
 
 	constructor() {
 		this.load();
+		this.loadTimeControls();
 
 		/**
 		 * An effect rather than a call in the body: Angular writes an input after the component is
@@ -186,6 +214,53 @@ export class GameFileDialogComponent {
 					// The list stays as it was; this dialog has nowhere to report a failure.
 				},
 			});
+	}
+
+	private loadTimeControls(): void {
+		if (!this.auth.currentUser()) {
+			return;
+		}
+		this.timeControls.list().subscribe({
+			next: (list) => this.savedTimeControls.set(list.map((entry) => entry.value)),
+			error: () => this.savedTimeControls.set([]),
+		});
+	}
+
+	toggleTimeMenu(event: Event): void {
+		/** Without this the click reaches the document handler that closes what it just opened. */
+		event.stopPropagation();
+		this.tcOther.set(false);
+		this.tcOpen.update((open) => !open);
+	}
+
+	closeTimeMenu(): void {
+		this.tcOpen.set(false);
+	}
+
+	pickTimeControl(value: string): void {
+		this.setField('timeControl', value);
+		this.tcOpen.set(false);
+	}
+
+	startOtherTimeControl(): void {
+		this.tcOpen.set(false);
+		this.tcOther.set(true);
+	}
+
+	/** Keeps the spelling on the account, so the next game finds it already in the list. */
+	commitTimeControl(): void {
+		const value = (this.draft()['timeControl'] ?? '').trim();
+		this.setField('timeControl', value);
+		this.tcOther.set(false);
+
+		const known = this.timeControlOptions().some((option) => option.value === value);
+		if (value.length === 0 || known || !this.auth.currentUser()) {
+			return;
+		}
+		this.timeControls.create(value).subscribe({
+			next: () => this.loadTimeControls(),
+			error: () => undefined,
+		});
 	}
 
 	show(panel: GameFilePanel): void {
