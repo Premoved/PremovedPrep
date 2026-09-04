@@ -340,7 +340,13 @@ export class GameFileDialogComponent {
 				headers[key] = trimmed;
 			}
 		}
-		return headers as GameHeaders;
+
+		/**
+		 * Carried across by hand. rosterOf only copies string values, so the tags the file arrived
+		 * with - which live in an object - would be dropped the first time anyone edited game data.
+		 */
+		const current = this.tree.headers();
+		return { ...(headers as GameHeaders), variant: current.variant, extra: current.extra };
 	}
 
 	/**

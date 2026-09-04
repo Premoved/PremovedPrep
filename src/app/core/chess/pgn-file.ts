@@ -34,7 +34,17 @@ export function composePgnFile(options: PgnFileOptions): string {
 	pushIf(tags, 'Termination', headers.termination);
 	pushIf(tags, 'Annotator', annotator || headers.annotator);
 
+	/** Whatever else the file arrived with. Dropping it is what made a copy lossy. */
+	for (const [name, value] of Object.entries(headers.extra ?? {})) {
+		pushIf(tags, name, value);
+	}
+
+	/**
+	 * Only for a position that is not the opening array. A FEN on the starting position tells a
+	 * reader the game was set up rather than played, which is why Lichess leaves it out too.
+	 */
 	if (startFen && startFen !== DEFAULT_FEN) {
+		pushIf(tags, 'Variant', variantFor(headers.variant));
 		tags.push(['FEN', startFen]);
 		tags.push(['SetUp', '1']);
 	}
@@ -55,6 +65,11 @@ export function pgnFileName(headers: GameHeaders, title?: string | null): string
 			.replace(/\s+/g, '-')
 			.slice(0, 60) || 'analysis'
 	);
+}
+
+/** A file's own variant wins, unless it only says Standard, which a set-up position is not. */
+function variantFor(variant: string | undefined): string {
+	return variant && variant.toLowerCase() !== 'standard' ? variant : 'From Position';
 }
 
 function pushIf(tags: [string, string][], name: string, value: string | undefined | null): void {
