@@ -7,14 +7,19 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   X-Frame-Options: DENY
-  # Report-Only while the policy is being verified: the browser blocks nothing and logs what it
-  # would have blocked. Swap the header name for Content-Security-Policy once the console is clean.
-  #
   # 'wasm-unsafe-eval' is Stockfish: instantiating a WebAssembly module counts as evaluation.
   # 'unsafe-inline' in style-src is Angular, which writes component styles into <style> elements
   # and sets [style.x] bindings as inline attributes. Nothing is loaded from a third-party host,
   # so every other directive is 'self'.
-  Content-Security-Policy-Report-Only: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.premovedprep.com; manifest-src 'self'
+  #
+  # There is deliberately no 'unsafe-hashes': the one inline handler this policy used to trip over
+  # was Angular's critical-CSS inlining (media="print" onload="this.media='all'"), and that is
+  # turned off in angular.json rather than allowed for here. Re-enabling inlineCritical breaks
+  # the application under this policy, not just the console.
+  #
+  # To debug a new violation, rename this header to Content-Security-Policy-Report-Only, deploy,
+  # and read the console; the browser then blocks nothing.
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.premovedprep.com; manifest-src 'self'
 
 # Hashed by the build
 /*.js
