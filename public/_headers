@@ -5,7 +5,7 @@
   Cross-Origin-Embedder-Policy: require-corp
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
   X-Frame-Options: DENY
   # Report-Only while the policy is being verified: the browser blocks nothing and logs what it
   # would have blocked. Swap the header name for Content-Security-Policy once the console is clean.
