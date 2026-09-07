@@ -111,6 +111,9 @@ const UNTITLED = 'Untitled';
 
 const MENU_FOOTPRINT = { width: 208, height: 132 };
 
+/** Matches CollectionDtos.MAX_PGN_CHARS on the server, which refuses anything longer. */
+const MAX_IMPORT_BYTES = 4 * 1024 * 1024;
+
 @Component({
 	selector: 'app-collection-view',
 	standalone: true,
@@ -924,6 +927,15 @@ export class CollectionViewComponent {
 		/** Cleared so choosing the same file twice still fires `change`. */
 		input.value = '';
 		if (!file) {
+			return;
+		}
+
+		/** The server refuses anything larger; saying so here costs no upload and reads better. */
+		if (file.size > MAX_IMPORT_BYTES) {
+			this.notify.error(
+				`That file is ${Math.round(file.size / (1024 * 1024))} MB. The largest import is ` +
+					`${MAX_IMPORT_BYTES / (1024 * 1024)} MB - split it and import the parts.`,
+			);
 			return;
 		}
 
