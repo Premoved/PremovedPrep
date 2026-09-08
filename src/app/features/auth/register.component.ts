@@ -6,6 +6,7 @@ import { LogoComponent } from '../../shared/logo/logo.component';
 import { BotCheckComponent } from '../../shared/captcha/bot-check.component';
 import { BotCheck } from '../../core/captcha/bot-check';
 import { CaptchaAnswer } from '../../core/captcha/captcha.model';
+import { PasswordRevealDirective } from '../../shared/password-reveal/password-reveal.directive';
 
 /** Must match the @Pattern on AuthDtos.RegisterRequest. */
 const USERNAME_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -13,7 +14,7 @@ const USERNAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 @Component({
 	selector: 'app-register',
 	standalone: true,
-	imports: [RouterLink, LogoComponent, BotCheckComponent],
+	imports: [RouterLink, LogoComponent, BotCheckComponent, PasswordRevealDirective],
 	templateUrl: './register.component.html',
 	styleUrl: './auth-form.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,

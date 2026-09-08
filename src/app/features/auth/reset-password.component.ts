@@ -3,11 +3,12 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { LogoComponent } from '../../shared/logo/logo.component';
+import { PasswordRevealDirective } from '../../shared/password-reveal/password-reveal.directive';
 
 @Component({
 	selector: 'app-reset-password',
 	standalone: true,
-	imports: [RouterLink, LogoComponent],
+	imports: [RouterLink, LogoComponent, PasswordRevealDirective],
 	templateUrl: './reset-password.component.html',
 	styleUrl: './auth-form.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,

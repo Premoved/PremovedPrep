@@ -161,3 +161,50 @@ cg-board {
 .cg-wrap.orientation-black coords.files :nth-child(odd) {
 	color: rgba(72, 72, 72, 0.85);
 }
+
+/* Password fields. The wrapper and the button are built by PasswordRevealDirective at runtime, so
+   they carry none of Angular's component-scoping attributes and cannot be styled from a component
+   stylesheet. */
+.password-field {
+	position: relative;
+	display: block;
+	width: 100%;
+	min-width: 0;
+}
+
+.password-field > input {
+	/* The field used to be the flex item itself. The wrapper took that place, so the input has to be
+	   told to fill it, and border-box keeps the new right padding from widening it. */
+	box-sizing: border-box;
+	width: 100%;
+	padding-right: 2.5rem;
+}
+
+.password-reveal {
+	position: absolute;
+	top: 50%;
+	right: 0.35rem;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--text-muted);
+	cursor: default;
+}
+
+.password-reveal:hover {
+	background: var(--bg-hover);
+	color: var(--text-main);
+}
+
+/* Pressed means the password is on screen. Without a second icon this colour is the only thing that
+   says so, which is why it is the accent and not another grey. */
+.password-reveal[aria-pressed='true'] {
+	color: var(--accent-blue);
+}

@@ -6,11 +6,12 @@ import { LogoComponent } from '../../shared/logo/logo.component';
 import { BotCheckComponent } from '../../shared/captcha/bot-check.component';
 import { BotCheck } from '../../core/captcha/bot-check';
 import { CaptchaAnswer } from '../../core/captcha/captcha.model';
+import { PasswordRevealDirective } from '../../shared/password-reveal/password-reveal.directive';
 
 @Component({
 	selector: 'app-login',
 	standalone: true,
-	imports: [RouterLink, LogoComponent, BotCheckComponent],
+	imports: [RouterLink, LogoComponent, BotCheckComponent, PasswordRevealDirective],
 	templateUrl: './login.component.html',
 	styleUrl: './auth-form.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,

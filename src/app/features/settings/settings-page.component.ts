@@ -16,6 +16,7 @@ import { CustomThemeService } from '../../core/theme/custom-theme.service';
 import { CUSTOM_COLOR_PRESETS, CUSTOM_COLOR_SLOTS, legibility } from '../../core/theme/custom-theme';
 import { ColorPickerComponent } from '../../shared/color-picker/color-picker.component';
 import { SettingsPreviewComponent } from './settings-preview.component';
+import { PasswordRevealDirective } from '../../shared/password-reveal/password-reveal.directive';
 
 const MIN_PASSWORD = 8;
 const MAX_PASSWORD = 72;
@@ -23,7 +24,7 @@ const MAX_PASSWORD = 72;
 @Component({
 	selector: 'app-settings-page',
 	standalone: true,
-	imports: [RouterLink, SettingsPreviewComponent, ColorPickerComponent],
+	imports: [RouterLink, SettingsPreviewComponent, ColorPickerComponent, PasswordRevealDirective],
 	templateUrl: './settings-page.component.html',
 	styleUrl: './settings-page.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
