@@ -43,6 +43,9 @@ const DEFAULT_PREVIEW_PX = 380;
 const HANDLE_MARGIN_PX = 24;
 const LIST_GUTTER_PX = 20;
 
+/** Mirrors the duration of the preview-sheet-up keyframes in the stylesheet. */
+const SHEET_ENTER_MS = 240;
+
 @Component({
 	selector: 'app-game-results',
 	standalone: true,
@@ -97,7 +100,13 @@ export class GameResultsComponent {
 	private sheetStartedAt = 0;
 
 	onSheetPointerDown(event: PointerEvent): void {
-		if (!this.viewport.isMobile()) return;
+		/**
+		 * Touch only. A mouse has the close button and never needs to throw a sheet away, and letting a
+		 * mouse arm this gesture is how a stuck sheetDragFrom turned an ordinary hover into a 529px
+		 * translate that left the sheet parked halfway down the screen.
+		 */
+		if (!this.viewport.isMobile() || event.pointerType !== 'touch') return;
+		event.preventDefault();
 		this.sheetDragFrom = event.clientY;
 		this.sheetStartedAt = event.timeStamp;
 		this.sheetOffset.set(0);
@@ -107,6 +116,11 @@ export class GameResultsComponent {
 
 	onSheetPointerMove(event: PointerEvent): void {
 		if (this.sheetDragFrom === null) return;
+		/** Belt and braces: if the press was lost without a pointerup, stop rather than follow. */
+		if (event.buttons === 0 && event.pointerType !== 'touch') {
+			this.onSheetPointerUp();
+			return;
+		}
 		/** Downward only. Dragging up would lift the sheet off the top of the screen. */
 		this.sheetOffset.set(Math.max(0, event.clientY - this.sheetDragFrom));
 	}
@@ -149,9 +163,22 @@ export class GameResultsComponent {
 		if (this.selectedId() === row.id) {
 			return;
 		}
-		this.selectedId.set(row.id);
-		this.previewPgn.set(null);
 
+		/** Opening from nothing is an entrance; stepping to the next game is not. */
+		if (this.selectedId() === null) {
+			this.sheetEntering.set(true);
+			setTimeout(() => this.sheetEntering.set(false), SHEET_ENTER_MS);
+		}
+
+		this.resetSheet();
+		this.selectedId.set(row.id);
+
+		/**
+		 * The previous game stays on the board until the next one arrives. Clearing it first put an
+		 * empty board on screen for the length of a request, which on a phone reads as the sheet
+		 * leaving and coming back - and the sheet is the only thing between a finger and the header
+		 * behind it.
+		 */
 		const request = ++this.previewRequestId;
 		this.archive.game(row.id).subscribe({
 			next: (detail: GameDetail) => {
@@ -165,9 +192,27 @@ export class GameResultsComponent {
 		});
 	}
 
+	/**
+	 * True only for the length of the opening animation. The animation lives on this class rather than
+	 * on .preview so that nothing which merely changes the sheet's contents can replay it.
+	 */
+	readonly sheetEntering = signal(false);
+
+	/** Nothing that opens or changes the sheet may inherit an offset from whatever happened before. */
+	private resetSheet(): void {
+		this.sheetDragFrom = null;
+		this.sheetDragging.set(false);
+		this.sheetOffset.set(0);
+	}
+
 	closePreview(): void {
 		this.selectedId.set(null);
 		this.previewPgn.set(null);
+		this.sheetDragFrom = null;
+		this.sheetDragging.set(false);
+		/** Not reset while the sheet is being dismissed - see onSheetPointerUp - but it must not be
+		    carried into the next one, and by now the element is gone. */
+		this.sheetOffset.set(0);
 	}
 
 	openInNewTab(row: SearchResultGame): void {
