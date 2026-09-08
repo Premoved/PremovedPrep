@@ -286,25 +286,8 @@ td.center {
 
 /* The grab bar, and the only affordance for closing the sheet on a phone. Absolute so it costs
    padding rather than a row. */
-/* A button, not a decoration: it is the target of the dismiss gesture, so it needs a hit area
-   larger than the 4px line it draws. touch-action:none keeps the browser from claiming the drag
-   for a scroll. */
+/* Decoration only: the drag is on the whole header. */
 .sheet-grip {
-	position: absolute;
-	top: 0;
-	left: 50%;
-	transform: translateX(-50%);
-	width: 5rem;
-	height: 1rem;
-	padding: 0;
-	border: none;
-	background: transparent;
-	touch-action: none;
-	cursor: default;
-}
-
-.sheet-grip::after {
-	content: '';
 	position: absolute;
 	top: 6px;
 	left: 50%;
@@ -434,8 +417,39 @@ app-preview-board {
 		padding: 0.9rem 0.5rem 0.55rem;
 	}
 
+	.preview-strip {
+		/* The whole header is the drag target, so the browser must not claim a vertical swipe here
+		   for a scroll. */
+		touch-action: none;
+	}
+
 	.preview-controls {
 		gap: 0.3rem;
+		width: 100%;
+	}
+
+	/* Previous and Next are the same width - Next's label is shorter, and left to its content it
+	   looked like a mistake next to Previous. The third button takes whatever is left, so the three
+	   fill the row exactly and none of them can push it wider than the screen. */
+	.preview-controls .tool:not(.open-board) {
+		flex: 0 0 auto;
+		min-width: 5.4rem;
+		justify-content: center;
+	}
+
+	.preview-controls .open-board {
+		flex: 1 1 auto;
+		min-width: 0;
+		justify-content: center;
+	}
+
+	.preview-controls .open-board .label {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		/* On a 320px screen the full label cannot fit next to two others. It shortens rather than
+		   overflowing, which is what the ellipsis is for. */
 	}
 
 	/* Three labelled buttons on a 360px screen only fit if they give up padding and a little size.

@@ -120,21 +120,21 @@
 			</div>
 
 			<div class="preview-panel">
-				<div class="preview-strip">
+				<div
+					class="preview-strip"
+					(pointerdown)="onSheetPointerDown($event)"
+					(pointermove)="onSheetPointerMove($event)"
+					(pointerup)="onSheetPointerUp($event)"
+					(pointercancel)="onSheetPointerUp()"
+				>
 					@if (viewport.isMobile()) {
 						<!-- The only thing that starts the drag. Bound to the grip and not to the whole
 						     header: a pointerdown on a button used to arm the gesture, and because
 						     sheetDragFrom is only cleared on pointerup, a later move over the header
 						     slid the sheet down and left it there. -->
-						<button
-							type="button"
-							class="sheet-grip"
-							(pointerdown)="onSheetPointerDown($event)"
-							(pointermove)="onSheetPointerMove($event)"
-							(pointerup)="onSheetPointerUp($event)"
-							(pointercancel)="onSheetPointerUp()"
-							aria-label="Drag down to close the preview"
-						></button>
+						<!-- Decoration. The gesture is on the whole header, so a finger anywhere works; a
+						     4mm line would be the smallest target on the screen. -->
+						<span class="sheet-grip" aria-hidden="true"></span>
 
 						<div class="preview-controls">
 							<button
@@ -182,7 +182,7 @@
 										d="M19 19H5V5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3z"
 									/>
 								</svg>
-								<span class="label">Board</span>
+								<span class="label">Open in analysis board</span>
 							</button>
 						</div>
 					} @else {

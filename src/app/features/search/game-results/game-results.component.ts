@@ -99,52 +99,89 @@ export class GameResultsComponent {
 
 	private sheetStartedAt = 0;
 
+	/** How far a finger must travel before this is a drag and not a tap on whatever is underneath. */
+	private static readonly DRAG_THRESHOLD_PX = 8;
+
+	private sheetPointerId: number | null = null;
+
+	/**
+	 * The gesture covers the whole header, buttons included, and still lets those buttons be pressed.
+	 * Nothing is claimed on pointerdown: the press is only recorded. Movement past the threshold is
+	 * what turns it into a drag, and taking the pointer capture at that moment cancels the click the
+	 * button underneath would otherwise receive. Below the threshold nothing happens and the tap
+	 * lands normally.
+	 *
+	 * The threshold is also what makes this safe with a mouse. Without it, arming on pointerdown and
+	 * only disarming on pointerup left a stuck start point, and an ordinary hover over the header
+	 * translated the sheet hundreds of pixels down the screen.
+	 */
 	onSheetPointerDown(event: PointerEvent): void {
-		/**
-		 * Touch only. A mouse has the close button and never needs to throw a sheet away, and letting a
-		 * mouse arm this gesture is how a stuck sheetDragFrom turned an ordinary hover into a 529px
-		 * translate that left the sheet parked halfway down the screen.
-		 */
-		if (!this.viewport.isMobile() || event.pointerType !== 'touch') return;
-		event.preventDefault();
+		if (!this.viewport.isMobile()) return;
 		this.sheetDragFrom = event.clientY;
+		this.sheetPointerId = event.pointerId;
 		this.sheetStartedAt = event.timeStamp;
 		this.sheetOffset.set(0);
-		this.sheetDragging.set(true);
-		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 	}
 
 	onSheetPointerMove(event: PointerEvent): void {
-		if (this.sheetDragFrom === null) return;
-		/** Belt and braces: if the press was lost without a pointerup, stop rather than follow. */
-		if (event.buttons === 0 && event.pointerType !== 'touch') {
+		if (this.sheetDragFrom === null || event.pointerId !== this.sheetPointerId) return;
+
+		/** A press that ended somewhere this element never heard about. Stop rather than follow. */
+		if (event.pointerType === 'mouse' && event.buttons === 0) {
 			this.onSheetPointerUp();
 			return;
 		}
+
+		const travelled = event.clientY - this.sheetDragFrom;
+
+		if (!this.sheetDragging()) {
+			if (travelled < GameResultsComponent.DRAG_THRESHOLD_PX) {
+				/** Upward or barely moved: still a tap as far as the buttons are concerned. */
+				return;
+			}
+			this.sheetDragging.set(true);
+			(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+		}
+
 		/** Downward only. Dragging up would lift the sheet off the top of the screen. */
-		this.sheetOffset.set(Math.max(0, event.clientY - this.sheetDragFrom));
+		this.sheetOffset.set(Math.max(0, travelled));
 	}
 
 	onSheetPointerUp(event?: PointerEvent): void {
 		if (this.sheetDragFrom === null) return;
-		this.sheetDragFrom = null;
-		this.sheetDragging.set(false);
 
+		const dragged = this.sheetDragging();
 		const travelled = this.sheetOffset();
 		const elapsed = event ? Math.max(1, event.timeStamp - this.sheetStartedAt) : 1;
-		const speed = travelled / elapsed;
+
+		this.sheetDragFrom = null;
+		this.sheetPointerId = null;
+		this.sheetDragging.set(false);
+
+		if (!dragged) {
+			/** Never crossed the threshold, so this was a tap; leave the click alone. */
+			return;
+		}
 
 		/**
 		 * A quarter of the screen, or a flick. Distance alone means a quick short swipe - which is what
 		 * dismissing a sheet actually feels like - does nothing, and the sheet springs back at you.
 		 */
-		if (travelled > window.innerHeight / 4 || (speed > 0.5 && travelled > 40)) {
+		if (travelled > window.innerHeight / 4 || (travelled / elapsed > 0.5 && travelled > 40)) {
 			/** Left where it is: the element is about to be removed, and snapping it back to the top
 			    for one frame first is exactly the jump this was meant to fix. */
 			this.closePreview();
 			return;
 		}
 		this.sheetOffset.set(0);
+	}
+
+	/** The mobile sheet has no close button, so this is the only way out for a keyboard or a mouse. */
+	@HostListener('document:keydown.escape')
+	onEscape(): void {
+		if (this.selectedId() !== null) {
+			this.closePreview();
+		}
 	}
 
 	private previewRequestId = 0;
