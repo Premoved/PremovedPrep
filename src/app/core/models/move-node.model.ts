@@ -17,6 +17,13 @@ interface MoveNodeBase {
 	modelGames?: readonly RepertoireGame[];
 
 	reportPoint?: ReportPoint;
+
+	/**
+	 * How many of the opponent's games reached this move, when the move came from the Advanced
+	 * Report's overlay. Absent on every other node, which is what tells a move the report found from
+	 * a move the person made themselves while looking at it - only the first kind is drawn.
+	 */
+	reportGames?: number;
 }
 
 export type FoldState = 'collapsed' | 'expanded';

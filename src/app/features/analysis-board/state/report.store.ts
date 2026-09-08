@@ -42,16 +42,32 @@ export class ReportStore {
 	});
 
 	readonly boardShapes = computed<DrawShape[]>(() => {
-		const point = this.currentPoint();
-		if (!point) {
-			return [];
-		}
-		const brush = point.kind === 'DEVIATION' ? 'yellow' : 'blue';
+		this.tree.revision();
+		const node = this.tree.currentNode();
 
-		return point.moves
+		/**
+		 * The trunk: the repertoire moves the opponent actually played, one ply ahead of wherever you
+		 * are. Drawn everywhere the overlay reaches, including at a point of interest, so it stays
+		 * visible how the line got here and where it goes on. Moves the person plays themselves while
+		 * reading the report join the tree without reportGames, and are left alone.
+		 */
+		const trunk = node.children
+			.filter((child) => child.reportGames !== undefined)
+			.map((child) => ({ orig: child.from as Key, dest: child.to as Key, brush: 'reportTrunk' }));
+
+		const point = node.reportPoint ?? null;
+		if (!point) {
+			return trunk;
+		}
+
+		const brush = point.kind === 'DEVIATION' ? 'reportDeviation' : 'reportOverlap';
+		const coloured = point.moves
 			.map((move) => parseUci(move.uci))
 			.filter((move): move is { from: string; to: string; promotion?: string } => move !== null)
 			.map((move) => ({ orig: move.from as Key, dest: move.to as Key, brush }));
+
+		/** Trunk first, so a coloured arrow is drawn over a grey one where the two share a square. */
+		return [...trunk, ...coloured];
 	});
 
 	build(report: AdvancedReport | null): void {
@@ -128,6 +144,8 @@ function attach(parent: MoveNode, source: ReportNode, overlaps: ReportEndpoint[]
 	for (const child of source.children) {
 		const node = play(parent, child.uci);
 		if (node) {
+			/** The mark that separates a move the overlay found from one the reader played. */
+			node.reportGames = child.games;
 			attach(node, child, overlaps, deviations);
 		}
 	}

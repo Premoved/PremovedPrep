@@ -286,13 +286,14 @@ td.center {
 
 /* The grab bar, and the only affordance for closing the sheet on a phone. Absolute so it costs
    padding rather than a row. */
-/* Decoration only: the drag is on the whole header. */
+/* Decoration only: the drag is on the whole header. Wide enough to read as "pull me" rather than
+   as a stray rule, since it is the only thing that says the sheet can be thrown away. */
 .sheet-grip {
 	position: absolute;
-	top: 6px;
+	top: 9px;
 	left: 50%;
 	transform: translateX(-50%);
-	width: 2.25rem;
+	width: 6rem;
 	height: 4px;
 	border-radius: 2px;
 	background: var(--bg-border);
@@ -413,14 +414,10 @@ app-preview-board {
 	}
 
 	.preview-strip {
-		/* Room above the controls for the grab bar. */
-		padding: 0.9rem 0.5rem 0.55rem;
-	}
-
-	.preview-strip {
 		/* The whole header is the drag target, so the browser must not claim a vertical swipe here
-		   for a scroll. */
+		   for a scroll. The top padding is room for the grab bar. */
 		touch-action: none;
+		padding: 1.35rem 0.5rem 0.7rem;
 	}
 
 	.preview-controls {
@@ -431,10 +428,25 @@ app-preview-board {
 	/* Previous and Next are the same width - Next's label is shorter, and left to its content it
 	   looked like a mistake next to Previous. The third button takes whatever is left, so the three
 	   fill the row exactly and none of them can push it wider than the screen. */
-	.preview-controls .tool:not(.open-board) {
+	.preview-controls .tool:not(.open-board):not(.close) {
 		flex: 0 0 auto;
-		min-width: 5.4rem;
+		min-width: 4.9rem;
 		justify-content: center;
+	}
+
+	/* Square, and no narrower than a fingertip. It is the fourth thing on the row, so it gives up
+	   width first. */
+	.preview-controls .close {
+		flex: 0 0 auto;
+		width: 2rem;
+		min-width: 2rem;
+		padding: 0;
+		justify-content: center;
+	}
+
+	.preview-controls .close .glyph {
+		font-size: 1.15rem;
+		line-height: 1;
 	}
 
 	.preview-controls .open-board {

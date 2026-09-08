@@ -46,6 +46,23 @@ type BoardConfig = Config & { pieces?: Pieces };
 
 const ENGINE_BRUSH = { key: 'engine', color: '#3d78ad', opacity: 1, lineWidth: 10 };
 
+/**
+ * The Advanced Report's three colours, fixed.
+ *
+ * They used to be the brush keys 'yellow' and 'blue', which arrowBrushes() fills with the arrow
+ * colours from Settings - so the report's red and orange were only red and orange for as long as
+ * nobody changed their preferences. The values below are what the defaults produced, so nothing
+ * looks different today; the difference is that a report now means the same thing on every screen.
+ *
+ * The trunk is thinner and translucent on purpose: it is the path to the points of interest, not a
+ * point of interest, and at a busy node there can be several of them behind two coloured arrows.
+ */
+const REPORT_BRUSHES = {
+	reportDeviation: { key: 'reportDeviation', color: '#c62828', opacity: 1, lineWidth: 10 },
+	reportOverlap: { key: 'reportOverlap', color: '#ff8c00', opacity: 1, lineWidth: 10 },
+	reportTrunk: { key: 'reportTrunk', color: '#8a8a8a', opacity: 0.75, lineWidth: 7 },
+};
+
 const LONG_PRESS_DRAW_MS = 450;
 
 const TOOLTIP_HOLD_MS = 2500;
@@ -215,7 +232,9 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 			const coordinates = this.prefs.coordinates();
 
 			untracked(() => {
-				this.cgApi?.set({ drawable: { brushes: { ...arrowBrushes(colours), engine: ENGINE_BRUSH } } });
+				this.cgApi?.set({
+					drawable: { brushes: { ...arrowBrushes(colours), engine: ENGINE_BRUSH, ...REPORT_BRUSHES } },
+				});
 
 				if (this.showCoordinates() === coordinates) return;
 				this.showCoordinates.set(coordinates);
@@ -347,6 +366,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 				brushes: {
 					...arrowBrushes(this.prefs.arrowColors()),
 					engine: ENGINE_BRUSH,
+					...REPORT_BRUSHES,
 				},
 				shapes: this.visibleDrawings(),
 				onChange: (shapes: DrawShape[]) => {

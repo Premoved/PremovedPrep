@@ -168,13 +168,7 @@
 								<span class="label">Previous</span>
 							</button>
 
-							<button
-								type="button"
-								class="tool"
-								[disabled]="!hasNextGame()"
-								(click)="selectNext()"
-								title="Next game"
-							>
+							<button type="button" class="tool" [disabled]="!hasNextGame()" (click)="selectNext()" title="Next game">
 								<svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 									<!-- Boxicons v3.0.8 - https://boxicons.com -->
 									<path
@@ -183,6 +177,15 @@
 									/>
 								</svg>
 								<span class="label">Next</span>
+							</button>
+							<button
+								type="button"
+								class="tool close"
+								(click)="closePreview()"
+								title="Close preview"
+								aria-label="Close preview"
+							>
+								<span class="glyph" aria-hidden="true">&times;</span>
 							</button>
 						</div>
 					} @else {
@@ -198,9 +201,7 @@
 							<span class="preview-name" [attr.title]="game.black">{{ cellText(game, 'black') }}</span>
 							<span class="preview-elo">{{ cellText(game, 'blackElo') }}</span>
 						</span>
-						<button type="button" class="icon-btn" (click)="closePreview()" aria-label="Close preview">
-							&times;
-						</button>
+						<button type="button" class="icon-btn" (click)="closePreview()" aria-label="Close preview">&times;</button>
 					}
 				</div>
 
