@@ -85,23 +85,52 @@ export class GameResultsComponent {
 	readonly sheetOffset = signal(0);
 	private sheetDragFrom: number | null = null;
 
+	/**
+	 * The sheet carries `transition: transform` so that letting go animates it back. While a finger is
+	 * down that transition is the bug: every pointermove sets a new transform and the browser spends
+	 * 180ms easing towards it, so the sheet trails the finger and replays the movement after it stops.
+	 * `dragging` turns the transition off for the duration, which is what makes it follow rather than
+	 * chase.
+	 */
+	readonly sheetDragging = signal(false);
+
+	private sheetStartedAt = 0;
+
 	onSheetPointerDown(event: PointerEvent): void {
 		if (!this.viewport.isMobile()) return;
 		this.sheetDragFrom = event.clientY;
+		this.sheetStartedAt = event.timeStamp;
+		this.sheetOffset.set(0);
+		this.sheetDragging.set(true);
 		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 	}
 
 	onSheetPointerMove(event: PointerEvent): void {
 		if (this.sheetDragFrom === null) return;
+		/** Downward only. Dragging up would lift the sheet off the top of the screen. */
 		this.sheetOffset.set(Math.max(0, event.clientY - this.sheetDragFrom));
 	}
 
-	onSheetPointerUp(): void {
+	onSheetPointerUp(event?: PointerEvent): void {
 		if (this.sheetDragFrom === null) return;
 		this.sheetDragFrom = null;
+		this.sheetDragging.set(false);
+
 		const travelled = this.sheetOffset();
+		const elapsed = event ? Math.max(1, event.timeStamp - this.sheetStartedAt) : 1;
+		const speed = travelled / elapsed;
+
+		/**
+		 * A quarter of the screen, or a flick. Distance alone means a quick short swipe - which is what
+		 * dismissing a sheet actually feels like - does nothing, and the sheet springs back at you.
+		 */
+		if (travelled > window.innerHeight / 4 || (speed > 0.5 && travelled > 40)) {
+			/** Left where it is: the element is about to be removed, and snapping it back to the top
+			    for one frame first is exactly the jump this was meant to fix. */
+			this.closePreview();
+			return;
+		}
 		this.sheetOffset.set(0);
-		if (travelled > window.innerHeight / 3) this.closePreview();
 	}
 
 	private previewRequestId = 0;
@@ -172,6 +201,15 @@ export class GameResultsComponent {
 	selectNext(): void {
 		this.step(1);
 	}
+
+	/** The index of the previewed game, or -1. Both header arrows are derived from it. */
+	private readonly selectedIndex = computed(() => this.rows().findIndex((row) => row.id === this.selectedId()));
+
+	readonly hasPreviousGame = computed(() => this.selectedIndex() > 0);
+	readonly hasNextGame = computed(() => {
+		const at = this.selectedIndex();
+		return at !== -1 && at < this.rows().length - 1;
+	});
 
 	private step(delta: number): void {
 		const rows = this.rows();

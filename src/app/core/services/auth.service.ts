@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, firstValueFrom, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, RegisterResponse, SubscriptionView, UserSummary } from '../models/user.model';
-import { clearToken, readToken, storeToken } from '../interceptors/auth.interceptor';
+import { TOKEN_STORAGE_KEY, clearToken, readToken, storeToken } from '../interceptors/auth.interceptor';
 import { CaptchaAnswer } from '../captcha/captcha.model';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AnalyticsEvent } from '../analytics/analytics.events';
@@ -20,6 +20,30 @@ export class AuthService {
 	private readonly _currentUser = signal<UserSummary | null>(null);
 	readonly currentUser = this._currentUser.asReadonly();
 	readonly isLoggedIn = computed(() => this._currentUser() !== null);
+
+	constructor() {
+		/**
+		 * `storage` fires in every OTHER tab of this origin when localStorage changes, which is what
+		 * makes the "Sign in" link on a 401 notice worth offering: the person signs in in the second
+		 * tab, and this one - the one holding an unsaved analysis - picks the session up instead of
+		 * staying signed out with a token it is already sending.
+		 *
+		 * It fires on sign-out too, so a tab left open elsewhere does not keep showing an account
+		 * that has been signed out.
+		 */
+		window.addEventListener('storage', (event) => {
+			if (event.key !== null && event.key !== TOKEN_STORAGE_KEY) {
+				return;
+			}
+			if (readToken()) {
+				if (!this.isLoggedIn()) {
+					void this.restoreSession();
+				}
+			} else {
+				this._currentUser.set(null);
+			}
+		});
+	}
 
 	isAuthenticated(): boolean {
 		return this._currentUser() !== null;

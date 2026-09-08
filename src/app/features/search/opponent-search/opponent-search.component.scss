@@ -485,6 +485,10 @@ a.p-chip:focus-visible {
 	align-items: flex-end;
 	gap: 0.25rem;
 	width: 100%;
+	/* Without this the three tabs are wider than a phone and, being flex items that cannot shrink,
+	   they push the row past the viewport - which widens the whole document, not just this strip.
+	   That is what was making the page scroll sideways and the game preview sit off-centre. */
+	min-width: 0;
 	padding: 0.35rem 0.25rem 0;
 	box-sizing: border-box;
 	border-bottom: 1px solid var(--bg-border);
@@ -514,6 +518,7 @@ a.p-chip:focus-visible {
 
 .result-tab {
 	flex: 0 0 auto;
+	min-width: 0;
 	padding: 0.5rem 1.1rem;
 	border: 1px solid var(--bg-border);
 	border-radius: 8px 8px 0 0;
@@ -631,4 +636,34 @@ a.p-chip:focus-visible {
 	padding: 0 0.25rem;
 	font-size: 0.8rem;
 	color: var(--text-muted);
+}
+
+/* Phones. The three labels - "Games list", "Player's Opening Tree", "Advanced report" - do not fit
+   side by side at any readable size, so below this width they share the row in equal thirds and
+   truncate rather than overflow. Truncating loses a word; overflowing broke the page. */
+@media (max-width: 640px) {
+	.result-tabs {
+		gap: 0.2rem;
+		padding-inline: 0.15rem;
+	}
+
+	.result-tab {
+		flex: 1 1 0;
+		padding-inline: 0.4rem;
+		font-size: 0.8125rem;
+		/* white-space: nowrap is inherited from the base rule; these two turn the overflow it would
+		   otherwise cause into an ellipsis inside the tab's own share of the width. */
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	/* The question mark stays on the tab you are looking at and goes from the other two: hiding it
+	   everywhere would put the report's guide out of reach on a phone entirely. */
+	.result-tab:not(.active) .tab-help {
+		display: none;
+	}
+
+	.tab-help {
+		margin-left: 0.3rem;
+	}
 }

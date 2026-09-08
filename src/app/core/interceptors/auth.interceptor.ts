@@ -1,6 +1,8 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
-const TOKEN_KEY = 'premovedprep.jwt';
+/** Exported so AuthService can tell this key apart from every other one in a `storage` event. */
+export const TOKEN_STORAGE_KEY = 'premovedprep.jwt';
+const TOKEN_KEY = TOKEN_STORAGE_KEY;
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
 	const token = localStorage.getItem(TOKEN_KEY);

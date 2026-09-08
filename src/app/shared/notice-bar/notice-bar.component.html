@@ -2,7 +2,13 @@
 	@for (notice of notices(); track notice.id) {
 		<div class="notice-card" [class.error]="notice.kind === 'error'">
 			<span class="mark" aria-hidden="true">{{ notice.kind === 'error' ? '!' : 'i' }}</span>
-			<p class="text">{{ notice.message }}</p>
+			<p class="text">
+				{{ notice.message }}
+				@if (notice.action; as action) {
+					<!-- A plain anchor, not routerLink: the point is a second tab, so this page keeps its work. -->
+					<a class="action" [href]="action.href" target="_blank" rel="noopener">{{ action.label }}</a>
+				}
+			</p>
 			<button type="button" class="close" (click)="dismiss(notice.id)" aria-label="Dismiss">&times;</button>
 		</div>
 	}

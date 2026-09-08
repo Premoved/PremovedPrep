@@ -1,12 +1,22 @@
 import { Injectable, signal } from '@angular/core';
+import { SIGN_IN_REQUIRED } from '../interceptors/error.interceptor';
 
 export type NoticeKind = 'error' | 'info';
+
+/** A link offered alongside the message. Opened in a new tab, so whatever is on this page survives. */
+export interface NoticeAction {
+	readonly label: string;
+	readonly href: string;
+}
 
 export interface Notice {
 	readonly id: number;
 	readonly kind: NoticeKind;
 	readonly message: string;
+	readonly action?: NoticeAction;
 }
+
+const SIGN_IN: NoticeAction = { label: 'Sign in', href: '/login' };
 
 const ERROR_MS = 9000;
 const INFO_MS = 4500;
@@ -38,7 +48,13 @@ export class NotificationService {
 		}
 
 		const id = this.nextId++;
-		this.items.update((list) => [...list, { id, kind, message: text }]);
+		/**
+		 * Attached here rather than at each call site: every 401 in the application arrives as this
+		 * one string, and there are dozens of places that show it. The alternative was passing an
+		 * action through every caller for the sake of a single case.
+		 */
+		const action = text === SIGN_IN_REQUIRED ? SIGN_IN : undefined;
+		this.items.update((list) => [...list, { id, kind, message: text, action }]);
 
 		/** No NgZone: the application is zoneless, so the signal write is what schedules the re-render. */
 		setTimeout(() => this.dismiss(id), timeoutMs);

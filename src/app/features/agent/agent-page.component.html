@@ -5,8 +5,8 @@
 			<h1>Desktop agent</h1>
 			<p>
 				A small application that runs on your own computer and acts as a bridge between this site and your local device:
-				enables you to use your own game archive as the Database, your own chess engine for analysis, and as much storage as your
-				disk has.
+				enables you to use your own game archive as the Database, your own chess engine for analysis, and as much
+				storage as your disk has.
 			</p>
 		</div>
 	</header>
@@ -16,16 +16,14 @@
 	} @else if (gate() === 'preview') {
 		<div class="card plan">
 			<h2>Coming soon...</h2>
-			<p>
-				The agent is currently under development. 
-			</p>
+			<p>The agent is currently under development.</p>
 			<p class="muted small">
-				The rest of this site in its current form will be unaffected by the agent's release, and all currently available features of the site will remain free to use.
+				The rest of this site in its current form will be unaffected by the agent's release, and all currently available
+				features of the site will remain free to use.
 			</p>
 		</div>
 	} @else if (gate() === 'plan') {
-		<div class="card plan">
-		</div>
+		<div class="card plan"></div>
 	} @else {
 		@if (access.insider() && access.stage() !== 'BETA') {
 			<p class="insider">

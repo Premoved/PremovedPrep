@@ -1,6 +1,12 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 
+/**
+ * The 401 wording, exported because NotificationService matches on it to attach a way out. A
+ * message that tells someone to sign in and gives them nowhere to do it is not much of a message.
+ */
+export const SIGN_IN_REQUIRED = 'You need to be signed in to continue.';
+
 /** Turns a failed response into an ApiError carrying a message the UI can show. */
 export class ApiError extends Error {
 	constructor(
@@ -47,7 +53,7 @@ function describe(err: unknown): string {
 		case 400:
 			return 'Please check what you entered and try again.';
 		case 401:
-			return 'Please sign in to continue.';
+			return SIGN_IN_REQUIRED;
 		case 402:
 			return 'That is part of a paid plan.';
 		case 403:

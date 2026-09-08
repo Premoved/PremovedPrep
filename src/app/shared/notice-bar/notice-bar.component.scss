@@ -86,6 +86,22 @@
 	color: var(--text-strong);
 }
 
+/* Inline with the sentence rather than a button below it: the notice is one line of prose, and
+   a second row of chrome would push the stack over the content it is talking about. */
+.action {
+	margin-left: 0.35rem;
+	color: inherit;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.action:hover {
+	text-decoration-thickness: 2px;
+}
+
 @keyframes notice-in {
 	from {
 		opacity: 0;

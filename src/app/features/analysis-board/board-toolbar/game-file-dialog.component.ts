@@ -296,12 +296,34 @@ export class GameFileDialogComponent {
 		this.itemType.set(type);
 	}
 
+	/**
+	 * Apply finishes the job when there is somewhere to put the game. Sending someone to a second tab
+	 * to press a second button is only useful when the destination is genuinely still unknown - which
+	 * is the case for a new analysis, and not for one that was opened from a collection or already
+	 * filed once. The location tab stays reachable either way.
+	 */
 	applyData(event: Event): void {
 		event.preventDefault();
+
+		if (this.selectedId() !== null) {
+			this.write();
+			return;
+		}
+
 		this.tree.setHeaders(this.headers());
 		this.notify.info('Game data updated.');
 		this.activePanel.set('location');
 	}
+
+	/** True when Apply writes rather than moving to the location tab; the button label follows it. */
+	readonly applySaves = computed(() => this.selectedId() !== null && !this.saving());
+
+	readonly applyLabel = computed(() => {
+		if (!this.applySaves()) {
+			return 'Apply';
+		}
+		return this.saving() ? 'Saving…' : this.saveLabel();
+	});
 
 	private headers(): GameHeaders {
 		const draft = this.draft();
@@ -462,7 +484,10 @@ export class GameFileDialogComponent {
 
 	save(event: Event): void {
 		event.preventDefault();
+		this.write();
+	}
 
+	private write(): void {
 		const collectionId = this.selectedId();
 		if (collectionId === null || this.saving()) {
 			return;

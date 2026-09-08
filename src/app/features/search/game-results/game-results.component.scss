@@ -217,7 +217,11 @@ td.center {
 	overflow: hidden;
 }
 
+/* Controls only. The players, ratings and result are in the details block under the board on a
+   phone, and in the list itself on a desktop - repeating them here bought a line of chrome on top
+   of a board that has none to spare. */
 .preview-strip {
+	position: relative;
 	flex: 0 0 auto;
 	display: flex;
 	align-items: center;
@@ -228,49 +232,62 @@ td.center {
 	box-sizing: border-box;
 }
 
+.preview-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	/* Centred in the strip whether or not the close button is there, so the arrows do not shift
+	   between the phone and the desktop layout. */
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.preview-controls .tool {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.3rem 0.55rem;
+	border: 1px solid transparent;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--text-main);
+	font-family: inherit;
+	font-size: 0.82rem;
+	cursor: default;
+}
+
+.preview-controls .tool:hover:not(:disabled) {
+	background: var(--bg-hover);
+	border-color: var(--bg-border);
+}
+
+.preview-controls .tool:disabled {
+	opacity: 0.4;
+}
+
+.preview-controls .open-board {
+	margin-left: 0.35rem;
+	border-color: var(--bg-border);
+}
+
+/* The grab bar, and the only affordance for closing the sheet on a phone. Absolute so it costs
+   padding rather than a row. */
+.sheet-grip {
+	position: absolute;
+	top: 6px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 2.25rem;
+	height: 4px;
+	border-radius: 2px;
+	background: var(--bg-border);
+}
+
 app-preview-board {
 	flex: 1;
 	min-height: 0;
 	box-sizing: border-box;
-}
-
-.preview-label {
-	flex-shrink: 0;
-	font-size: 0.9rem;
-	font-weight: 600;
-	color: var(--text-muted);
-}
-
-.preview-side {
-	flex: 1 1 0;
-	min-width: 0;
-	display: flex;
-	align-items: baseline;
-	gap: 0.3rem;
-}
-
-.preview-name {
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	font-size: 0.85rem;
-	font-weight: 600;
-	color: var(--text-strong);
-}
-
-.preview-elo {
-	flex: 0 0 auto;
-	font-size: 0.75rem;
-	color: var(--text-muted);
-	font-variant-numeric: tabular-nums;
-}
-
-.preview-result {
-	flex-shrink: 0;
-	font-size: 0.85rem;
-	font-weight: 600;
-	color: var(--text-muted);
 }
 
 .icon-btn {
@@ -329,12 +346,31 @@ app-preview-board {
 		touch-action: none;
 	}
 
+	/* While a finger is down there is nothing to ease towards: the transform IS the finger. Leaving
+	   the transition on is what made the sheet lag and then replay the drag after it ended. */
+	.preview.dragging {
+		transition: none;
+		animation: none;
+		will-change: transform;
+	}
+
 	.preview .pane-divider {
 		display: none;
 	}
 
 	.preview-strip {
-		padding: 0.75rem 0.6rem;
+		/* Room above the controls for the grab bar. */
+		padding: 0.9rem 0.5rem 0.55rem;
+	}
+
+	.preview-controls .tool {
+		padding: 0.35rem 0.5rem;
+	}
+
+	/* The label goes, the icon stays: three labelled buttons do not fit, and the arrows explain
+	   themselves. The button keeps its accessible name from aria-label. */
+	.preview-controls .open-board .label {
+		display: none;
 	}
 }
 
