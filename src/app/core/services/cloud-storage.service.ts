@@ -30,6 +30,14 @@ export class CloudStorageService {
 		return usage && usage.bytesQuota > 0 ? (usage.bytesUsed / usage.bytesQuota) * 100 : 0;
 	});
 
+	/**
+	 * The largest file the server will accept in one write, or null before the first figure arrives.
+	 * Relative to this account's quota, not a constant of its own - a bigger allowance raises it by
+	 * itself. Only the cloud path consults it: a PGN that never leaves the browser is not bounded by
+	 * a budget it does not spend.
+	 */
+	readonly maxRequestBytes = computed(() => this._usage()?.bytesMaxRequest ?? null);
+
 	readonly overQuota = computed(() => {
 		const usage = this._usage();
 		return usage !== null && usage.bytesUsed > usage.bytesQuota;
@@ -70,7 +78,8 @@ export class CloudStorageService {
 
 		const usage = usageFrom(error);
 		if (usage) {
-			this._usage.set(usage);
+			/** The 507 carries the three usage figures but not the policy one; keep what we know. */
+			this._usage.set({ ...usage, bytesMaxRequest: this._usage()?.bytesMaxRequest });
 		} else {
 			this.refresh();
 		}

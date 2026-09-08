@@ -117,4 +117,10 @@ export interface StorageUsage {
 	readonly bytesQuota: number;
 	/** Where writes actually stop, a little above the quota. */
 	readonly bytesHardLimit: number;
+	/**
+	 * The largest PGN one request that saves to the server may carry - a multiple of bytesQuota,
+	 * decided by StorageLimits on the server. Absent on the figures recovered from a 507, which does
+	 * not carry it, so a caller must treat null as "the server will decide".
+	 */
+	readonly bytesMaxRequest?: number;
 }

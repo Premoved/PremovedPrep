@@ -111,9 +111,6 @@ const UNTITLED = 'Untitled';
 
 const MENU_FOOTPRINT = { width: 208, height: 132 };
 
-/** Matches CollectionDtos.MAX_PGN_CHARS on the server, which refuses anything longer. */
-const MAX_IMPORT_BYTES = 4 * 1024 * 1024;
-
 @Component({
 	selector: 'app-collection-view',
 	standalone: true,
@@ -930,11 +927,16 @@ export class CollectionViewComponent {
 			return;
 		}
 
-		/** The server refuses anything larger; saying so here costs no upload and reads better. */
-		if (file.size > MAX_IMPORT_BYTES) {
+		/**
+		 * The server refuses anything larger, so saying so here costs no upload. The figure comes from
+		 * the account's own storage budget rather than a constant, and null means it has not arrived
+		 * yet - in which case the upload goes ahead and the server answers.
+		 */
+		const limit = this.cloud.maxRequestBytes();
+		if (limit !== null && file.size > limit) {
+			const mb = (bytes: number) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
 			this.notify.error(
-				`That file is ${Math.round(file.size / (1024 * 1024))} MB. The largest import is ` +
-					`${MAX_IMPORT_BYTES / (1024 * 1024)} MB - split it and import the parts.`,
+				`That file is ${mb(file.size)} MB. The largest import is ${mb(limit)} MB — ` + `split it and import the parts.`,
 			);
 			return;
 		}
