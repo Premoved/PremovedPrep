@@ -81,10 +81,14 @@ export class AuthService {
 		return this.http.delete<void>(`${this.baseUrl}/me`, { body: { username } });
 	}
 
+	/**
+	 * Answers with a new session, not a summary: changing the password signs out every device, and
+	 * without the replacement token that would include this one.
+	 */
 	changePassword(currentPassword: string, newPassword: string) {
 		return this.http
-			.post<UserSummary>(`${this.baseUrl}/me/password`, { currentPassword, newPassword })
-			.pipe(tap((user) => this._currentUser.set(user)));
+			.post<AuthResponse>(`${this.baseUrl}/me/password`, { currentPassword, newPassword })
+			.pipe(tap((res) => this.applySession(res)));
 	}
 
 	async restoreSession(): Promise<void> {

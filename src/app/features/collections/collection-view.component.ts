@@ -111,6 +111,11 @@ const UNTITLED = 'Untitled';
 
 const MENU_FOOTPRINT = { width: 208, height: 132 };
 
+/** One decimal, and no trailing '.0' - '2 MB', not '2.0 MB'. */
+function megabytes(bytes: number): string {
+	return String(Math.round((bytes / (1024 * 1024)) * 10) / 10);
+}
+
 @Component({
 	selector: 'app-collection-view',
 	standalone: true,
@@ -934,9 +939,11 @@ export class CollectionViewComponent {
 		 */
 		const limit = this.cloud.maxRequestBytes();
 		if (limit !== null && file.size > limit) {
-			const mb = (bytes: number) => Math.round((bytes / (1024 * 1024)) * 10) / 10;
+			/** The refusal quotes the allowance, not the request cap: the allowance is what it is about. */
+			const quota = this.cloud.usage()?.bytesQuota ?? limit;
 			this.notify.error(
-				`That file is ${mb(file.size)} MB. The largest import is ${mb(limit)} MB — ` + `split it and import the parts.`,
+				`That file is ${megabytes(file.size)} MB. Each user is allocated only ${megabytes(quota)} MB ` +
+					`of cloud storage. Use the desktop agent to import it locally.`,
 			);
 			return;
 		}

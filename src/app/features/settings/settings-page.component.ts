@@ -365,7 +365,7 @@ export class SettingsPageComponent {
 				this.passwordBusy.set(false);
 				this.clearPasswordFields();
 				this.editingPassword.set(false);
-				this.passwordDone.set('Your password has been changed.');
+				this.passwordDone.set('Your password has been changed. Any other device is now signed out.');
 			},
 			error: (err: Error) => {
 				this.passwordBusy.set(false);
