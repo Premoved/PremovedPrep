@@ -114,6 +114,7 @@
 						<span class="field-label">Current password</span>
 						<input
 							type="password"
+							appPasswordReveal
 							autocomplete="current-password"
 							[value]="currentPassword()"
 							(input)="currentPassword.set($any($event.target).value); clearPasswordNotice()"
@@ -123,6 +124,7 @@
 						<span class="field-label">New password</span>
 						<input
 							type="password"
+							appPasswordReveal
 							autocomplete="new-password"
 							[value]="newPassword()"
 							(input)="newPassword.set($any($event.target).value); clearPasswordNotice()"
@@ -132,6 +134,7 @@
 						<span class="field-label">Repeat new password</span>
 						<input
 							type="password"
+							appPasswordReveal
 							autocomplete="new-password"
 							[value]="confirmPassword()"
 							(input)="confirmPassword.set($any($event.target).value); clearPasswordNotice()"

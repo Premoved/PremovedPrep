@@ -3,10 +3,10 @@ import { Directive, ElementRef, OnDestroy, OnInit, Renderer2, inject } from '@an
 /**
  * Puts a show/hide control inside every password field.
  *
- * A directive rather than a component so that no call site has to remember it: it matches on the
- * input itself, which means a password field added later gets the control without anyone thinking
- * about it. The price is that it builds two elements at runtime - the alternative was rewriting
- * seven templates and hoping the eighth remembers.
+ * A directive rather than a component so that the field keeps its own bindings, its own id and its
+ * own autocomplete hint: the call sites differ in all three, and a component would have had to carry
+ * every one of them through as an input. Put `appPasswordReveal` on any password field that should
+ * have the control - which is all of them.
  *
  * The wrapper is what makes the button positionable. It is not decoration: an absolutely positioned
  * button needs a containing block the size of the input, and the input's own parent is a whole form
@@ -14,7 +14,7 @@ import { Directive, ElementRef, OnDestroy, OnInit, Renderer2, inject } from '@an
  * none of Angular's component-scoping attributes and a component stylesheet would not reach them.
  */
 @Directive({
-	selector: 'input[type="password"]',
+	selector: 'input[appPasswordReveal]',
 })
 export class PasswordRevealDirective implements OnInit, OnDestroy {
 	private readonly input = inject<ElementRef<HTMLInputElement>>(ElementRef).nativeElement;
