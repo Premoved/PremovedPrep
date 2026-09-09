@@ -17,6 +17,22 @@
  *
  * The page is for a person as much as for a crawler: it ends in one link, into the application,
  * with this player already loaded in the opponent search.
+ *
+ * WHAT THIS PAGE DELIBERATELY DOES NOT SHOW
+ *
+ * Nothing sourced from the FIDE rating list: no title, no federation, no standard, rapid or blitz
+ * rating, no world rank, no birth year, and no Elo on the game rows either - a PGN that arrives
+ * without a rating has one filled in from `player_rating`, and this page cannot tell those apart.
+ *
+ * Lichess releases its exports under CC0, which permits publication of any kind. FIDE's download
+ * page carries a blanket reservation - "No part of this site may be reproduced ... without the
+ * written permission of FIDE" - and, in the EU, a database right protects re-utilisation of a
+ * substantial part of a database regardless of whether the facts inside it are copyrightable.
+ * Sixty-two thousand generated pages is a substantial part by any reading.
+ *
+ * Using that data inside the application, for the people using it, is the ordinary use every chess
+ * tool makes of it. Publishing it as an indexed corpus is not the same act, and only the second one
+ * is given up here. What is left is what the archive itself is: names, results, openings, dates.
  */
 
 /**
@@ -35,17 +51,9 @@ type PagesFunction = (context: PagesContext) => Response | Promise<Response>;
 interface PlayerProfile {
 	fideId: number;
 	name: string;
-	federation: string | null;
-	title: string | null;
-	standardRating: number | null;
-	rapidRating: number | null;
-	blitzRating: number | null;
-	birthYear: number | null;
-	active: boolean;
+	/** The spelling the games themselves carry, which is the one this page prefers. */
+	archiveName: string | null;
 	archiveGames: number;
-	peakArchiveElo: number | null;
-	worldRankAll: number | null;
-	nationalRankAll: number | null;
 }
 
 interface RelatedPlayer {
@@ -57,9 +65,7 @@ interface RelatedPlayer {
 interface ResultGame {
 	id: number;
 	white: string;
-	whiteElo: number | null;
 	black: string;
-	blackElo: number | null;
 	result: string;
 	date: string | null;
 	year: number | null;
@@ -99,7 +105,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 	const [asWhite, asBlack, related] = await Promise.all([
 		fetchGames(fideId, 'w'),
 		fetchGames(fideId, 'b'),
-		fetchRelated(fideId, profile.federation),
+		fetchRelated(fideId),
 	]);
 	const games = [...asWhite, ...asBlack].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).slice(0, 12);
 
@@ -169,9 +175,13 @@ async function fetchJson<T>(url: string): Promise<T | null> {
  * Not decoration: without them each of these pages is an island, reachable only from a sitemap, and
  * a crawler treats a page nothing links to as a page nobody thinks matters.
  */
-async function fetchRelated(fideId: number, federation: string | null): Promise<RelatedPlayer[]> {
-	const query = `fideId=${fideId}&limit=8` + (federation ? `&federation=${encodeURIComponent(federation)}` : '');
-	return (await fetchJson<RelatedPlayer[]>(`${API}/api/players/indexable/related?${query}`)) ?? [];
+async function fetchRelated(fideId: number): Promise<RelatedPlayer[]> {
+	/**
+	 * Without a federation, which would come from the FIDE list. The endpoint's fallback - the
+	 * players with the most games - is the neighbour relation left, and it is the better one for a
+	 * crawler anyway: it points at the pages with the most on them.
+	 */
+	return (await fetchJson<RelatedPlayer[]>(`${API}/api/players/indexable/related?fideId=${fideId}&limit=8`)) ?? [];
 }
 
 async function fetchGames(fideId: number, color: 'w' | 'b'): Promise<ResultGame[]> {
@@ -189,30 +199,18 @@ function notFound(): Response {
 }
 
 function render(profile: PlayerProfile, games: ResultGame[], related: RelatedPlayer[], canonical: string): string {
-	const name = esc(profile.name);
-	const title = profile.title ? `${esc(profile.title)} ` : '';
+	/** The archive spelling first: it comes from the game scores, which are the CC0 half. */
+	const name = esc(profile.archiveName ?? profile.name);
 	const indexable = profile.archiveGames >= MIN_GAMES_TO_INDEX;
+	const count = `${profile.archiveGames} game${profile.archiveGames === 1 ? '' : 's'}`;
 
-	const facts: string[] = [];
-	if (profile.federation) facts.push(`Federation ${esc(profile.federation)}`);
-	if (profile.standardRating) facts.push(`FIDE standard ${profile.standardRating}`);
-	if (profile.rapidRating) facts.push(`rapid ${profile.rapidRating}`);
-	if (profile.blitzRating) facts.push(`blitz ${profile.blitzRating}`);
-	if (profile.birthYear) facts.push(`born ${profile.birthYear}`);
-	if (profile.worldRankAll) facts.push(`world rank ${profile.worldRankAll}`);
-	if (!profile.active) facts.push('inactive');
-
-	const description =
-		`${profile.archiveGames} games by ${title}${name}` +
-		(profile.federation ? ` (${esc(profile.federation)})` : '') +
-		(profile.standardRating ? `, FIDE ${profile.standardRating}` : '') +
-		'. Openings by colour, results and full game scores - and one click to prepare against them.';
+	const description = `${count} by ${name} in the PremovedPrep archive: full game scores, openings by colour, opponents and results - and one click to prepare against them.`;
 
 	const rows = games
 		.map(
 			(game) => `<tr>
-			<td>${esc(game.white)}${game.whiteElo ? ` <span class="elo">${game.whiteElo}</span>` : ''}</td>
-			<td>${esc(game.black)}${game.blackElo ? ` <span class="elo">${game.blackElo}</span>` : ''}</td>
+			<td>${esc(game.white)}</td>
+			<td>${esc(game.black)}</td>
 			<td class="mid">${esc(game.result ?? '*')}</td>
 			<td class="mid">${esc(game.eco ?? '')}</td>
 			<td>${esc(game.event ?? '')}</td>
@@ -221,14 +219,15 @@ function render(profile: PlayerProfile, games: ResultGame[], related: RelatedPla
 		)
 		.join('\n');
 
-	/** Schema.org Person. It is what puts a name, a nationality and a job title into a rich result. */
+	/**
+	 * Schema.org Person, with nothing in it that came from the rating list: a name, and the FIDE id
+	 * that is already in the URL and is what makes two players of the same name distinguishable.
+	 */
 	const jsonLd = JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'Person',
-		name: profile.name,
+		name: profile.archiveName ?? profile.name,
 		jobTitle: 'Chess player',
-		nationality: profile.federation ?? undefined,
-		birthDate: profile.birthYear ? String(profile.birthYear) : undefined,
 		identifier: { '@type': 'PropertyValue', propertyID: 'FIDE ID', value: String(profile.fideId) },
 		url: canonical,
 	});
@@ -238,11 +237,11 @@ function render(profile: PlayerProfile, games: ResultGame[], related: RelatedPla
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}${name} - chess games and preparation | PremovedPrep</title>
+<title>${name} - chess games and preparation | PremovedPrep</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${esc(canonical)}">
 ${indexable ? '' : '<meta name="robots" content="noindex, follow">\n'}<meta property="og:type" content="profile">
-<meta property="og:title" content="${title}${name} - chess games and preparation">
+<meta property="og:title" content="${name} - chess games and preparation">
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${esc(canonical)}">
 <meta property="og:image" content="${SITE}/social-banner.png">
@@ -259,15 +258,14 @@ h1 { font-size: 1.7rem; margin: 0 0 .25rem; }
 table { border-collapse: collapse; width: 100%; font-size: .92rem; }
 th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #ddd; }
 td.mid { text-align: center; white-space: nowrap; }
-.elo { color: #888; font-variant-numeric: tabular-nums; }
 p.related { line-height: 2; }
 footer { margin-top: 2.5rem; color: #666; font-size: .9rem; }
 a { color: #2f6fb0; }
 </style>
 </head>
 <body>
-<h1>${title}${name}</h1>
-<p class="facts">${facts.length ? esc(facts.join(' · ')) : 'FIDE player'} · ${profile.archiveGames} game${profile.archiveGames === 1 ? '' : 's'} in the archive${profile.peakArchiveElo ? ` · peak ${profile.peakArchiveElo}` : ''}</p>
+<h1>${name}</h1>
+<p class="facts">${count} in the PremovedPrep archive</p>
 
 <a class="cta" href="${SITE}/search?opponent=${profile.fideId}">Prepare against ${name}</a>
 <a class="cta secondary" href="${SITE}/search?opponent=${profile.fideId}&amp;color=b">Their games as Black</a>
@@ -286,7 +284,7 @@ ${rows}
 
 ${
 	related.length
-		? `<h2>${profile.federation ? `Other players from ${esc(profile.federation)}` : 'Other players in the archive'}</h2>
+		? `<h2>Other players in the archive</h2>
 <p class="related">${related
 				.map((other) => `<a href="${SITE}/player/${canonicalSlug(other.name, other.fideId)}">${esc(other.name)}</a>`)
 				.join(' &middot; ')}</p>`
@@ -295,8 +293,8 @@ ${
 
 <footer>
 <p><a href="${SITE}/players">All players in the archive</a> &middot; <a href="${SITE}/search">Search the archive</a></p>
-<p>Game scores come from public broadcast archives; ratings and titles from the monthly FIDE list.
-Open the full archive, the opening tree by colour and the analysis board on
+<p>Game scores come from public broadcast archives released under CC0. Open the full archive, the
+opening tree by colour and the analysis board on
 <a href="${SITE}/search?opponent=${profile.fideId}">PremovedPrep</a>.</p>
 </footer>
 </body>
