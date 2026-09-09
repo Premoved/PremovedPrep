@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Injectable, OnDestroy, inject, signal } from '@angular/core';
 import { ViewportService } from '../../../core/layout/viewport.service';
+import { FrameResizeObserver } from '../../../core/browser/frame-resize-observer';
 
 export interface BoardLayoutElements {
 	shell: HTMLElement;
@@ -50,7 +51,7 @@ export class BoardLayoutService implements OnDestroy {
 	private elements?: BoardLayoutElements;
 	private paneEl?: HTMLElement;
 	private probeSetupContent: SetupContentProbe = () => null;
-	private resizeObserver?: ResizeObserver;
+	private resizeObserver?: FrameResizeObserver;
 	private transitionEndListener?: () => void;
 	private narrowSwitchShellWidth: number | null = null;
 
@@ -59,7 +60,7 @@ export class BoardLayoutService implements OnDestroy {
 		this.probeSetupContent = probeSetupContent;
 		this.reserveUtilities = reserveUtilities;
 
-		this.resizeObserver = new ResizeObserver(() => this.recompute());
+		this.resizeObserver = new FrameResizeObserver(() => this.recompute());
 		/** Observes only elements whose size changes externally, never one this loop writes. */
 		this.resizeObserver.observe(elements.shell);
 		this.paneEl = elements.shell.parentElement?.parentElement ?? undefined;

@@ -32,6 +32,7 @@ import { LocalShelfService } from '../../core/agent/local-shelf.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { OpeningExplorerService } from '../../core/services/opening-explorer.service';
 import { ViewportService } from '../../core/layout/viewport.service';
+import { FrameResizeObserver } from '../../core/browser/frame-resize-observer';
 import { AuthService } from '../../core/services/auth.service';
 import { AnalyticsService } from '../../core/analytics/analytics.service';
 import { AnalyticsEvent } from '../../core/analytics/analytics.events';
@@ -188,7 +189,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 
 	private readonly toolbar = viewChild(BoardToolbarComponent);
 
-	private resizeObserver?: ResizeObserver;
+	private resizeObserver?: FrameResizeObserver;
 
 	readonly notationWidth = signal<number | null>(null);
 
@@ -629,7 +630,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 		const mainEl = this.mainRef?.nativeElement;
 		if (!mainEl) return;
 
-		this.resizeObserver = new ResizeObserver(() => {
+		this.resizeObserver = new FrameResizeObserver(() => {
 			this.applyClamp(mainEl.getBoundingClientRect().width);
 			this.publishOverlayBounds();
 		});

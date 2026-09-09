@@ -32,6 +32,7 @@ import { VariationPickerComponent } from '../../analysis-board/chess-board/varia
 import { fitOnScreen } from '../../../core/browser/menu-placement';
 import { ViewportService } from '../../../core/layout/viewport.service';
 import { formatGameDate } from '../../../core/chess/game-headers';
+import { FrameResizeObserver } from '../../../core/browser/frame-resize-observer';
 
 const MOVE_ANIMATION_MS = 200;
 
@@ -91,7 +92,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 	readonly nextRequested = output<void>();
 
 	private api?: Api;
-	private resizeObserver?: ResizeObserver;
+	private resizeObserver?: FrameResizeObserver;
 
 	private readonly tree = signal<MoveTreeStore | null>(null);
 
@@ -224,7 +225,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 			},
 		});
 
-		this.resizeObserver = new ResizeObserver(() => this.measure());
+		this.resizeObserver = new FrameResizeObserver(() => this.measure());
 		this.resizeObserver.observe(this.columnEl().nativeElement);
 
 		this.measure();

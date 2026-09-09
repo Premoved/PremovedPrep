@@ -60,7 +60,7 @@ const ENGINE_BRUSH = { key: 'engine', color: '#3d78ad', opacity: 1, lineWidth: 1
 const REPORT_BRUSHES = {
 	reportDeviation: { key: 'reportDeviation', color: '#c62828', opacity: 1, lineWidth: 10 },
 	reportOverlap: { key: 'reportOverlap', color: '#ff8c00', opacity: 1, lineWidth: 10 },
-	reportTrunk: { key: 'reportTrunk', color: '#8a8a8a', opacity: 0.75, lineWidth: 7 },
+	reportTrunk: { key: 'reportTrunk', color: '#5c5c5c', opacity: 0.75, lineWidth: 7 },
 };
 
 const LONG_PRESS_DRAW_MS = 450;

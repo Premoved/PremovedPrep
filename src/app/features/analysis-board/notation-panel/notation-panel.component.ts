@@ -30,6 +30,7 @@ import { GameListComponent } from './game-list/game-list.component';
 import { MoveTreeComponent } from './move-tree/move-tree.component';
 import { OpeningTreeComponent } from './opening-tree/opening-tree.component';
 import { ReportBarComponent } from './report-bar/report-bar.component';
+import { FrameResizeObserver } from '../../../core/browser/frame-resize-observer';
 
 /** The panel's top-level views. */
 export type NotationTab = 'notation' | 'openings' | 'games';
@@ -124,7 +125,7 @@ export class NotationPanelComponent implements AfterViewInit, OnDestroy {
 
 	private readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabButton');
 
-	private tabObserver?: ResizeObserver;
+	private tabObserver?: FrameResizeObserver;
 	private lastMinWidth = 0;
 
 	constructor() {
@@ -138,7 +139,7 @@ export class NotationPanelComponent implements AfterViewInit, OnDestroy {
 
 	ngAfterViewInit(): void {
 		/** Observing the tabs, not the strip: the strip is stretched by its container. */
-		this.tabObserver = new ResizeObserver(() => this.measure());
+		this.tabObserver = new FrameResizeObserver(() => this.measure());
 		for (const tab of this.tabButtons()) {
 			this.tabObserver.observe(tab.nativeElement);
 		}
