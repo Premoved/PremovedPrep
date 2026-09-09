@@ -111,6 +111,12 @@ const UNTITLED = 'Untitled';
 
 const MENU_FOOTPRINT = { width: 208, height: 132 };
 
+/** Mirrors the duration of the preview-sheet-up keyframes in the stylesheet. */
+const SHEET_ENTER_MS = 240;
+
+/** How far a finger must travel before this is a drag and not a tap on whatever is underneath. */
+const DRAG_THRESHOLD_PX = 8;
+
 /** One decimal, and no trailing '.0' - '2 MB', not '2.0 MB'. */
 function megabytes(bytes: number): string {
 	return String(Math.round((bytes / (1024 * 1024)) * 10) / 10);
@@ -158,6 +164,27 @@ export class CollectionViewComponent {
 
 	readonly previewWidth = signal(DEFAULT_PREVIEW_PX);
 	readonly resizing = signal(false);
+
+	/* The mobile preview sheet. Deliberately the same behaviour as the Database results sheet in
+	   game-results.component.ts; the two are twins and were written to stay that way. */
+
+	readonly sheetOffset = signal(0);
+	private sheetDragFrom: number | null = null;
+	private sheetPointerId: number | null = null;
+	private sheetStartedAt = 0;
+
+	/**
+	 * The sheet carries `transition: transform` so that letting go animates it back. While a finger is
+	 * down that transition is the bug: every pointermove sets a new transform and the browser spends
+	 * 180ms easing towards it, so the sheet trails the finger and replays the movement after it stops.
+	 */
+	readonly sheetDragging = signal(false);
+
+	/**
+	 * True only for the length of the opening animation, so that nothing which merely changes the
+	 * sheet's contents - stepping to the next game - replays it.
+	 */
+	readonly sheetEntering = signal(false);
 
 	readonly handleOffset = signal<number | null>(null);
 	readonly handleActive = signal(false);
@@ -240,6 +267,19 @@ export class CollectionViewComponent {
 	readonly selectedRow = computed(() => {
 		const id = this.selectedId();
 		return id === null ? null : (this.rows().find((row) => row.id === id) ?? null);
+	});
+
+	/** The index of the previewed item, or -1. Both sheet arrows are derived from it. */
+	private readonly selectedIndex = computed(() => {
+		const id = this.selectedId();
+		return id === null ? -1 : this.rows().findIndex((row) => row.id === id);
+	});
+
+	readonly hasPreviousItem = computed(() => this.selectedIndex() > 0);
+
+	readonly hasNextItem = computed(() => {
+		const at = this.selectedIndex();
+		return at !== -1 && at < this.rows().length - 1;
 	});
 
 	readonly listGutterRight = computed(() => (this.selected() ? this.previewWidth() + LIST_GUTTER_PX : LIST_GUTTER_PX));
@@ -379,8 +419,30 @@ export class CollectionViewComponent {
 		if (this.selectedId() === row.id) {
 			return;
 		}
+
+		/**
+		 * Opening from nothing is an entrance; stepping to the next game is not. Unlike the Database
+		 * sheet, the element only exists once the item has been fetched, so the flag is raised when the
+		 * detail lands rather than when the tap happens - otherwise a request slower than the animation
+		 * would clear the flag before there was anything to animate.
+		 */
+		const opening = this.selected() === null;
+
+		this.resetSheet();
+
+		/**
+		 * The previous game stays on the board until the next one arrives. Clearing it first put an
+		 * empty board on screen for the length of a request, which on a phone reads as the sheet
+		 * leaving and coming back.
+		 */
 		this.api.getItem(row.id).subscribe({
-			next: (detail) => this.selected.set(detail),
+			next: (detail) => {
+				if (opening) {
+					this.sheetEntering.set(true);
+					setTimeout(() => this.sheetEntering.set(false), SHEET_ENTER_MS);
+				}
+				this.selected.set(detail);
+			},
 			error: (err: Error) => this.notify.error(err.message),
 		});
 	}
@@ -389,7 +451,9 @@ export class CollectionViewComponent {
 		this.clipboard.clear();
 
 		if (this.viewport.isMobile()) {
-			this.openItem(row.id);
+			/** A tap opens the preview sheet; the analysis board is a button inside it. Before the sheet
+			    existed this jumped straight to a new tab, which is what the Database list does not do. */
+			this.select(row);
 			return;
 		}
 
@@ -500,6 +564,91 @@ export class CollectionViewComponent {
 
 	closePreview(): void {
 		this.selected.set(null);
+		this.sheetDragFrom = null;
+		this.sheetPointerId = null;
+		this.sheetDragging.set(false);
+		/** Not reset while the sheet is being dismissed - see onSheetPointerUp - but it must not be
+		    carried into the next one, and by now the element is gone. */
+		this.sheetOffset.set(0);
+	}
+
+	/** Nothing that opens or changes the sheet may inherit an offset from whatever happened before. */
+	private resetSheet(): void {
+		this.sheetDragFrom = null;
+		this.sheetPointerId = null;
+		this.sheetDragging.set(false);
+		this.sheetOffset.set(0);
+	}
+
+	/**
+	 * The gesture covers the whole header, buttons included, and still lets those buttons be pressed.
+	 * Nothing is claimed on pointerdown: the press is only recorded. Movement past the threshold is
+	 * what turns it into a drag, and taking the pointer capture at that moment cancels the click the
+	 * button underneath would otherwise receive.
+	 *
+	 * The threshold is also what makes this safe with a mouse. Without it, arming on pointerdown and
+	 * only disarming on pointerup left a stuck start point, and an ordinary hover over the header
+	 * translated the sheet hundreds of pixels down the screen.
+	 */
+	onSheetPointerDown(event: PointerEvent): void {
+		if (!this.viewport.isMobile()) return;
+		this.sheetDragFrom = event.clientY;
+		this.sheetPointerId = event.pointerId;
+		this.sheetStartedAt = event.timeStamp;
+		this.sheetOffset.set(0);
+	}
+
+	onSheetPointerMove(event: PointerEvent): void {
+		if (this.sheetDragFrom === null || event.pointerId !== this.sheetPointerId) return;
+
+		/** A press that ended somewhere this element never heard about. Stop rather than follow. */
+		if (event.pointerType === 'mouse' && event.buttons === 0) {
+			this.onSheetPointerUp();
+			return;
+		}
+
+		const travelled = event.clientY - this.sheetDragFrom;
+
+		if (!this.sheetDragging()) {
+			if (travelled < DRAG_THRESHOLD_PX) {
+				/** Upward or barely moved: still a tap as far as the buttons are concerned. */
+				return;
+			}
+			this.sheetDragging.set(true);
+			(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+		}
+
+		/** Downward only. Dragging up would lift the sheet off the top of the screen. */
+		this.sheetOffset.set(Math.max(0, travelled));
+	}
+
+	onSheetPointerUp(event?: PointerEvent): void {
+		if (this.sheetDragFrom === null) return;
+
+		const dragged = this.sheetDragging();
+		const travelled = this.sheetOffset();
+		const elapsed = event ? Math.max(1, event.timeStamp - this.sheetStartedAt) : 1;
+
+		this.sheetDragFrom = null;
+		this.sheetPointerId = null;
+		this.sheetDragging.set(false);
+
+		if (!dragged) {
+			/** Never crossed the threshold, so this was a tap; leave the click alone. */
+			return;
+		}
+
+		/**
+		 * A quarter of the screen, or a flick. Distance alone means a quick short swipe - which is what
+		 * dismissing a sheet actually feels like - does nothing, and the sheet springs back at you.
+		 */
+		if (travelled > window.innerHeight / 4 || (travelled / elapsed > 0.5 && travelled > 40)) {
+			/** Left where it is: the element is about to be removed, and snapping it back to the top
+			    for one frame first is exactly the jump this was meant to fix. */
+			this.closePreview();
+			return;
+		}
+		this.sheetOffset.set(0);
 	}
 
 	selectPrevious(): void {
