@@ -15,10 +15,12 @@ export const routes: Routes = [
 	{
 		path: 'login',
 		loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
+		data: { title: 'Sign in' },
 	},
 	{
 		path: 'register',
 		loadComponent: () => import('./features/auth/register.component').then((m) => m.RegisterComponent),
+		data: { title: 'Create an account' },
 	},
 
 	// Standalone pages opened from email links
@@ -39,13 +41,25 @@ export const routes: Routes = [
 		component: MainLayoutComponent,
 		children: [
 			{ path: '', pathMatch: 'full', redirectTo: 'home' },
-			{ path: 'home', component: HomeComponent },
+			{
+				path: 'home',
+				component: HomeComponent,
+				data: {
+					description:
+						'Prepare for your next opponent: search a FIDE player, see every game the archive holds, and build your repertoire around what they actually play.',
+				},
+			},
 			{ path: 'menu', pathMatch: 'full', redirectTo: 'home' },
 			{
 				path: 'analysis',
 				loadComponent: () =>
 					import('./features/analysis-board/analysis-board.component').then((m) => m.AnalysisBoardComponent),
 				canDeactivate: [unsavedChangesGuard],
+				data: {
+					title: 'Analysis board',
+					description:
+						'An analysis board with an engine, an opening tree over the game archive, and repertoire tools. Paste a PGN or a FEN and start from any position.',
+				},
 			},
 			{
 				path: 'library',
@@ -109,24 +123,33 @@ export const routes: Routes = [
 			{
 				path: 'search',
 				loadComponent: () => import('./features/search/search-page.component').then((m) => m.SearchPageComponent),
+				data: {
+					title: 'Database search',
+					description:
+						'Search the game archive by opponent or by position: every game a FIDE player has in the database, their openings by colour, and the lines they repeat.',
+				},
 			},
 			{
 				path: 'agent',
 				loadComponent: () => import('./features/agent/agent-page.component').then((m) => m.AgentPageComponent),
+				data: { title: 'Desktop agent' },
 			},
 			{
 				path: 'settings',
 				loadComponent: () => import('./features/settings/settings-page.component').then((m) => m.SettingsPageComponent),
+				data: { title: 'Settings' },
 			},
 
 			// Reachable signed out, and linked from the registration form and from Settings.
 			{
 				path: 'terms',
 				loadComponent: () => import('./features/legal/terms.component').then((m) => m.TermsComponent),
+				data: { title: 'Terms of service' },
 			},
 			{
 				path: 'privacy',
 				loadComponent: () => import('./features/legal/privacy.component').then((m) => m.PrivacyComponent),
+				data: { title: 'Privacy policy' },
 			},
 		],
 	},

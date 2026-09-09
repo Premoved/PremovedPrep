@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  A sitemap index, not a sitemap. One file may hold 50,000 URLs, and the player list is larger than
+  that, so it is split by the function that generates it and listed here.
+-->
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	<sitemap>
+		<loc>https://premovedprep.com/sitemap-pages.xml</loc>
+	</sitemap>
+	<sitemap>
+		<loc>https://premovedprep.com/sitemap-players.xml</loc>
+	</sitemap>
+</sitemapindex>

@@ -22,6 +22,26 @@
 			content="A chess analysis tool for tournament preparation, building organized repertoires, studying opponents and exploring database games."
 		/>
 		<meta property="og:image" content="https://premovedprep.com/social-banner.png" />
+		<meta property="og:site_name" content="PremovedPrep" />
+
+		<!--
+			summary_large_image, not summary: the banner is 1200x630, and the small card crops it to a
+			square that cuts the wordmark in half.
+		-->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="PremovedPrep - Chess preparation tool" />
+		<meta
+			name="twitter:description"
+			content="A chess analysis tool for tournament preparation, building organized repertoires, studying opponents and exploring database games."
+		/>
+		<meta name="twitter:image" content="https://premovedprep.com/social-banner.png" />
+
+		<!--
+			The canonical for the application shell. SeoService rewrites it on every navigation, because
+			a single-page application never reloads this file and every route would otherwise declare
+			itself to be the home page.
+		-->
+		<link rel="canonical" href="https://premovedprep.com/home" />
 
 		<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 	</head>

@@ -227,6 +227,36 @@ export class OpponentSearchComponent {
 		}
 	}
 
+	/**
+	 * Opens the page already searching for one player, from `/search?opponent=<fideId>`.
+	 *
+	 * This is what a link from outside the application arrives on - a player page, a shared result,
+	 * a search engine - so it has to reach the same state a person reaches by typing a name and
+	 * pressing search, not a half-filled form they must finish.
+	 *
+	 * The profile call is what turns an id into a name; the suggestion is rebuilt from it rather
+	 * than asking the autocomplete, which searches by text and could match somebody else.
+	 */
+	openFor(fideId: number, color: SearchColor | null): void {
+		if (color) {
+			this.color.set(color);
+		}
+		this.api.playerProfile(fideId).subscribe({
+			next: (profile) => {
+				const player: PlayerSuggestion = {
+					fideId: profile.fideId,
+					name: profile.name,
+					federation: profile.federation,
+					title: profile.title,
+					standardRating: profile.standardRating,
+				};
+				this.pick(player);
+				this.runFor(player);
+			},
+			error: () => this.notify.error('That player could not be found in the archive.'),
+		});
+	}
+
 	pick(suggestion: PlayerSuggestion): void {
 		this.picked.set(suggestion);
 		this.query.set(describe(suggestion));

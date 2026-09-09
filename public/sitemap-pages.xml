@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The fixed pages. The player pages are generated, and live in sitemap-players.xml.
+
+  lastmod is deliberately absent: a date that is not maintained is a lie a crawler learns to
+  distrust, and these pages change when the application is deployed, not on a schedule.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	<url>
+		<loc>https://premovedprep.com/home</loc>
+		<priority>1.0</priority>
+	</url>
+	<url>
+		<loc>https://premovedprep.com/search</loc>
+		<priority>0.9</priority>
+	</url>
+	<url>
+		<loc>https://premovedprep.com/analysis</loc>
+		<priority>0.8</priority>
+	</url>
+	<url>
+		<loc>https://premovedprep.com/terms</loc>
+		<priority>0.2</priority>
+	</url>
+	<url>
+		<loc>https://premovedprep.com/privacy</loc>
+		<priority>0.2</priority>
+	</url>
+</urlset>

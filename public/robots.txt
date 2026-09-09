@@ -1,0 +1,23 @@
+# What a crawler may read, and what there is no point in reading.
+#
+# Everything behind a sign-in is disallowed - not to hide it, but because those routes render an
+# empty shell to anyone without a token. A crawler that fetches them stores a page with no content,
+# which is worse for the site than not storing one at all.
+#
+# The pages that are meant to be found are the public ones: the home page, the two search surfaces,
+# the analysis board, the legal texts, and one page per player.
+
+User-agent: *
+Allow: /
+
+Disallow: /library
+Disallow: /repertoire
+Disallow: /settings
+Disallow: /agent
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+
+Sitemap: https://premovedprep.com/sitemap.xml
