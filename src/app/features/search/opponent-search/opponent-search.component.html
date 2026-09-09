@@ -118,6 +118,15 @@
 						@if (!player.active) {
 							<span class="p-chip inactive">inactive</span>
 						}
+						<a
+							class="p-chip"
+							[href]="publicPage(player)"
+							target="_blank"
+							rel="noopener"
+							[attr.title]="'The public page for ' + player.name + ', safe to share'"
+						>
+							Public page
+						</a>
 					</div>
 				</div>
 

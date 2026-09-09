@@ -15,6 +15,11 @@
 		<priority>0.9</priority>
 	</url>
 	<url>
+		<!-- The crawlable index of the player pages. Its own "next" links reach the rest. -->
+		<loc>https://premovedprep.com/players</loc>
+		<priority>0.9</priority>
+	</url>
+	<url>
 		<loc>https://premovedprep.com/analysis</loc>
 		<priority>0.8</priority>
 	</url>

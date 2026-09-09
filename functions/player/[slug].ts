@@ -48,6 +48,12 @@ interface PlayerProfile {
 	nationalRankAll: number | null;
 }
 
+interface RelatedPlayer {
+	fideId: number;
+	name: string;
+	games: number;
+}
+
 interface ResultGame {
 	id: number;
 	white: string;
@@ -90,13 +96,17 @@ export const onRequestGet: PagesFunction = async (context) => {
 	 * Two subrequests rather than one: the API answers per colour, and rewriting it for this page
 	 * would put a search-engine concern into the application's own contract.
 	 */
-	const [asWhite, asBlack] = await Promise.all([fetchGames(fideId, 'w'), fetchGames(fideId, 'b')]);
+	const [asWhite, asBlack, related] = await Promise.all([
+		fetchGames(fideId, 'w'),
+		fetchGames(fideId, 'b'),
+		fetchRelated(fideId, profile.federation),
+	]);
 	const games = [...asWhite, ...asBlack].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).slice(0, 12);
 
 	const canonical = `${SITE}/player/${canonicalSlug(profile.name, profile.fideId)}`;
 
 	/** A redirect would be cleaner, but a crawler follows it and drops what it already fetched. */
-	const html = render(profile, games, canonical);
+	const html = render(profile, games, related, canonical);
 
 	return new Response(html, {
 		headers: {
@@ -153,6 +163,17 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 	}
 }
 
+/**
+ * The players linked at the foot of the page.
+ *
+ * Not decoration: without them each of these pages is an island, reachable only from a sitemap, and
+ * a crawler treats a page nothing links to as a page nobody thinks matters.
+ */
+async function fetchRelated(fideId: number, federation: string | null): Promise<RelatedPlayer[]> {
+	const query = `fideId=${fideId}&limit=8` + (federation ? `&federation=${encodeURIComponent(federation)}` : '');
+	return (await fetchJson<RelatedPlayer[]>(`${API}/api/players/indexable/related?${query}`)) ?? [];
+}
+
 async function fetchGames(fideId: number, color: 'w' | 'b'): Promise<ResultGame[]> {
 	const page = await fetchJson<{ games: ResultGame[] }>(
 		`${API}/api/search/opponent?fideId=${fideId}&color=${color}&size=12`,
@@ -167,7 +188,7 @@ function notFound(): Response {
 	});
 }
 
-function render(profile: PlayerProfile, games: ResultGame[], canonical: string): string {
+function render(profile: PlayerProfile, games: ResultGame[], related: RelatedPlayer[], canonical: string): string {
 	const name = esc(profile.name);
 	const title = profile.title ? `${esc(profile.title)} ` : '';
 	const indexable = profile.archiveGames >= MIN_GAMES_TO_INDEX;
@@ -239,6 +260,7 @@ table { border-collapse: collapse; width: 100%; font-size: .92rem; }
 th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #ddd; }
 td.mid { text-align: center; white-space: nowrap; }
 .elo { color: #888; font-variant-numeric: tabular-nums; }
+p.related { line-height: 2; }
 footer { margin-top: 2.5rem; color: #666; font-size: .9rem; }
 a { color: #2f6fb0; }
 </style>
@@ -262,7 +284,17 @@ ${rows}
 		: '<p>No games by this player are in the archive yet.</p>'
 }
 
+${
+	related.length
+		? `<h2>${profile.federation ? `Other players from ${esc(profile.federation)}` : 'Other players in the archive'}</h2>
+<p class="related">${related
+				.map((other) => `<a href="${SITE}/player/${canonicalSlug(other.name, other.fideId)}">${esc(other.name)}</a>`)
+				.join(' &middot; ')}</p>`
+		: ''
+}
+
 <footer>
+<p><a href="${SITE}/players">All players in the archive</a> &middot; <a href="${SITE}/search">Search the archive</a></p>
 <p>Game scores come from public broadcast archives; ratings and titles from the monthly FIDE list.
 Open the full archive, the opening tree by colour and the analysis board on
 <a href="${SITE}/search?opponent=${profile.fideId}">PremovedPrep</a>.</p>
