@@ -36,6 +36,17 @@
 					(input)="onPassword($event)"
 				/>
 
+				<div class="consent">
+					<label class="consent-row">
+						<input
+							type="checkbox"
+							[checked]="keepSignedIn()"
+							(change)="keepSignedIn.set($any($event.target).checked)"
+						/>
+						<span>Keep me signed in on this device</span>
+					</label>
+				</div>
+
 				@if (error(); as message) {
 					<div class="error" role="alert">
 						{{ message }}

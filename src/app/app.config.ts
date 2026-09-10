@@ -16,7 +16,12 @@ export const appConfig: ApplicationConfig = {
 	providers: [
 		provideBrowserGlobalErrorListeners(),
 		provideRouter(routes, withComponentInputBinding(), withPreloading(PreloadAllModules)),
-		provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+		/**
+		 * errorInterceptor first, so it is the outer one: authInterceptor then sees a raw 401 rather
+		 * than the ApiError the UI is meant to read, and a 401 it recovers from by refreshing never
+		 * becomes a message at all.
+		 */
+		provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
 
 		provideAppInitializer(() => {
 			inject(ThemeService).init();

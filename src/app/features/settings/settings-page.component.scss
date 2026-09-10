@@ -594,10 +594,100 @@
 	color: var(--text-main);
 }
 
-/* Deleting the account, and the two documents, at the foot of the page */
+/* Where you are signed in, deleting the account, and the two documents: the foot of the page */
 
-.account-danger {
+.account-close {
 	margin-top: 2.5rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--bg-border);
+}
+
+.close-title {
+	margin: 0 0 0.35rem;
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--text-main);
+}
+
+.close-hint {
+	margin: 0 0 0.9rem;
+	max-width: 34rem;
+	font-size: 0.82rem;
+	line-height: 1.45;
+	color: var(--text-muted);
+}
+
+.close-rule {
+	height: 1px;
+	margin: 1.5rem 0;
+	background: var(--bg-border);
+}
+
+.session-list {
+	display: flex;
+	flex-direction: column;
+	max-width: 34rem;
+	margin: 0 0 0.9rem;
+	padding: 0;
+	border: 1px solid var(--bg-border);
+	border-radius: 8px;
+	overflow: hidden;
+	list-style: none;
+}
+
+.session-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.4rem 1rem;
+	padding: 0.6rem 0.85rem;
+	background: var(--bg-elevated);
+
+	& + & {
+		border-top: 1px solid var(--bg-border);
+	}
+
+	&.empty {
+		justify-content: flex-start;
+		font-size: 0.85rem;
+		color: var(--text-muted);
+	}
+}
+
+.session-what {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
+
+.session-device {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.9rem;
+	color: var(--text-main);
+}
+
+.session-here {
+	padding: 0.05rem 0.4rem;
+	border-radius: 999px;
+	background: var(--bg-hover);
+	font-size: 0.68rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+}
+
+.session-when {
+	font-size: 0.76rem;
+	color: var(--text-muted);
+}
+
+/* Inside .account-close the rule above already provides the separation. */
+.account-danger {
+	margin-top: 0;
 }
 
 .danger-link {

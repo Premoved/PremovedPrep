@@ -215,7 +215,8 @@ button.primary:disabled {
 	font-size: 0.82rem;
 	line-height: 1.4;
 	color: var(--text-muted);
-	cursor: default;
+	/* The row is a label wrapping a checkbox, so the whole of it is a target. */
+	cursor: pointer;
 }
 
 .consent-row input {

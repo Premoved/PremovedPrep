@@ -405,37 +405,89 @@
 	</section>
 
 	@if (auth.currentUser(); as user) {
-		<div class="account-danger">
-			@if (deleting()) {
-				<form class="delete-form" (submit)="$event.preventDefault(); confirmDelete()">
-					<p class="delete-warning">
-						All data linked to your account will be permanently deleted. This can't be undone.
-					</p>
-					<label class="field">
-						<span class="delete-label">Write "{{ user.username }}" to confirm</span>
-						<input
-							type="text"
-							autocomplete="off"
-							autocapitalize="none"
-							spellcheck="false"
-							[value]="deleteConfirm()"
-							(input)="deleteConfirm.set($any($event.target).value); deleteError.set('')"
-							(keydown.escape)="cancelDelete()"
-						/>
-					</label>
-					<div class="delete-actions">
-						<button type="submit" class="danger-link" [disabled]="!deleteReady() || deleteBusy()">
-							{{ deleteBusy() ? 'Deleting…' : 'Delete account' }}
-						</button>
-						<button type="button" class="link-btn" (click)="cancelDelete()">Cancel</button>
-					</div>
-					@if (deleteError()) {
-						<p class="line-problem">{{ deleteError() }}</p>
+		<div class="account-close">
+			<section class="sessions">
+				<h2 class="close-title">Where you are signed in</h2>
+				<p class="close-hint">
+					One line per browser signed in to this account. Signing one out asks it for your password the next time it is
+					used; nothing you have saved is touched.
+				</p>
+
+				@if (sessionsError(); as message) {
+					<p class="line-problem">{{ message }}</p>
+				}
+
+				<ul class="session-list">
+					@for (session of sessions(); track session.id) {
+						<li class="session-row" [class.here]="session.current">
+							<span class="session-what">
+								<span class="session-device">
+									{{ session.device ?? 'Unrecognised browser' }}
+									@if (session.current) {
+										<span class="session-here">This device</span>
+									}
+								</span>
+								<span class="session-when">
+									Last used {{ since(session.lastUsedAt) }} &middot; signed in {{ since(session.startedAt) }}
+								</span>
+							</span>
+							<button
+								type="button"
+								class="danger-link"
+								[disabled]="sessionBusy() !== null"
+								(click)="endSession(session)"
+							>
+								{{ sessionBusy() === session.id ? 'Signing out…' : 'Sign out' }}
+							</button>
+						</li>
+					} @empty {
+						<li class="session-row empty">
+							{{ sessionsLoaded() ? 'Nothing to show.' : 'Loading…' }}
+						</li>
 					}
-				</form>
-			} @else {
-				<button type="button" class="danger-link" (click)="startDelete()">Delete account</button>
-			}
+				</ul>
+
+				@if (hasOtherSessions()) {
+					<button type="button" class="danger-link" [disabled]="othersBusy()" (click)="endOtherSessions()">
+						{{ othersBusy() ? 'Signing out…' : 'Sign out everywhere else' }}
+					</button>
+				}
+			</section>
+
+			<div class="close-rule" aria-hidden="true"></div>
+
+			<div class="account-danger">
+				@if (deleting()) {
+					<form class="delete-form" (submit)="$event.preventDefault(); confirmDelete()">
+						<p class="delete-warning">
+							All data linked to your account will be permanently deleted. This can't be undone.
+						</p>
+						<label class="field">
+							<span class="delete-label">Write "{{ user.username }}" to confirm</span>
+							<input
+								type="text"
+								autocomplete="off"
+								autocapitalize="none"
+								spellcheck="false"
+								[value]="deleteConfirm()"
+								(input)="deleteConfirm.set($any($event.target).value); deleteError.set('')"
+								(keydown.escape)="cancelDelete()"
+							/>
+						</label>
+						<div class="delete-actions">
+							<button type="submit" class="danger-link" [disabled]="!deleteReady() || deleteBusy()">
+								{{ deleteBusy() ? 'Deleting…' : 'Delete account' }}
+							</button>
+							<button type="button" class="link-btn" (click)="cancelDelete()">Cancel</button>
+						</div>
+						@if (deleteError()) {
+							<p class="line-problem">{{ deleteError() }}</p>
+						}
+					</form>
+				} @else {
+					<button type="button" class="danger-link" (click)="startDelete()">Delete account</button>
+				}
+			</div>
 		</div>
 	}
 

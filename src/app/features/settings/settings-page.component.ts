@@ -5,7 +5,7 @@ import { BoardThemeService } from '../../core/board/board-theme.service';
 import { BOARD_THEMES } from '../../core/board/board-themes';
 import { pieceSetFor } from '../../core/board/piece-sets';
 import { CloudStorageService } from '../../core/services/cloud-storage.service';
-import { SubscriptionView } from '../../core/models/user.model';
+import { SessionSummary, SubscriptionView } from '../../core/models/user.model';
 import { ARROW_PALETTE, ARROW_SLOTS, MoveDestStyle } from '../../core/models/preferences.model';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -20,6 +20,16 @@ import { PasswordRevealDirective } from '../../shared/password-reveal/password-r
 
 const MIN_PASSWORD = 8;
 const MAX_PASSWORD = 72;
+
+/** "2 minutes ago", "yesterday". The wording is the platform's; only the unit is chosen here. */
+const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+const UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
+	['second', 60],
+	['minute', 60],
+	['hour', 24],
+	['day', 30],
+	['month', 12],
+];
 
 @Component({
 	selector: 'app-settings-page',
@@ -183,6 +193,15 @@ export class SettingsPageComponent {
 			this.passwordProblem() === '',
 	);
 
+	readonly sessions = signal<readonly SessionSummary[]>([]);
+	readonly sessionsLoaded = signal(false);
+	readonly sessionsError = signal('');
+	/** The id being signed out, so one row shows the wait and the others stay usable. */
+	readonly sessionBusy = signal<number | null>(null);
+	readonly othersBusy = signal(false);
+
+	readonly hasOtherSessions = computed(() => this.sessions().some((session) => !session.current));
+
 	readonly deleting = signal(false);
 	readonly deleteConfirm = signal('');
 	readonly deleteBusy = signal(false);
@@ -204,6 +223,80 @@ export class SettingsPageComponent {
 		this.deleting.set(false);
 		this.deleteConfirm.set('');
 		this.deleteError.set('');
+	}
+
+	loadSessions(): void {
+		if (!this.auth.isLoggedIn()) return;
+
+		this.auth.sessions().subscribe({
+			next: (list) => {
+				this.sessions.set(list);
+				this.sessionsLoaded.set(true);
+				this.sessionsError.set('');
+			},
+			error: (err: Error) => {
+				this.sessionsLoaded.set(true);
+				this.sessionsError.set(err.message);
+			},
+		});
+	}
+
+	endSession(session: SessionSummary): void {
+		if (this.sessionBusy() !== null) return;
+
+		if (session.current) {
+			/** Ending the session you are in is signing out, and that has to clear the cookie here too. */
+			this.auth.logout();
+			void this.router.navigateByUrl('/home');
+			return;
+		}
+
+		this.sessionBusy.set(session.id);
+		this.sessionsError.set('');
+		this.auth.endSession(session.id).subscribe({
+			next: () => {
+				this.sessionBusy.set(null);
+				this.loadSessions();
+			},
+			error: (err: Error) => {
+				this.sessionBusy.set(null);
+				this.sessionsError.set(err.message);
+			},
+		});
+	}
+
+	endOtherSessions(): void {
+		if (this.othersBusy()) return;
+
+		this.othersBusy.set(true);
+		this.sessionsError.set('');
+		this.auth.endOtherSessions().subscribe({
+			next: () => {
+				this.othersBusy.set(false);
+				this.loadSessions();
+				this.notify.info('Every other browser has been signed out.');
+			},
+			error: (err: Error) => {
+				this.othersBusy.set(false);
+				this.sessionsError.set(err.message);
+			},
+		});
+	}
+
+	since(iso: string): string {
+		const then = Date.parse(iso);
+		if (Number.isNaN(then)) {
+			return 'at an unknown time';
+		}
+
+		let value = (then - Date.now()) / 1000;
+		for (const [unit, span] of UNITS) {
+			if (Math.abs(value) < span) {
+				return RELATIVE.format(Math.round(value), unit);
+			}
+			value /= span;
+		}
+		return RELATIVE.format(Math.round(value), 'year');
 	}
 
 	confirmDelete(): void {
@@ -237,10 +330,12 @@ export class SettingsPageComponent {
 		});
 	}
 
+	/** Everything on this page that another device could have changed since it was last looked at. */
 	@HostListener('window:focus')
 	refreshStorage(): void {
 		if (!this.auth.isLoggedIn()) return;
 		this.cloud.refresh();
+		this.loadSessions();
 
 		this.auth.subscription().subscribe({
 			next: (view) => this.plan.set(view),
@@ -367,6 +462,7 @@ export class SettingsPageComponent {
 				this.clearPasswordFields();
 				this.editingPassword.set(false);
 				this.passwordDone.set('Your password has been changed. Any other device is now signed out.');
+				this.loadSessions();
 			},
 			error: (err: Error) => {
 				this.passwordBusy.set(false);

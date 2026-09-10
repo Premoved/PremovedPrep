@@ -21,10 +21,21 @@ export interface RegisterResponse {
 	readonly verificationSent: boolean;
 }
 
+/** `token` is the access token. The refresh token is a cookie no script can read. */
 export interface AuthResponse {
 	readonly token: string;
 	readonly expiresInSeconds: number;
 	readonly user: UserSummary;
+}
+
+/** One browser signed in to this account. */
+export interface SessionSummary {
+	readonly id: number;
+	/** "Chrome on Windows", or null when the browser said nothing useful about itself. */
+	readonly device: string | null;
+	readonly current: boolean;
+	readonly startedAt: string;
+	readonly lastUsedAt: string;
 }
 
 export interface SubscriptionView {

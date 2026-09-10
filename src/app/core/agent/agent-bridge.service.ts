@@ -1,5 +1,4 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
-import { readToken } from '../interceptors/auth.interceptor';
 import { AuthService } from '../services/auth.service';
 import { AgentKeysStore } from './agent-keys.store';
 import {
@@ -183,8 +182,16 @@ export class AgentBridgeService {
 		const socket = new WebSocket(`${origin.replace(/^http/, 'ws')}/bridge`);
 		this.socket = socket;
 
-		socket.onopen = () => {
-			const token = readToken();
+		socket.onopen = async () => {
+			/**
+			 * Renewed first when it is nearly out. The access token is minutes long now, and the agent
+			 * checks the one it is given: handing over a stale one refuses the pairing outright.
+			 */
+			const token = await this.auth.freshAccessToken();
+			if (this.socket !== socket) {
+				// Closed or replaced while the renewal was in flight.
+				return;
+			}
 			if (!token) {
 				this.disconnect();
 				this._state.set('idle');

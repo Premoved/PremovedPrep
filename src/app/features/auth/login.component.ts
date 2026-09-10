@@ -24,6 +24,9 @@ export class LoginComponent {
 	readonly email = signal('');
 	readonly password = signal('');
 
+	/** Unticked is the shorter of the two sessions: the cookie goes when the browser does. */
+	readonly keepSignedIn = signal(false);
+
 	readonly error = signal<string | null>(null);
 	readonly submitting = signal(false);
 
@@ -66,7 +69,7 @@ export class LoginComponent {
 		this.unconfirmed.set(false);
 		this.submitting.set(true);
 
-		this.auth.login(this.email().trim(), this.password(), this.botCheck.take()).subscribe({
+		this.auth.login(this.email().trim(), this.password(), this.keepSignedIn(), this.botCheck.take()).subscribe({
 			next: () => {
 				const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/home';
 				/** navigateByUrl only after the session is applied. */
