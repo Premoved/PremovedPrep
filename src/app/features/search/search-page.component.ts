@@ -46,7 +46,7 @@ export class SearchPageComponent implements AfterViewInit {
 			if (!player || player.fideId !== this.wanted) {
 				return;
 			}
-			/** `archiveName` is the archive's own name - "Lichess Broadcasts" - not the player's. */
+			/** `archiveName` is the archive's own name - "Official Lichess Broadcasts" - not the player's. */
 			const name = player.name;
 			const games = `${player.archiveGames} game${player.archiveGames === 1 ? '' : 's'}`;
 			/** Word for word what functions/search/opponent/[slug].ts served; SeoService appends the site. */

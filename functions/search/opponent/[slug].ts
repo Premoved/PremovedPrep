@@ -77,9 +77,9 @@ interface PlayerProfile {
 	fideId: number;
 	/**
 	 * The player. Not `archiveName`, which sits next to it on the same DTO and is the name of the
-	 * *archive* - it answers "Lichess Broadcasts", not "Carlsen, Magnus". Reading it as the player's
-	 * spelling put the archive's name in the title, the canonical and the slug of every one of these
-	 * URLs, against a sitemap built from this field.
+	 * *archive* - it answers "Official Lichess Broadcasts", not "Carlsen, Magnus". Reading it as
+	 * the player's spelling put the archive's name in the title, the canonical and the slug of
+	 * every one of these URLs, against a sitemap built from this field.
 	 */
 	name: string;
 	archiveGames: number;

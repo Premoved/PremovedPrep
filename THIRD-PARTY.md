@@ -73,7 +73,7 @@ None of this data is redistributed in this repository. It is dynamically fetched
 
 | Source | Where it comes from | Used for |
 |---|---|---|
-| Lichess broadcast archives | <https://database.lichess.org/#broadcasts> | The game archive used for the Opening Tree, the Game List and Database Search. The Lichess broadcast archives are the only source of game data. |
+| Official Lichess broadcast archives | <https://database.lichess.org/#broadcasts> | The game archive used for the Opening Tree, the Game List and Database Search. The monthly export carries official broadcasts only, and is the single source of game data. |
 | Lichess broadcast API | <https://lichess.org/api> | Event, location, round and date for a broadcast game with missing tags |
 | Lichess tablebase API | <https://tablebase.lichess.ovh> | Endgame tablebase lookups |
 | FIDE rating lists | <https://ratings.fide.com/download_lists.phtml> | Player profiles, titles, federations, and the monthly rating for each player |
