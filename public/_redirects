@@ -1,1 +1,18 @@
-/* /index.html 200
+# The pages this site used to publish about a player, at /player/<slug> and /players, are gone. A
+# player has one URL now and it is the search page itself, so somebody arriving from a search engine
+# lands in the tool rather than on a summary of it.
+#
+# 301 and not 410: the URLs are retired, not disowned. Everything they earned moves to the new one,
+# and the links already out there keep working.
+#
+# The sitemap is redirected for a different reason: Google has it registered under the old name, and
+# without this it would fall through to the catch-all below and be served the application's HTML -
+# which reads as a broken sitemap rather than a moved one.
+#
+# These have to come first. The catch-all matches everything, and the first match wins.
+/player/*            /search/opponent/:splat  301
+/players             /search                  301
+/sitemap-players.xml /sitemap-opponents.xml   301
+
+# Every other path is a route of the single-page application, answered by its shell.
+/*  /index.html  200

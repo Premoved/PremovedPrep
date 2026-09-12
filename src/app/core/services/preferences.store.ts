@@ -61,7 +61,16 @@ export class PreferencesStore {
 
 		effect(() => {
 			const user = this.auth.currentUser();
-			if (!user || this.adopted) return;
+			/**
+			 * Cleared on the way out, not only set on the way in: without this, signing in as a second
+			 * account in the same tab would keep the first one's board and theme, because the flag said
+			 * the work had already been done.
+			 */
+			if (!user) {
+				this.adopted = false;
+				return;
+			}
+			if (this.adopted) return;
 			untracked(() => this.adopt(user));
 		});
 	}
@@ -151,13 +160,18 @@ export class PreferencesStore {
 		 * arranged their pieces before registering should keep them. The custom surface colours do not:
 		 * an account that opens for the first time inside somebody else's colour experiment looks
 		 * broken, and the product's own light theme is the honest thing to start from.
+		 *
+		 * The theme is settled above and not here. It used to be forced to light in this branch, which
+		 * never happened: the fallback only fired when the account's preference was neither 'light' nor
+		 * 'dark', and the column is NOT NULL with a CHECK allowing only those two. It was unreachable
+		 * from the day it was written, and V2's `DEFAULT 'dark'` underneath it turned every new account
+		 * dark on its first sign-in. Migration V22 changed that default to 'light', which is where a
+		 * new account's theme is now decided - once, in the schema, rather than in a guard here that
+		 * cannot run.
 		 */
 		if (!user.boardPreferences) {
 			if (this.draft().customColors) {
 				this.update('customColors', null);
-			}
-			if (user.themePreference !== 'light' && user.themePreference !== 'dark') {
-				this.theme.set('light');
 			}
 			this.save();
 			this.scheduleSync();

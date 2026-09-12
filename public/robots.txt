@@ -5,7 +5,8 @@
 # which is worse for the site than not storing one at all.
 #
 # The pages that are meant to be found are the public ones: the home page, the two search surfaces,
-# the analysis board, the legal texts, and one page per player.
+# the analysis board, the legal texts, and one search URL per player - /search/opponent/<slug>,
+# which is the search page with that player already loaded.
 
 User-agent: *
 Allow: /

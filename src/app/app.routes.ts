@@ -120,6 +120,23 @@ export const routes: Routes = [
 					},
 				],
 			},
+			/**
+			 * One URL per player, and it is this page rather than a page about them: somebody arriving
+			 * from a search engine lands in the search with that player already loaded. The HTML a
+			 * crawler receives is written by functions/search/opponent/[slug].ts; this is the route the
+			 * application matches once it boots on the same URL.
+			 *
+			 * Before the bare 'search' route, so the longer path is tried first.
+			 */
+			{
+				path: 'search/opponent/:slug',
+				loadComponent: () => import('./features/search/search-page.component').then((m) => m.SearchPageComponent),
+				data: {
+					title: 'Database search',
+					description:
+						'Search the game archive by opponent or by position: every game a FIDE player has in the database, their openings by colour, and the lines they repeat.',
+				},
+			},
 			{
 				path: 'search',
 				loadComponent: () => import('./features/search/search-page.component').then((m) => m.SearchPageComponent),

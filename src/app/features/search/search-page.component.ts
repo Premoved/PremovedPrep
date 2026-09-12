@@ -1,6 +1,8 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SearchColor } from '../../core/models/search.model';
+import { SeoService } from '../../core/seo/seo.service';
+import { fideIdFromSlug, opponentSearchPath } from '../../core/seo/opponent-page';
 import { AdvancedSearchComponent } from './advanced-search/advanced-search.component';
 import { OpponentSearchComponent } from './opponent-search/opponent-search.component';
 
@@ -16,6 +18,7 @@ export type SearchTab = 'opponent' | 'advanced';
 })
 export class SearchPageComponent implements AfterViewInit {
 	private readonly route = inject(ActivatedRoute);
+	private readonly seo = inject(SeoService);
 
 	private readonly opponentSearch = viewChild(OpponentSearchComponent);
 
@@ -26,24 +29,55 @@ export class SearchPageComponent implements AfterViewInit {
 		{ id: 'advanced', label: 'Advanced search' },
 	];
 
+	/** The player this page was opened for, when it was opened at /search/opponent/<slug>. */
+	private wanted: number | null = null;
+
+	constructor() {
+		/**
+		 * The title of that URL is the player's name, and the name arrives with the profile rather
+		 * than with the route. The function that served the HTML has already written it; this keeps it
+		 * written once Angular has replaced the page, which is the version a rendering crawler reads.
+		 *
+		 * Only for the player the URL asked for. Searching for somebody else afterwards leaves the
+		 * title alone, because the address bar still says whose page this is.
+		 */
+		effect(() => {
+			const player = this.opponentSearch()?.profile();
+			if (!player || player.fideId !== this.wanted) {
+				return;
+			}
+			const name = player.archiveName || player.name;
+			const games = `${player.archiveGames} game${player.archiveGames === 1 ? '' : 's'}`;
+			this.seo.describe(
+				`${name} - chess games`,
+				`${games} by ${name} in the PremovedPrep archive: every game score, their openings by colour, ` +
+					`their opponents and results - searchable, on one page.`,
+				opponentSearchPath(name, player.fideId),
+			);
+		});
+	}
+
 	/**
-	 * `/search?opponent=<fideId>&color=b` opens the page already searching.
+	 * `/search/opponent/<slug>` opens the page already searching, and `?color=b` starts it on the
+	 * other side of the board.
 	 *
 	 * Read once, after the view exists, rather than subscribed: this is an entry point, not a state
 	 * the page keeps in the URL. Reacting to every parameter change would fight the user the moment
 	 * they searched for somebody else.
 	 */
 	ngAfterViewInit(): void {
-		const params = this.route.snapshot.queryParamMap;
-		const opponent = Number(params.get('opponent'));
-		if (!Number.isInteger(opponent) || opponent <= 0) {
+		const slug = this.route.snapshot.paramMap.get('slug');
+		const fideId = slug === null ? null : fideIdFromSlug(slug);
+		if (fideId === null) {
 			return;
 		}
-		const colour = params.get('color');
+
+		const colour = this.route.snapshot.queryParamMap.get('color');
 		const color: SearchColor | null = colour === 'w' || colour === 'b' ? colour : null;
 
+		this.wanted = fideId;
 		this.tab.set('opponent');
-		this.opponentSearch()?.openFor(opponent, color);
+		this.opponentSearch()?.openFor(fideId, color);
 	}
 
 	select(tab: SearchTab): void {

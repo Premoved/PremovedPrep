@@ -30,7 +30,6 @@ import { AdvancedReportComponent } from '../advanced-report/advanced-report.comp
 import { GameResultsComponent } from '../game-results/game-results.component';
 import { OpponentExplorerComponent } from '../opponent-explorer/opponent-explorer.component';
 import { ViewportService } from '../../../core/layout/viewport.service';
-import { playerPagePath } from '../../../core/seo/player-page';
 
 /** Autocomplete debounce. */
 const SUGGEST_DEBOUNCE_MS = 220;
@@ -263,17 +262,6 @@ export class OpponentSearchComponent {
 		this.query.set(describe(suggestion));
 		this.closeSuggestions();
 		this.queryInput()?.nativeElement.focus();
-	}
-
-	/**
-	 * The public, shareable page for this player - the same one a search engine sees.
-	 *
-	 * A link for people: somewhere to send a friend, or to keep. It is not what a crawler follows,
-	 * since this page is rendered by JavaScript; that path runs through /players, which is HTML
-	 * before anything executes.
-	 */
-	publicPage(player: PlayerProfile): string {
-		return playerPagePath(player.name, player.fideId);
 	}
 
 	closeSuggestions(): void {

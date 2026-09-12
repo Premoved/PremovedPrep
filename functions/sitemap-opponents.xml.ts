@@ -1,21 +1,25 @@
 /**
- * The generated half of the sitemap: one URL per player worth a page.
+ * The generated half of the sitemap: one URL per player worth landing on.
  *
- * /sitemap-players.xml is an index, and /sitemap-players.xml?page=N is one file of it. The format
- * allows 50,000 URLs per file, which is also the page size the API serves, so the two limits are
- * the same number in both places on purpose.
+ * /sitemap-opponents.xml is an index, and /sitemap-opponents.xml?page=N is one file of it. The
+ * format allows 50,000 URLs per file, which is also the page size the API serves, so the two limits
+ * are the same number in both places on purpose.
  *
  * Which players appear is decided in the database, by the `player_indexable` materialized view
- * (migration V20): those with at least five games in the archive. A page for somebody with one
- * game has a name on it and nothing else, and thousands of those are a liability rather than an
- * asset - so they are not offered here, and the page itself asks not to be indexed.
+ * (migration V20): those with at least five games in the archive. Below that the page has a name
+ * and little else, and thousands of those are a liability rather than an asset - so they are not
+ * offered here, and the page itself asks not to be indexed.
+ *
+ * This is the only way a crawler discovers these URLs. The browsable index that used to link them
+ * to each other is gone, deliberately: it was a page about the archive rather than a page of the
+ * application, and this site has one entry point for a player, which is the search itself.
  */
 
 /**
  * Declared here rather than pulled from @cloudflare/workers-types.
  *
- * These two files are the only thing in this repository that runs on Cloudflare rather than in a
- * browser, and the shape they need is four lines. A dependency for four lines is a dependency to
+ * These files are the only thing in this repository that runs on Cloudflare rather than in a
+ * browser, and the shape they need is a few lines. A dependency for a few lines is a dependency to
  * update, to audit and to explain, and it would be the only one the Angular build has no use for.
  */
 type PagesContext = {
@@ -78,7 +82,7 @@ function index(total: number): string {
 	const files = Math.max(1, Math.ceil(total / PER_FILE));
 	const entries: string[] = [];
 	for (let page = 0; page < files; page++) {
-		entries.push(`\t<sitemap><loc>${SITE}/sitemap-players.xml?page=${page}</loc></sitemap>`);
+		entries.push(`\t<sitemap><loc>${SITE}/sitemap-opponents.xml?page=${page}</loc></sitemap>`);
 	}
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -94,7 +98,7 @@ function urlSet(data: IndexPage): string {
 		 * games means a page with more on it, so it is worth reaching first.
 		 */
 		const priority = player.games >= 100 ? '0.8' : player.games >= 20 ? '0.6' : '0.4';
-		return `\t<url><loc>${SITE}/player/${slug(player.name, player.fideId)}</loc><priority>${priority}</priority></url>`;
+		return `\t<url><loc>${SITE}/search/opponent/${slug(player.name, player.fideId)}</loc><priority>${priority}</priority></url>`;
 	});
 
 	return `<?xml version="1.0" encoding="UTF-8"?>
@@ -104,7 +108,7 @@ ${entries.join('\n')}
 `;
 }
 
-/** Twin of canonicalSlug in player/[slug].ts. If one changes, change the other. */
+/** Twin of canonicalSlug in search/opponent/[slug].ts. If one changes, change the other. */
 function slug(name: string, fideId: number): string {
 	const words = name
 		.normalize('NFD')

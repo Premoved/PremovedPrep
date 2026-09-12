@@ -37,7 +37,20 @@ export class SeoService {
 		});
 	}
 
-	private apply(pageTitle: string | null, description: string | null): void {
+	/**
+	 * For a page whose subject is only known once a request has answered - the opponent search at
+	 * /search/opponent/<slug>, which has to fetch the player before it can name them. The function
+	 * that served the HTML already wrote these tags; this is what keeps them there after Angular has
+	 * replaced the page, which is the version a rendering crawler reads.
+	 *
+	 * Applied now and forgotten at the next navigation, which reapplies the route's own data, so it
+	 * cannot leak onto another page.
+	 */
+	describe(pageTitle: string, description: string, canonicalPath?: string): void {
+		this.apply(pageTitle, description, canonicalPath);
+	}
+
+	private apply(pageTitle: string | null, description: string | null, canonicalPath?: string): void {
 		/** "Database search - PremovedPrep", and the bare name on the home page. */
 		const full = pageTitle ? `${pageTitle} - ${SITE}` : SITE;
 		const text = description ?? FALLBACK_DESCRIPTION;
@@ -50,10 +63,13 @@ export class SeoService {
 		this.meta.updateTag({ name: 'twitter:description', content: text });
 
 		/**
-		 * Query parameters are dropped on purpose. /search and /search?opponent=1503014 are the same
-		 * page with a form filled in; declaring them as two would split whatever either one earns.
+		 * Query parameters are dropped on purpose. /search/opponent/x and the same URL with ?color=b
+		 * are one page with a toggle flipped; declaring them as two would split whatever either earns.
+		 *
+		 * A caller may pass the path instead, which is how a player's page declares the server's
+		 * spelling of their name as canonical rather than whichever spelling was followed here.
 		 */
-		const canonical = ORIGIN + this.router.url.split('?')[0].split('#')[0];
+		const canonical = ORIGIN + (canonicalPath ?? this.router.url.split('?')[0].split('#')[0]);
 		this.meta.updateTag({ property: 'og:url', content: canonical });
 
 		let link = this.document.querySelector<HTMLLinkElement>('link[rel="canonical"]');

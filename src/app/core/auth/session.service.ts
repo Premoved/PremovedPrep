@@ -4,6 +4,7 @@ import { Observable, catchError, finalize, firstValueFrom, map, of, shareReplay 
 import { environment } from '../../../environments/environment';
 import { AuthResponse, UserSummary } from '../models/user.model';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { ThemeService } from '../services/theme.service';
 import {
 	SKIP_SESSION_RETRY,
 	accessTokenFresh,
@@ -25,6 +26,7 @@ import {
 export class SessionService {
 	private readonly http = inject(HttpClient);
 	private readonly analytics = inject(AnalyticsService);
+	private readonly theme = inject(ThemeService);
 	private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
 
 	private readonly _currentUser = signal<UserSummary | null>(null);
@@ -134,10 +136,21 @@ export class SessionService {
 
 	/** Local only: what is left when a session has ended, however it ended. */
 	forget(): void {
+		const wasSignedIn = this._currentUser() !== null;
+
 		clearAccessToken();
 		this._currentUser.set(null);
 		this.cancelRenewal();
 		this.analytics.reset();
+
+		/**
+		 * The theme on screen came from the account that has just left, and this is one browser. Only
+		 * on the way out of a session: a visitor who was never signed in keeps whatever they picked,
+		 * and this method also runs on the startup refresh that answers "nobody is signed in".
+		 */
+		if (wasSignedIn) {
+			this.theme.reset();
+		}
 	}
 
 	setUser(user: UserSummary): void {
