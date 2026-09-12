@@ -46,7 +46,8 @@ export class SearchPageComponent implements AfterViewInit {
 			if (!player || player.fideId !== this.wanted) {
 				return;
 			}
-			const name = player.archiveName || player.name;
+			/** `archiveName` is the archive's own name - "Lichess Broadcasts" - not the player's. */
+			const name = player.name;
 			const games = `${player.archiveGames} game${player.archiveGames === 1 ? '' : 's'}`;
 			this.seo.describe(
 				`${name} - chess games`,

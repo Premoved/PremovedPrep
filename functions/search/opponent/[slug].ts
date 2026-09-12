@@ -27,6 +27,12 @@
  * HTMLRewriter rather than string surgery: the shell is built by Angular and minified, so its
  * attribute order and whitespace are not ours to predict.
  *
+ * THE NAME
+ *
+ * `profile.name`, which is the `player` table's spelling and the one functions/sitemap-opponents.xml
+ * builds its slugs from. The two have to be the same field or every URL in the sitemap declares a
+ * canonical pointing somewhere else.
+ *
  * WHAT THE PRE-RENDERED HTML DELIBERATELY LEAVES OUT
  *
  * Everything sourced from the FIDE rating list: title, federation, the three ratings, the world and
@@ -69,9 +75,13 @@ declare const HTMLRewriter: { new (): HtmlRewriter };
 
 interface PlayerProfile {
 	fideId: number;
+	/**
+	 * The player. Not `archiveName`, which sits next to it on the same DTO and is the name of the
+	 * *archive* - it answers "Lichess Broadcasts", not "Carlsen, Magnus". Reading it as the player's
+	 * spelling put the archive's name in the title, the canonical and the slug of every one of these
+	 * URLs, against a sitemap built from this field.
+	 */
 	name: string;
-	/** The spelling the game scores themselves carry, which is the one this page prefers. */
-	archiveName: string | null;
 	archiveGames: number;
 }
 
@@ -117,7 +127,8 @@ export const onRequestGet: PagesFunction = async (context) => {
 
 	const games = await fetchGames(fideId, color);
 
-	const name = profile.archiveName ?? profile.name;
+	/** The same field the sitemap builds its slugs from, so the canonical and the sitemap agree. */
+	const name = profile.name;
 	const canonical = `${SITE}/search/opponent/${canonicalSlug(name, profile.fideId)}`;
 	const count = `${profile.archiveGames} game${profile.archiveGames === 1 ? '' : 's'}`;
 	const title = `${name} - chess games and preparation | PremovedPrep`;
@@ -272,7 +283,7 @@ function extraHead(profile: PlayerProfile, canonical: string, title: string, des
 		url: canonical,
 		about: {
 			'@type': 'Person',
-			name: profile.archiveName ?? profile.name,
+			name: profile.name,
 			jobTitle: 'Chess player',
 			identifier: { '@type': 'PropertyValue', propertyID: 'FIDE ID', value: String(profile.fideId) },
 		},
