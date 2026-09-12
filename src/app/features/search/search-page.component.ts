@@ -49,10 +49,11 @@ export class SearchPageComponent implements AfterViewInit {
 			/** `archiveName` is the archive's own name - "Lichess Broadcasts" - not the player's. */
 			const name = player.name;
 			const games = `${player.archiveGames} game${player.archiveGames === 1 ? '' : 's'}`;
+			/** Word for word what functions/search/opponent/[slug].ts served; SeoService appends the site. */
 			this.seo.describe(
-				`${name} - chess games`,
-				`${games} by ${name} in the PremovedPrep archive: every game score, their openings by colour, ` +
-					`their opponents and results - searchable, on one page.`,
+				`${name} - chess games and preparation`,
+				`${games} by ${name} in the PremovedPrep archive: an all-in-one chess tool for analysis, ` +
+					`exploring database games, studying opponents and building repertoires.`,
 				opponentSearchPath(name, player.fideId),
 			);
 		});

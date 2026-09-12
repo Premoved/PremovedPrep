@@ -131,10 +131,15 @@ export const onRequestGet: PagesFunction = async (context) => {
 	const name = profile.name;
 	const canonical = `${SITE}/search/opponent/${canonicalSlug(name, profile.fideId)}`;
 	const count = `${profile.archiveGames} game${profile.archiveGames === 1 ? '' : 's'}`;
-	const title = `${name} - chess games and preparation | PremovedPrep`;
+	/**
+	 * The same two strings SearchPageComponent sets once Angular has booted. They have to match: a
+	 * crawler that runs no JavaScript reads this one, a crawler that does reads that one, and two
+	 * different titles for one URL is the kind of drift nobody notices until it is in the index.
+	 */
+	const title = `${name} - chess games and preparation - PremovedPrep`;
 	const description =
-		`${count} by ${name} in the PremovedPrep archive: every game score, their openings by colour, ` +
-		`their opponents and results - searchable, on one page.`;
+		`${count} by ${name} in the PremovedPrep archive: an all-in-one chess tool for analysis, ` +
+		`exploring database games, studying opponents and building repertoires.`;
 
 	const shell = await context.env.ASSETS.fetch(new Request(new URL('/index.html', context.request.url).toString()));
 	if (!shell.ok) {
