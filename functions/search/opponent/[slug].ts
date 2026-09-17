@@ -27,6 +27,21 @@
  * HTMLRewriter rather than string surgery: the shell is built by Angular and minified, so its
  * attribute order and whitespace are not ours to predict.
  *
+ * ONE URL PER PLAYER
+ *
+ * The id at the end of the slug is what resolves a request, so any words in front of it used to
+ * answer 200: an unbounded set of URLs serving one page, held apart only by a canonical tag a
+ * crawler is free to disregard. A request whose slug is not the canonical one is now answered with
+ * a 301 to the one that is.
+ *
+ * HOW A CRAWLER GETS FROM ONE PLAYER TO THE NEXT
+ *
+ * The opponent's name in each row links to that opponent's own page. The sitemap offers the 5,000
+ * players the archive knows best; everybody else is reached from here, by having played somebody.
+ * That is the archive's real structure, and a link out of a page is a better reason to crawl than a
+ * line in a file - which is what the first version of this relied on, and Google answered by
+ * discovering 64,000 URLs and fetching almost none of them.
+ *
  * THE NAME
  *
  * `profile.name`, which is the `player` table's spelling and the one functions/sitemap-opponents.xml
@@ -85,9 +100,22 @@ interface PlayerProfile {
 	archiveGames: number;
 }
 
+/**
+ * `white` and `black` are the PGN's spelling, which is what the row displays and what the game
+ * itself says. The `FideName` fields are the `player` table's spelling of the same side, and that
+ * is what an opponent's link is built from: every /search/opponent URL comes from that table, so a
+ * link built from the PGN spelling would redirect on each row where the two disagree.
+ *
+ * Both may be null. Not every side in an imported PGN can be matched to a FIDE id, and a name with
+ * nothing behind it is shown as text rather than linked to a page that does not exist.
+ */
 interface ResultGame {
 	white: string;
+	whiteFideId: number | null;
+	whiteFideName: string | null;
 	black: string;
+	blackFideId: number | null;
+	blackFideName: string | null;
 	result: string;
 	date: string | null;
 	year: number | null;
@@ -111,12 +139,14 @@ const MIN_GAMES_TO_INDEX = 5;
 const PAGE_SIZE = 100;
 
 export const onRequestGet: PagesFunction = async (context) => {
-	const fideId = idFromSlug(String(context.params.slug ?? ''));
+	const requestedSlug = String(context.params.slug ?? '');
+	const fideId = idFromSlug(requestedSlug);
 	if (fideId === null) {
 		return notFound();
 	}
 
-	const requested = new URL(context.request.url).searchParams.get('color');
+	const url = new URL(context.request.url);
+	const requested = url.searchParams.get('color');
 	/** White unless asked otherwise, which is the colour the component starts on. */
 	const color: 'w' | 'b' = requested === 'b' ? 'b' : 'w';
 
@@ -125,11 +155,34 @@ export const onRequestGet: PagesFunction = async (context) => {
 		return notFound();
 	}
 
-	const games = await fetchGames(fideId, color);
-
 	/** The same field the sitemap builds its slugs from, so the canonical and the sitemap agree. */
 	const name = profile.name;
-	const canonical = `${SITE}/search/opponent/${canonicalSlug(name, profile.fideId)}`;
+	const slug = canonicalSlug(name, profile.fideId);
+
+	/**
+	 * Before the games are fetched, because a request that is about to be redirected has no use for
+	 * them. The name is needed first, which is why this cannot be answered from the URL alone.
+	 */
+	if (requestedSlug !== slug) {
+		const target = new URL(`/search/opponent/${slug}`, url);
+		/** ?color=b survives the move; the colour is part of what was asked for. */
+		target.search = url.search;
+		return new Response(null, {
+			status: 301,
+			headers: {
+				location: target.toString(),
+				/**
+				 * At the edge only. A player's spelling can change in the FIDE list, and then so does
+				 * the target of this redirect - a browser holding it for a year would not find out.
+				 */
+				'cache-control': 'public, max-age=0, s-maxage=86400',
+			},
+		});
+	}
+
+	const games = await fetchGames(fideId, color);
+
+	const canonical = `${SITE}/search/opponent/${slug}`;
 	const count = `${profile.archiveGames} game${profile.archiveGames === 1 ? '' : 's'}`;
 	/**
 	 * The same two strings SearchPageComponent sets once Angular has booted. They have to match: a
@@ -221,9 +274,9 @@ export const onRequestGet: PagesFunction = async (context) => {
 
 /**
  * The id is the trailing number, so the words in front of it are free to change: a player's name
- * gains a spelling, the slug changes, and every old link still resolves - to the same page, which
- * then declares the new URL as its canonical one. It is also what keeps two players of the same
- * name apart, which a name alone cannot do.
+ * gains a spelling, the slug changes, and every old link still resolves - by being redirected to
+ * the current one, which is the 301 above. It is also what keeps two players of the same name
+ * apart, which a name alone cannot do.
  */
 function idFromSlug(slug: string): number | null {
 	const match = /(\d+)$/.exec(slug);
@@ -307,12 +360,15 @@ function prerendered(name: string, count: string, color: 'w' | 'b', games: Resul
 	const side = color === 'w' ? 'as White' : 'as Black';
 
 	const rows = games
-		.map(
-			(game) => `<tr><td>${esc(game.white)}</td><td>${esc(game.black)}</td>` +
+		.map((game) => {
+			const opponent = opponentCell(game, color);
+			const white = color === 'w' ? esc(game.white) : opponent;
+			const black = color === 'w' ? opponent : esc(game.black);
+			return `<tr><td>${white}</td><td>${black}</td>` +
 				`<td class="c">${esc(game.result || '*')}</td><td class="c">${esc(game.eco ?? '')}</td>` +
 				`<td>${esc(game.event ?? '')}</td>` +
-				`<td class="c">${esc(game.date ?? (game.year ? String(game.year) : ''))}</td></tr>`,
-		)
+				`<td class="c">${esc(game.date ?? (game.year ? String(game.year) : ''))}</td></tr>`;
+		})
 		.join('');
 
 	const table = games.length
@@ -334,6 +390,29 @@ function prerendered(name: string, count: string, color: 'w' | 'b', games: Resul
 ${table}
 <p><a href="${SITE}/search">Search the archive</a></p>
 </div>`;
+}
+
+/**
+ * The other side of the game, as a link to their own page.
+ *
+ * Only the other side. On a page of somebody's games as White, the White column is that player on
+ * every row, and a page linking to itself a hundred times says nothing to anyone.
+ *
+ * The text shown is the PGN's spelling, because that is what the game records. The link is built
+ * from the `player` table's spelling, because that is what the URL is built from everywhere else -
+ * using the PGN's would send every visitor and every crawler through a redirect. A side the ingest
+ * never matched to a FIDE id has no page to point at, and stays plain text.
+ */
+function opponentCell(game: ResultGame, color: 'w' | 'b'): string {
+	const name = color === 'w' ? game.black : game.white;
+	const fideId = color === 'w' ? game.blackFideId : game.whiteFideId;
+	const fideName = color === 'w' ? game.blackFideName : game.whiteFideName;
+
+	const text = esc(name ?? '');
+	if (!fideId || !fideName) {
+		return text;
+	}
+	return `<a href="/search/opponent/${canonicalSlug(fideName, fideId)}">${text}</a>`;
 }
 
 /** Every value here comes from a database that ingests other people's PGN files. Escape all of it. */

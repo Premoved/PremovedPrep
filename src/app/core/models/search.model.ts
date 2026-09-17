@@ -6,8 +6,13 @@ export type SearchSortKey =
 export interface SearchResultGame {
 	readonly id: number;
 	readonly white: string;
+	/** The FIDE id this side was linked to on import, and the `player` table's spelling of it. */
+	readonly whiteFideId: number | null;
+	readonly whiteFideName: string | null;
 	readonly whiteElo: number | null;
 	readonly black: string;
+	readonly blackFideId: number | null;
+	readonly blackFideName: string | null;
 	readonly blackElo: number | null;
 	readonly result: string;
 	readonly date: string | null;

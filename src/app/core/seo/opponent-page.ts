@@ -8,7 +8,9 @@
  * Twin of `canonicalSlug` in functions/search/opponent/[slug].ts and `slug` in
  * functions/sitemap-opponents.xml.ts. The id is the trailing number, so the words in front of it
  * may disagree with the server's spelling without breaking anything - the page resolves on the id
- * and then declares its own canonical URL. If one of the three changes, change the others.
+ * and then redirects, once, to the spelling it holds. Which is a reason to keep these three in
+ * step rather than to rely on it: a link built here from a stale name costs every visitor a round
+ * trip. If one of the three changes, change the others.
  */
 export function opponentSearchPath(name: string, fideId: number): string {
 	const words = name

@@ -5,6 +5,10 @@
 # 301 and not 410: the URLs are retired, not disowned. Everything they earned moves to the new one,
 # and the links already out there keep working.
 #
+# A /player/ URL whose slug is not the current spelling is redirected twice - here, and then by
+# functions/search/opponent/[slug].ts to the canonical slug. Two hops is within what every crawler
+# follows, and the alternative is this file knowing how players are named, which it cannot.
+#
 # The sitemap is redirected for a different reason: Google has it registered under the old name, and
 # without this it would fall through to the catch-all below and be served the application's HTML -
 # which reads as a broken sitemap rather than a moved one.

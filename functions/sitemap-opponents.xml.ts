@@ -1,18 +1,27 @@
 /**
- * The generated half of the sitemap: one URL per player worth landing on.
+ * The generated half of the sitemap: one URL per player the archive knows well.
  *
- * /sitemap-opponents.xml is an index, and /sitemap-opponents.xml?page=N is one file of it. The
- * format allows 50,000 URLs per file, which is also the page size the API serves, so the two limits
- * are the same number in both places on purpose.
+ * WHY IT IS SHORT
  *
- * Which players appear is decided in the database, by the `player_indexable` materialized view
- * (migration V20): those with at least five games in the archive. Below that the page has a name
- * and little else, and thousands of those are a liability rather than an asset - so they are not
- * offered here, and the page itself asks not to be indexed.
+ * It used to offer every player with five games or more - tens of thousands of URLs, across two
+ * files, because the format allows 50,000 in one. Google's answer was to register all of them and
+ * crawl almost none: "Discovered - currently not indexed" against the whole list. Nothing was
+ * rejected on its merits, because nothing was fetched. A sitemap states that a URL exists, not that
+ * it is worth the request, and a very long one from a domain with no history reads as the former.
  *
- * This is the only way a crawler discovers these URLs. The browsable index that used to link them
- * to each other is gone, deliberately: it was a page about the archive rather than a page of the
- * application, and this site has one entry point for a player, which is the search itself.
+ * So it now offers the best-known players only, and the number lives in the backend - see
+ * IndexablePlayerRepository.OFFERED, which is the same 5,000 this file asks for. One file, no index
+ * above it, which is also what the sitemap protocol wants: /sitemap.xml is already an index, and an
+ * index may not list another index.
+ *
+ * The players left out are not hidden and not noindex. Their pages are served exactly as before,
+ * and a crawler reaches them by following an opponent's name out of a game table on a page that is
+ * listed here. That is a link from a real page rather than a line in a file, which is the stronger
+ * signal of the two - and it is also how the archive genuinely connects: by who played whom.
+ *
+ * Which players qualify at all is decided in the database, by the `player_indexable` materialized
+ * view (migration V20): those with at least five games. Below that the page has a name and little
+ * else, and the page itself asks not to be indexed.
  */
 
 /**
@@ -37,13 +46,12 @@ interface IndexPage {
 
 const API = 'https://api.premovedprep.com';
 const SITE = 'https://premovedprep.com';
-const PER_FILE = 50_000;
 
-export const onRequestGet: PagesFunction = async (context) => {
-	const url = new URL(context.request.url);
-	const page = Number(url.searchParams.get('page'));
+/** Twin of IndexablePlayerRepository.OFFERED. The backend caps it too; asking for more is harmless. */
+const OFFERED = 5_000;
 
-	const data = await fetchIndex(Number.isInteger(page) && page > 0 ? page : 0);
+export const onRequestGet: PagesFunction = async () => {
+	const data = await fetchOffered();
 	if (!data) {
 		/**
 		 * 503 rather than an empty sitemap. An empty one is a statement - "these pages no longer
@@ -52,9 +60,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 		return new Response('Sitemap temporarily unavailable', { status: 503 });
 	}
 
-	const body = url.searchParams.has('page') ? urlSet(data) : index(data.total);
-
-	return new Response(body, {
+	return new Response(urlSet(data), {
 		headers: {
 			'content-type': 'application/xml; charset=utf-8',
 			/** The view behind it is rebuilt once a night. */
@@ -63,9 +69,9 @@ export const onRequestGet: PagesFunction = async (context) => {
 	});
 };
 
-async function fetchIndex(page: number): Promise<IndexPage | null> {
+async function fetchOffered(): Promise<IndexPage | null> {
 	try {
-		const response = await fetch(`${API}/api/players/indexable?page=${page}&size=${PER_FILE}`, {
+		const response = await fetch(`${API}/api/players/indexable?page=0&size=${OFFERED}`, {
 			headers: { accept: 'application/json' },
 		});
 		if (!response.ok) {
@@ -75,20 +81,6 @@ async function fetchIndex(page: number): Promise<IndexPage | null> {
 	} catch {
 		return null;
 	}
-}
-
-/** Without ?page, this file is a list of the files that hold the URLs. */
-function index(total: number): string {
-	const files = Math.max(1, Math.ceil(total / PER_FILE));
-	const entries: string[] = [];
-	for (let page = 0; page < files; page++) {
-		entries.push(`\t<sitemap><loc>${SITE}/sitemap-opponents.xml?page=${page}</loc></sitemap>`);
-	}
-	return `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${entries.join('\n')}
-</sitemapindex>
-`;
 }
 
 function urlSet(data: IndexPage): string {
@@ -112,7 +104,7 @@ ${entries.join('\n')}
 function slug(name: string, fideId: number): string {
 	const words = name
 		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[̀-ͯ]/g, '')
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '');
