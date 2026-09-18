@@ -80,14 +80,22 @@ export class VerifyEmailComponent {
 		});
 	}
 
+	/**
+	 * Confirming no longer signs the person in.
+	 *
+	 * It used to land them on the home page with a session. A session is only half of being signed in
+	 * now - the other half is the key that decrypts their files, and it comes from the password,
+	 * which a link from an inbox does not carry. So confirming ends at the sign-in form, where both
+	 * halves are produced at once.
+	 */
 	private confirm(token: string): void {
 		this.confirming.set(true);
 
 		this.auth.verifyEmail(token).subscribe({
 			next: () => {
 				/** The notice outlives the navigation because the notice bar is mounted on the root component. */
-				this.notices.info('Your email address is confirmed. Welcome.');
-				this.router.navigateByUrl('/home');
+				this.notices.info('Your email address is confirmed. Sign in to continue.');
+				this.router.navigateByUrl('/login');
 			},
 			error: (err: Error) => {
 				this.confirming.set(false);

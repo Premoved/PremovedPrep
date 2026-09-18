@@ -1,4 +1,16 @@
-/** Collections and their contents, as the backend sends them. */
+/**
+ * Collections and their contents.
+ *
+ * TWO LAYERS, AND WHY
+ *
+ * The types whose names begin with `Wire` are what the backend sends: a folder's name and an entry's
+ * document arrive sealed, and nothing there can be shown to anyone. Everything else is what the
+ * application works with, after CollectionApiService has opened them.
+ *
+ * CollectionSummary, ItemSummary and ItemDetail are unchanged from before end-to-end encryption, on
+ * purpose. They are what the three components that draw collections bind to, and keeping them
+ * identical is what let the encryption go in underneath those components rather than through them.
+ */
 
 export type CollectionKind = 'LIBRARY' | 'REPERTOIRE';
 
@@ -32,6 +44,31 @@ export interface CollectionSummary {
 	readonly updatedAt: string;
 }
 
+/** A folder as it arrives: the shape of the shelf in the clear, the name sealed. */
+export interface WireCollectionSummary extends Omit<CollectionSummary, 'name'> {
+	readonly nameCipher: string;
+}
+
+/**
+ * An entry as it arrives.
+ *
+ * There is one wire shape rather than the summary-and-detail pair the API used to have. The list
+ * used to send the derived columns and hold the document back, because the document was the
+ * expensive part; the columns are now inside the document, so a list that shows anything at all is
+ * a list that sent everything - and the browser has to open it all anyway in order to sort it.
+ */
+export interface ItemRow {
+	readonly id: number;
+	readonly collectionId: number;
+	readonly itemType: ItemType;
+	readonly shape: ItemShape;
+	readonly sortOrder: number;
+	/** The sealed entry: the PGN, its title and its annotator. See item-payload.ts. */
+	readonly payload: string;
+	readonly createdAt: string;
+	readonly updatedAt: string;
+}
+
 export interface ItemSummary {
 	readonly id: number;
 	readonly itemType: ItemType;
@@ -58,7 +95,12 @@ export interface ItemSummary {
 	readonly updatedAt: string;
 }
 
-export interface ItemDetail extends Omit<ItemSummary, 'sortOrder'> {
+/**
+ * An entry with its moves. It now extends ItemSummary rather than omitting sortOrder from it: one
+ * decrypt produces both, so the detail is what a listing actually holds and the summary is the view
+ * of it that the table binds to.
+ */
+export interface ItemDetail extends ItemSummary {
 	readonly collectionId: number;
 	readonly pgn: string;
 	readonly createdAt: string;
@@ -121,6 +163,10 @@ export interface StorageUsage {
 	 * The largest PGN one request that saves to the server may carry - a multiple of bytesQuota,
 	 * decided by StorageLimits on the server. Absent on the figures recovered from a 507, which does
 	 * not carry it, so a caller must treat null as "the server will decide".
+	 *
+	 * Since end-to-end encryption this counts the sealed entry, not the PGN. A document usually
+	 * deflates to well under what it was before base64 adds a third back, so an account's allowance
+	 * goes further than it did - but the figure a person sees is the one they actually occupy.
 	 */
 	readonly bytesMaxRequest?: number;
 }

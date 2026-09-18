@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { AuthResponse, UserSummary } from '../models/user.model';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { ThemeService } from '../services/theme.service';
+import { VaultService } from '../crypto/vault.service';
 import {
 	SKIP_SESSION_RETRY,
 	accessTokenFresh,
@@ -21,12 +22,22 @@ import {
  * AuthService is the surface the components call; this is the state underneath it. They are apart
  * because the interceptor needs the renewal and must not drag the rest of the account API - and its
  * dependencies - into every request it makes.
+ *
+ * SINCE END-TO-END ENCRYPTION THERE ARE THREE STATES, NOT TWO
+ *
+ * Signed out; signed in and unlocked; and signed in and locked. The third is what a restored session
+ * is in a browser that has no key - a new device, a cleared profile, a private window - and it is a
+ * normal state rather than a failure: the account is reachable and its contents are not. This class
+ * owns the first two transitions and asks VaultService about the third, because the key's lifetime
+ * is exactly the session's: it is looked for when a session is restored, and it is destroyed when
+ * one ends, however it ends.
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
 	private readonly http = inject(HttpClient);
 	private readonly analytics = inject(AnalyticsService);
 	private readonly theme = inject(ThemeService);
+	private readonly vault = inject(VaultService);
 	private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
 
 	private readonly _currentUser = signal<UserSummary | null>(null);
@@ -66,9 +77,49 @@ export class SessionService {
 		});
 	}
 
-	/** Startup, and every reload: the cookie is all that survived, so ask what it is worth. */
+	/**
+	 * Startup, and every reload: the cookie is all that survived, so ask what it is worth - and then
+	 * look for the key this browser was holding for that account.
+	 *
+	 * Not finding one is not an error. It leaves the application signed in and locked, which the
+	 * screens draw as a prompt for the password rather than as a row of failures.
+	 */
 	async restore(): Promise<void> {
 		await firstValueFrom(this.renew());
+		await this.restoreVault();
+	}
+
+	/**
+	 * Looks for the key this browser was holding for the account the cookie just restored.
+	 *
+	 * NOT FINDING ONE ENDS THE SESSION, ON PURPOSE
+	 *
+	 * A session without a key is signed in and unable to read anything, and there is no honest screen
+	 * for that: a grid of folders that will not open reads as data loss, and a second password prompt
+	 * on top of an apparently live session reads as a bug. Signing out locally turns a state nobody
+	 * can explain into one everybody already knows - the sign-in form - and typing the password there
+	 * produces both halves at once.
+	 *
+	 * It is rare. The cookie and the key are written together and cleared together; they come apart
+	 * only when the browser evicts one and not the other, which is what Safari and Firefox do to
+	 * IndexedDB after a week or so of not visiting while a long-lived cookie survives, and what a
+	 * private window does on its own terms.
+	 */
+	private async restoreVault(): Promise<void> {
+		const user = this._currentUser();
+		if (user === null) {
+			return;
+		}
+
+		try {
+			if (await this.vault.restore(user.id, await this.vault.vault())) {
+				return;
+			}
+		} catch {
+			/** Unreachable or unreadable key material. Treated the same as not having the key. */
+		}
+
+		this.forget();
 	}
 
 	apply(response: AuthResponse): void {
@@ -139,6 +190,13 @@ export class SessionService {
 		const wasSignedIn = this._currentUser() !== null;
 
 		clearAccessToken();
+
+		/**
+		 * The key goes with the session, always and immediately - before the network call that ends the
+		 * session on the other side, and whether or not that call succeeds. A session that has ended
+		 * and a key still sitting in this browser's store is the one combination that must not exist.
+		 */
+		void this.vault.lock();
 		this._currentUser.set(null);
 		this.cancelRenewal();
 		this.analytics.reset();

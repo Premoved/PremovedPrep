@@ -56,9 +56,14 @@ export class RegisterComponent {
 		if (value.length === 0) {
 			return null;
 		}
-		/** 72 is BCrypt's ceiling: anything longer is silently truncated. */
-		if (value.length > 72) {
-			return 'At most 72 characters.';
+		/**
+		 * The rule now lives only here. Since end-to-end encryption the server is sent a 43-character
+		 * derived secret and never sees the password, so it cannot check the length of one - which also
+		 * means BCrypt's 72-character ceiling no longer applies to what a person may choose. The cap
+		 * below is for the person's sake, not the hash's.
+		 */
+		if (value.length > 200) {
+			return 'At most 200 characters.';
 		}
 		return value.length < 8 ? 'At least 8 characters.' : null;
 	});
@@ -121,6 +126,12 @@ export class RegisterComponent {
 							'Your account was created, but we could not send the confirmation email. Try sending it again.',
 						);
 					}
+					/**
+					 * The recovery code made here is deliberately not shown. It cannot survive the trip
+					 * through the inbox and back, and keeping it in between would mean storing the one
+					 * thing that must never be stored. The first sign-in replaces it with one the person
+					 * actually sees - see VaultService.ensureRecoveryCode.
+					 */
 					this.router.navigateByUrl('/verify-email', { state: { email: created.email } });
 				},
 				error: (err: Error) => {

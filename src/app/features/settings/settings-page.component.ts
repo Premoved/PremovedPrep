@@ -17,9 +17,19 @@ import { CUSTOM_COLOR_PRESETS, CUSTOM_COLOR_SLOTS, legibility } from '../../core
 import { ColorPickerComponent } from '../../shared/color-picker/color-picker.component';
 import { SettingsPreviewComponent } from './settings-preview.component';
 import { PasswordRevealDirective } from '../../shared/password-reveal/password-reveal.directive';
+import { RecoveryCodeComponent } from './recovery-code.component';
 
 const MIN_PASSWORD = 8;
-const MAX_PASSWORD = 72;
+
+/**
+ * There is no upper bound any more.
+ *
+ * It used to be 72, which is BCrypt's ceiling: anything past it was silently truncated. Since
+ * end-to-end encryption the server is sent a 43-character derived secret and never sees the
+ * password, so BCrypt's limit no longer has anything to do with what a person may choose. The cap
+ * that remains is for the sake of the person typing, not the hash.
+ */
+const MAX_PASSWORD = 200;
 
 /** "2 minutes ago", "yesterday". The wording is the platform's; only the unit is chosen here. */
 const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
@@ -34,13 +44,31 @@ const UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
 @Component({
 	selector: 'app-settings-page',
 	standalone: true,
-	imports: [RouterLink, SettingsPreviewComponent, ColorPickerComponent, PasswordRevealDirective],
+	imports: [
+		RouterLink,
+		SettingsPreviewComponent,
+		ColorPickerComponent,
+		PasswordRevealDirective,
+		RecoveryCodeComponent,
+	],
 	templateUrl: './settings-page.component.html',
 	styleUrl: './settings-page.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsPageComponent {
 	readonly auth = inject(AuthService);
+
+	/**
+	 * When the account's recovery code was last made. Read once, and only for the one line the
+	 * profile prints - the code itself is not here and cannot be: nothing stores it.
+	 */
+	private readonly vaultUpdatedAt = signal<string | null>(null);
+
+	readonly recoveryCodeCreated = computed(() => {
+		const at = this.vaultUpdatedAt();
+		return at === null ? 'Not created yet' : `Created ${formatDay(at)}`;
+	});
+
 	readonly theme = inject(ThemeService);
 	readonly prefs = inject(PreferencesStore);
 	private readonly boardTheme = inject(BoardThemeService);
@@ -322,6 +350,7 @@ export class SettingsPageComponent {
 	constructor() {
 		this.route.fragment.pipe(takeUntilDestroyed()).subscribe((fragment) => this.scrollTo(fragment));
 		this.refreshStorage();
+		this.refreshRecoveryCodeDate();
 
 		effect(() => {
 			this.theme.theme();
@@ -489,4 +518,20 @@ export class SettingsPageComponent {
 			document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		});
 	}
+
+	private refreshRecoveryCodeDate(): void {
+		this.auth.vaultSummary().subscribe({
+			next: (vault) => this.vaultUpdatedAt.set(vault.updatedAt ?? vault.createdAt),
+			/** The line is a nicety; failing to draw it is not worth telling anyone about. */
+			error: () => this.vaultUpdatedAt.set(null),
+		});
+	}
+}
+
+/** "18 Sep 2026". Short, unambiguous across locales, and no time of day - the day is the point. */
+function formatDay(iso: string): string {
+	const at = new Date(iso);
+	return Number.isNaN(at.getTime())
+		? 'recently'
+		: at.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }

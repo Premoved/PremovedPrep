@@ -1,3 +1,5 @@
+import { ResetVaultView } from '../crypto/vault.model';
+
 /** The account, as the backend sends it. */
 
 export type SubscriptionStatus = 'FREE' | 'ACTIVE' | 'CANCELED';
@@ -19,6 +21,19 @@ export interface RegisterResponse {
 	readonly email: string;
 	/** False when the mail provider refused. The account exists either way. */
 	readonly verificationSent: boolean;
+}
+
+/**
+ * What a password reset link turns out to be for, read without spending it.
+ *
+ * The address is here because the browser salts its key derivation with it and the person following
+ * a link from their inbox has not typed it. The recovery wrap is here because re-sealing the master
+ * key under the new password is the only way a reset can leave the account's contents readable. The
+ * password wrap is deliberately not - see ResetVaultView.
+ */
+export interface ResetContext {
+	readonly email: string;
+	readonly vault: ResetVaultView;
 }
 
 /** `token` is the access token. The refresh token is a cookie no script can read. */
