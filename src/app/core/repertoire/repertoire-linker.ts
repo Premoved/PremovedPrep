@@ -100,11 +100,7 @@ export function buildRepertoireTree(
  * A game that leaves trunk A at move 12 and trunk B at move 6 is theory for A and a curiosity for B,
  * and drawing it on both would fill every trunk in the folder with every game in it.
  */
-function placeOn(
-	walk: Walk,
-	trunkId: number,
-	indexes: ReadonlyMap<number, TrunkIndex>,
-): Fit | null {
+function placeOn(walk: Walk, trunkId: number, indexes: ReadonlyMap<number, TrunkIndex>): Fit | null {
 	let best: Fit | null = null;
 	let here: Fit | null = null;
 
@@ -152,9 +148,7 @@ function fitOn(walk: Walk, trunk: TrunkIndex): Fit | null {
 	return best;
 }
 
-function attachmentsFor(
-	placements: readonly { walk: Walk; node: PgnTreeNode; ply: number }[],
-): RepertoireAttachment[] {
+function attachmentsFor(placements: readonly { walk: Walk; node: PgnTreeNode; ply: number }[]): RepertoireAttachment[] {
 	const byNode = new Map<PgnTreeNode, { walk: Walk; ply: number }[]>();
 	for (const placement of placements) {
 		const group = byNode.get(placement.node) ?? [];
@@ -175,9 +169,10 @@ function attachmentsFor(
 	return attachments.sort((left, right) => left.path.length - right.path.length);
 }
 
-function expand(
-	walkers: readonly { walk: Walk; ply: number }[],
-): { branches: RepertoireBranch[]; ending: RepertoireGame[] } {
+function expand(walkers: readonly { walk: Walk; ply: number }[]): {
+	branches: RepertoireBranch[];
+	ending: RepertoireGame[];
+} {
 	const ending: RepertoireGame[] = [];
 	const byMove = new Map<string, { walk: Walk; ply: number }[]>();
 

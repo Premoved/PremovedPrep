@@ -104,10 +104,7 @@ export class VaultService {
 		const keyId = toBase64Url(randomBytes(16));
 		const recoveryCode = newRecoveryCode();
 
-		const masterKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
-			'encrypt',
-			'decrypt',
-		]);
+		const masterKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
 		const rawMaster = new Uint8Array(await crypto.subtle.exportKey('raw', masterKey));
 
 		const [derived, recoveryKey] = await Promise.all([

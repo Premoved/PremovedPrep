@@ -194,12 +194,7 @@ export class AuthService {
 	 * itself, adopts key material on the spot, and starts sealing what it already had. See
 	 * VaultMigrationService.
 	 */
-	login(
-		email: string,
-		password: string,
-		keepSignedIn: boolean,
-		captcha?: CaptchaAnswer,
-	): Observable<AuthResponse> {
+	login(email: string, password: string, keepSignedIn: boolean, captcha?: CaptchaAnswer): Observable<AuthResponse> {
 		return from(this.signIn(email, password, keepSignedIn, captcha));
 	}
 

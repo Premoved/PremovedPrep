@@ -44,13 +44,7 @@ const UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
 @Component({
 	selector: 'app-settings-page',
 	standalone: true,
-	imports: [
-		RouterLink,
-		SettingsPreviewComponent,
-		ColorPickerComponent,
-		PasswordRevealDirective,
-		RecoveryCodeComponent,
-	],
+	imports: [RouterLink, SettingsPreviewComponent, ColorPickerComponent, PasswordRevealDirective, RecoveryCodeComponent],
 	templateUrl: './settings-page.component.html',
 	styleUrl: './settings-page.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,

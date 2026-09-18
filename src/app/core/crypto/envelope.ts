@@ -38,11 +38,7 @@ const RAW = 0;
 const DEFLATE = 1;
 
 /** What an envelope is for. Half of what binds it in place; see the note above. */
-export type EnvelopePurpose =
-	| 'item'
-	| 'collection-name'
-	| 'wrap:password'
-	| 'wrap:recovery';
+export type EnvelopePurpose = 'item' | 'collection-name' | 'wrap:password' | 'wrap:recovery';
 
 export class EnvelopeError extends Error {
 	constructor(message: string) {
@@ -69,12 +65,7 @@ export async function seal(
 	return `${PREFIX}.${toBase64Url(nonce)}.${toBase64Url(new Uint8Array(sealed))}`;
 }
 
-export async function open(
-	key: CryptoKey,
-	keyId: string,
-	purpose: EnvelopePurpose,
-	envelope: string,
-): Promise<string> {
+export async function open(key: CryptoKey, keyId: string, purpose: EnvelopePurpose, envelope: string): Promise<string> {
 	const parts = envelope.split('.');
 	if (parts.length !== 3 || parts[0] !== PREFIX) {
 		throw new EnvelopeError('This value is not in a format this version can read');

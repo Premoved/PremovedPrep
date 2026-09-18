@@ -139,7 +139,7 @@ describe('choosing a type for an imported game', () => {
 		expect(importTypeFor('LIBRARY', parsePgn('1. e4 *'))).toBe('ANALYSIS');
 	});
 
-	it('does not count PGN\'s ways of writing nobody as players', () => {
+	it("does not count PGN's ways of writing nobody as players", () => {
 		expect(importTypeFor('LIBRARY', parsePgn('[White "NN"]\n[Black "N.N."]\n\n1. e4 *'))).toBe('ANALYSIS');
 	});
 });

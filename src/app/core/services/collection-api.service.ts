@@ -93,14 +93,9 @@ export class CollectionApiService {
 		);
 	}
 
-	update(
-		id: number,
-		changes: { name?: string; icon?: string; sortOrder?: number },
-	): Observable<CollectionSummary> {
+	update(id: number, changes: { name?: string; icon?: string; sortOrder?: number }): Observable<CollectionSummary> {
 		const sealing =
-			changes.name === undefined
-				? Promise.resolve(undefined)
-				: this.vault.seal('collection-name', changes.name);
+			changes.name === undefined ? Promise.resolve(undefined) : this.vault.seal('collection-name', changes.name);
 
 		return from(sealing).pipe(
 			switchMap((nameCipher) =>
@@ -186,9 +181,7 @@ export class CollectionApiService {
 	}
 
 	getItem(itemId: number): Observable<ItemDetail> {
-		return this.http
-			.get<ItemRow>(`${this.baseUrl}/items/${itemId}`)
-			.pipe(switchMap((row) => from(this.openItem(row))));
+		return this.http.get<ItemRow>(`${this.baseUrl}/items/${itemId}`).pipe(switchMap((row) => from(this.openItem(row))));
 	}
 
 	/** The PGN is sealed here; the server stores an envelope and derives nothing from it. */
@@ -200,9 +193,7 @@ export class CollectionApiService {
 		author?: string,
 	): Observable<ItemSummary> {
 		return from(this.sealItem({ pgn, title: title ?? null, author: author ?? null })).pipe(
-			switchMap((payload) =>
-				this.http.post<ItemRow>(`${this.baseUrl}/${collectionId}/items`, { itemType, payload }),
-			),
+			switchMap((payload) => this.http.post<ItemRow>(`${this.baseUrl}/${collectionId}/items`, { itemType, payload })),
 			switchMap((row) => from(this.openItem(row))),
 		);
 	}
@@ -216,9 +207,7 @@ export class CollectionApiService {
 		itemType?: ItemType,
 	): Observable<ItemSummary> {
 		return from(this.sealItem({ pgn, title: title ?? null, author: author ?? null })).pipe(
-			switchMap((payload) =>
-				this.http.put<ItemRow>(`${this.baseUrl}/items/${itemId}`, { payload, itemType }),
-			),
+			switchMap((payload) => this.http.put<ItemRow>(`${this.baseUrl}/items/${itemId}`, { payload, itemType })),
 			switchMap((row) => from(this.openItem(row))),
 		);
 	}
@@ -249,9 +238,7 @@ export class CollectionApiService {
 	importPgn(collectionId: number, pgn: string, itemType?: ItemType): Observable<ImportResult> {
 		return this.get(collectionId).pipe(
 			switchMap((collection) => {
-				const games = splitPgn(pgn).filter(
-					(game) => game.plyCount > 0 || Object.keys(game.tags).length > 0,
-				);
+				const games = splitPgn(pgn).filter((game) => game.plyCount > 0 || Object.keys(game.tags).length > 0);
 				const skipped = splitPgn(pgn).length - games.length;
 
 				if (games.length === 0) {
@@ -294,11 +281,7 @@ export class CollectionApiService {
 	 * Moves or copies entries into another folder. The target type for each one is decided here, for
 	 * the same reason it is in transferCollections: it depends on the starting position.
 	 */
-	transferItems(
-		targetCollectionId: number,
-		itemIds: readonly number[],
-		copy: boolean,
-	): Observable<ItemSummary[]> {
+	transferItems(targetCollectionId: number, itemIds: readonly number[], copy: boolean): Observable<ItemSummary[]> {
 		return forkJoin({
 			target: this.get(targetCollectionId),
 			items: forkJoin(itemIds.map((id) => this.getItem(id))),
@@ -321,16 +304,10 @@ export class CollectionApiService {
 	// -----------------------------------------------------------------
 
 	exportCollection(id: number): Observable<Blob> {
-		return this.listDetails(id).pipe(
-			map((items) => new Blob([joinPgn(items)], { type: 'application/x-chess-pgn' })),
-		);
+		return this.listDetails(id).pipe(map((items) => new Blob([joinPgn(items)], { type: 'application/x-chess-pgn' })));
 	}
 
-	exportArchive(
-		kind: CollectionKind,
-		color: RepertoireColor | null,
-		ids: readonly number[] = [],
-	): Observable<Blob> {
+	exportArchive(kind: CollectionKind, color: RepertoireColor | null, ids: readonly number[] = []): Observable<Blob> {
 		return this.list(kind, color).pipe(
 			map((all) => (ids.length === 0 ? all : all.filter((collection) => ids.includes(collection.id)))),
 			switchMap((chosen) =>
@@ -488,9 +465,7 @@ export class CollectionApiService {
 				collectionId: source.id,
 				nameCipher: name === null ? null : await this.vault.seal('collection-name', name),
 				items: retyped,
-				trunkPayload: needsTrunk
-					? await this.sealItem({ pgn: EMPTY_MAIN_LINE_PGN, title: null, author: null })
-					: null,
+				trunkPayload: needsTrunk ? await this.sealItem({ pgn: EMPTY_MAIN_LINE_PGN, title: null, author: null }) : null,
 			});
 		}
 		return planned;
@@ -510,7 +485,11 @@ function joinPgn(items: readonly ItemDetail[]): string {
 function zipEntriesFor(collections: readonly CollectionSummary[], contents: readonly ItemDetail[][]) {
 	const used = new Set<string>();
 	return collections.map((collection, index) => {
-		const base = collection.name.trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-').slice(0, 80) || 'collection';
+		const base =
+			collection.name
+				.trim()
+				.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
+				.slice(0, 80) || 'collection';
 		let name = `${base}.pgn`;
 		for (let suffix = 2; used.has(name); suffix++) {
 			name = `${base} (${suffix}).pgn`;

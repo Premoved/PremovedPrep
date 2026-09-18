@@ -72,10 +72,7 @@ export async function forgetKey(): Promise<void> {
  * unavailable - private browsing, storage turned off, a quota refusal - the application asks for the
  * password again, which is correct behaviour and not an error to report.
  */
-function withStore<T>(
-	mode: IDBTransactionMode,
-	run: (store: IDBObjectStore) => IDBRequest,
-): Promise<T | undefined> {
+function withStore<T>(mode: IDBTransactionMode, run: (store: IDBObjectStore) => IDBRequest): Promise<T | undefined> {
 	return new Promise<T | undefined>((resolve) => {
 		let database: IDBDatabase | null = null;
 

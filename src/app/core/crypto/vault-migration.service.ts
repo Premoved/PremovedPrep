@@ -107,10 +107,7 @@ export class VaultMigrationService {
 			for (const row of batch.items) {
 				items.push({
 					itemId: row.id,
-					payload: await this.vault.seal(
-						'item',
-						writePayload({ pgn: row.pgn, title: row.title, author: row.author }),
-					),
+					payload: await this.vault.seal('item', writePayload({ pgn: row.pgn, title: row.title, author: row.author })),
 				});
 			}
 

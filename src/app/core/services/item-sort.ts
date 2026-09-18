@@ -58,11 +58,7 @@ export function defaultsAscending(sort: ItemSortKey): boolean {
 	}
 }
 
-export function compareItems<T extends ItemSummary>(
-	items: readonly T[],
-	sort: ItemSortKey,
-	ascending?: boolean,
-): T[] {
+export function compareItems<T extends ItemSummary>(items: readonly T[], sort: ItemSortKey, ascending?: boolean): T[] {
 	const direction = (ascending ?? defaultsAscending(sort)) ? 1 : -1;
 
 	return [...items].sort((left, right) => {

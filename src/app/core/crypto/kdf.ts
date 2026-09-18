@@ -84,11 +84,7 @@ export interface DerivedSecrets {
 	readonly vaultKey: CryptoKey;
 }
 
-export async function deriveFromPassword(
-	password: string,
-	email: string,
-	kdf: KdfParameters,
-): Promise<DerivedSecrets> {
+export async function deriveFromPassword(password: string, email: string, kdf: KdfParameters): Promise<DerivedSecrets> {
 	const stretched = await stretch(password, await saltFor('kdf', email), kdf);
 
 	const [authSecret, vaultKey] = await Promise.all([
@@ -120,9 +116,7 @@ export async function deriveFromRecoveryCode(
  * milliseconds inside one function. What the callers get back is not extractable.
  */
 async function stretch(secret: string, salt: Bytes, kdf: KdfParameters): Promise<Bytes> {
-	const material = await crypto.subtle.importKey('raw', utf8(secret), 'PBKDF2', false, [
-		'deriveBits',
-	]);
+	const material = await crypto.subtle.importKey('raw', utf8(secret), 'PBKDF2', false, ['deriveBits']);
 
 	const bits = await crypto.subtle.deriveBits(
 		{ name: 'PBKDF2', salt: salt, iterations: kdf.iterations, hash: 'SHA-256' },

@@ -1,12 +1,5 @@
 import { Chess } from 'chess.js';
-import {
-	AdvancedReport,
-	ArchiveGame,
-	ReportGame,
-	ReportMove,
-	ReportNode,
-	ReportPoint,
-} from '../models/report.model';
+import { AdvancedReport, ArchiveGame, ReportGame, ReportMove, ReportNode, ReportPoint } from '../models/report.model';
 import { Book, BookNode, bookPathOf } from './repertoire-book';
 import { cleanSan } from '../chess/pgn-tree';
 
