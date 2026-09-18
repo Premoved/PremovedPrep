@@ -41,6 +41,9 @@ export interface ResetVaultView {
 /** What is needed to open a recovery wrap, which both VaultView and ResetVaultView satisfy. */
 export type RecoverableVault = Pick<ResetVaultView, 'keyId' | 'kdf' | 'recoveryWrap'>;
 
+/** What is needed to open a password wrap, which both VaultView and VaultMaterial satisfy. */
+export type UnlockableVault = Pick<VaultMaterial, 'keyId' | 'passwordWrap'>;
+
 /**
  * A vault that has just been created, with the one thing the server never sees and the person only
  * ever will: the recovery code, in the grouped form it should be written down in.

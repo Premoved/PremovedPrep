@@ -2,11 +2,11 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { fromBase64Url, randomBytes, toBase64Url } from './base64url';
+import { Bytes, fromBase64Url, randomBytes, toBase64Url } from './base64url';
 import { EnvelopePurpose, open, seal } from './envelope';
 import { DEFAULT_KDF, KdfParameters, describeKdf, deriveFromPassword, deriveFromRecoveryCode, parseKdf } from './kdf';
 import { newRecoveryCode, readRecoveryCode } from './recovery-code';
-import { NewVault, Prelogin, RecoverableVault, VaultMaterial, VaultView } from './vault.model';
+import { NewVault, Prelogin, RecoverableVault, UnlockableVault, VaultMaterial, VaultView } from './vault.model';
 import { forgetKey, recallKey, rememberKey } from './vault-storage';
 
 /**
@@ -145,7 +145,7 @@ export class VaultService {
 	 * and PBKDF2 costs about a second, so deriving twice to keep the two calls tidy would be a second
 	 * of the person's time spent on tidiness.
 	 */
-	async unlockWithDerived(vaultKey: CryptoKey, vault: VaultView, userId: number | null): Promise<void> {
+	async unlockWithDerived(vaultKey: CryptoKey, vault: UnlockableVault, userId: number | null): Promise<void> {
 		const master = await this.unwrap(vaultKey, vault.keyId, 'wrap:password', vault.passwordWrap);
 		await this.adoptMaster(vault.keyId, master, userId);
 	}
@@ -203,7 +203,7 @@ export class VaultService {
 	 * with it, so it is unlocked here rather than being re-derived from what was just written.
 	 */
 	async adoptCreated(created: NewVault, vaultKey: CryptoKey, userId: number): Promise<void> {
-		await this.unlockWithDerived(vaultKey, { ...created.material, createdAt: null, updatedAt: null }, userId);
+		await this.unlockWithDerived(vaultKey, created.material, userId);
 	}
 
 	/**
@@ -337,12 +337,7 @@ export class VaultService {
 
 	// -----------------------------------------------------------------
 
-	private async unwrap(
-		wrappingKey: CryptoKey,
-		keyId: string,
-		purpose: EnvelopePurpose,
-		wrap: string,
-	): Promise<Uint8Array> {
+	private async unwrap(wrappingKey: CryptoKey, keyId: string, purpose: EnvelopePurpose, wrap: string): Promise<Bytes> {
 		return fromBase64Url(await open(wrappingKey, keyId, purpose, wrap));
 	}
 
@@ -355,7 +350,7 @@ export class VaultService {
 	 * never leaves this service, and what protects it is that it is reachable only from code running
 	 * on this origin - the same thing that protects a non-extractable key from being used.
 	 */
-	private async adoptMaster(keyId: string, rawMaster: Uint8Array, userId: number | null): Promise<void> {
+	private async adoptMaster(keyId: string, rawMaster: Bytes, userId: number | null): Promise<void> {
 		const key = await crypto.subtle.importKey('raw', rawMaster, { name: 'AES-GCM', length: 256 }, true, [
 			'encrypt',
 			'decrypt',
