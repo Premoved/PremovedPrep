@@ -14,9 +14,8 @@ import { ItemShape, ItemType } from '../models/collection.model';
  * anyone can check. The two places it knowingly differs are marked below.
  */
 
-export interface PgnTags {
-	readonly [name: string]: string;
-}
+/** A game's tag pairs, by tag name. */
+export type PgnTags = Readonly<Record<string, string>>;
 
 /** One game out of a file: its own text, its tags, and how long its mainline is. */
 export interface PgnGame {
@@ -358,9 +357,14 @@ function unescapeTag(value: string): string {
 	return value.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
 }
 
-/** Removes the byte order mark a Windows exporter leaves at the top. */
+/**
+ * Removes the byte order mark a Windows exporter leaves at the top.
+ *
+ * Written as an escape rather than the character itself: a U+FEFF sitting in the source is invisible
+ * to whoever reads this next, and is the kind of thing a copy and paste loses without saying so.
+ */
 function strip(pgn: string): string {
-	return pgn.includes('﻿') ? pgn.replace(/﻿/g, '') : pgn;
+	return pgn.includes('\uFEFF') ? pgn.replace(/\uFEFF/g, '') : pgn;
 }
 
 function blankToNull(value: string | null | undefined): string | null {

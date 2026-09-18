@@ -322,12 +322,7 @@ export class CollectionApiService {
 
 	/** The name the export downloads as. The rule the server's fileName() used, unchanged. */
 	fileNameFor(name: string): string {
-		const cleaned = name
-			.trim()
-			.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
-			.trim()
-			.slice(0, 80)
-			.trim();
+		const cleaned = fileNameSafe(name.trim()).trim().slice(0, 80).trim();
 		return cleaned.length === 0 ? 'collection' : cleaned;
 	}
 
@@ -472,6 +467,26 @@ export class CollectionApiService {
 	}
 }
 
+/** The characters Windows forbids in a path component. */
+const FORBIDDEN_IN_FILE_NAME: ReadonlySet<string> = new Set(['\\', '/', ':', '*', '?', '"', '<', '>', '|']);
+
+/**
+ * A name made safe to use as a file name: the same set the server's fileName() removed, which is
+ * those characters and the control characters below U+0020.
+ *
+ * Spelled as a test rather than as a character class because a class that reaches from U+0000 to
+ * U+001F is a run of invisible characters in the source, which is a thing to be able to read and a
+ * thing a linter is right to ask about. The set is unchanged; only where it is written moved.
+ */
+function fileNameSafe(name: string): string {
+	let safe = '';
+	for (const character of name) {
+		const code = character.codePointAt(0) ?? 0;
+		safe += FORBIDDEN_IN_FILE_NAME.has(character) || code < 0x20 ? '-' : character;
+	}
+	return safe;
+}
+
 /** The sorting the server used to do in SQL, done here over what has just been decrypted. */
 function sortItems(items: readonly ItemDetail[], sort: ItemSortKey, ascending?: boolean): ItemSummary[] {
 	return compareItems(items, sort, ascending);
@@ -485,11 +500,7 @@ function joinPgn(items: readonly ItemDetail[]): string {
 function zipEntriesFor(collections: readonly CollectionSummary[], contents: readonly ItemDetail[][]) {
 	const used = new Set<string>();
 	return collections.map((collection, index) => {
-		const base =
-			collection.name
-				.trim()
-				.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
-				.slice(0, 80) || 'collection';
+		const base = fileNameSafe(collection.name.trim()).slice(0, 80) || 'collection';
 		let name = `${base}.pgn`;
 		for (let suffix = 2; used.has(name); suffix++) {
 			name = `${base} (${suffix}).pgn`;

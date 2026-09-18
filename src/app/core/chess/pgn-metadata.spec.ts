@@ -124,7 +124,7 @@ describe('splitting a file', () => {
 	});
 
 	it('survives the byte order mark a Windows exporter leaves', () => {
-		expect(splitPgn(`﻿${GAME}`)).toHaveLength(1);
+		expect(splitPgn(`\uFEFF${GAME}`)).toHaveLength(1);
 	});
 });
 
