@@ -1,6 +1,6 @@
 <div class="legal-page">
 	<h1 class="legal-title">Privacy Policy</h1>
-	<p class="legal-updated">Last updated 29 August 2026</p>
+	<p class="legal-updated">Last updated 18 September 2026</p>
 
 	<h2>Controller</h2>
 	<p>
@@ -8,29 +8,31 @@
 		<a href="mailto:contact@premoved.com">contact&#64;premoved.com</a>
 	</p>
 
-	<h2>What is processed</h2>
+	<h2>Processed data</h2>
 	<ul>
 		<li>
-			<strong>Account</strong> — username, email address, password hash, registration date, and the version of the terms
-			you accepted.
-		</li>
-		<li><strong>Content</strong> — your collections, repertoires, saved PGN games and interface preferences.</li>
-		<li>
-			<strong>Technical</strong> — IP address and browser user agent at registration, sign-in and password reset, and in
-			server logs.
+			<strong>Account</strong> — username, email address, password hash, registration date, the version of the terms you accept when registering, and cryptographic vault metadata (KDF descriptors needed for authentication, and wrapped keys needed to decrypt your files).
 		</li>
 		<li>
-			<strong>Sessions</strong> — for each browser signed in to your account: a short description of it, such as "Chrome
-			on Windows", when it signed in and when it was last used. No IP address is kept with it. You can see the list, and
-			end any of these sessions, on the settings page.
+			<strong>Content</strong> — your collections, repertoires, saved PGN games and interface preferences. All saved files and collection names are encrypted before they are saved in the cloud. The encryption key is generated from your password or Recovery Code, and is never sent to or stored on the server.
+		</li>
+		<li>
+			<strong>Metadata</strong> — while your content and collection names are encrypted, the server can see the structural shape of your data: the number of collections, their kind (e.g., Library or Repertoire), colors, icons, type, the number of entries in each collection, and timestamps for when entries are created or updated. This is required to organize your library. The server also sees the size of your encrypted files, which is used strictly to manage storage quotas.
+		</li>
+		<li>
+			<strong>Technical</strong> — your IP address and browser user agent are processed temporarily. This happens only during sensitive actions (like registration, sign-in, or password reset) and in short-lived server logs strictly to prevent abuse, spam, and malicious attacks. Your IP address is not stored permanently, and is not used for any other purpose.
+		</li>
+		<li>
+			<strong>Sessions</strong> — for each active session where you are signed in: a short description of it (such as "Chrome
+			on Windows"), the date of the sign in and when it was last accessed. When signing out of an active session, the data related to it is deleted immediately.
 		</li>
 	</ul>
 	<p>Passwords are stored only as a one-way hash and cannot be read back by anyone.</p>
 
-	<h2>Why, and on what legal basis</h2>
+	<h2>Legal basis for the processed data</h2>
 	<ul>
 		<li>
-			Account and content, to provide the service you signed up for — performance of a contract, Article 6(1)(b) GDPR.
+			Account, content, and metadata, to provide the service you signed up for — performance of a contract, Article 6(1)(b) GDPR.
 		</li>
 		<li>
 			Technical data, to prevent automated abuse and keep the service running — legitimate interests, Article 6(1)(f)
@@ -44,9 +46,9 @@
 
 	<h2>Analytics and cookies</h2>
 	<p>
-		There is no analytics, no advertising and no third-party tracking. One cookie is set, when you sign in, and it is
-		what keeps you signed in; it is removed when you sign out. Your browser also stores your interface preferences. Both
-		are needed for the site to work, neither is read by anyone else, and neither follows you to another site.
+		There are no analytics, ads, or third-party trackers. The only cookie set is strictly necessary to keep you logged in, 
+		and it is deleted the moment you log out. Your board and interface preferences, as well as your device-specific encryption key, are saved locally in your browser.
+		These elements are essential for the app to function, are never shared with anyone, and do not track you across other websites.
 	</p>
 
 	<h2>Processors</h2>
@@ -57,11 +59,12 @@
 
 	<h2>Retention</h2>
 	<p>
-		Account data is kept until you delete your account. An account that is never confirmed by email is deleted
-		automatically. Deleting your account removes your username, email address, password hash, collections, saved games,
-		sessions and agent keys, immediately and irreversibly. If a refund was ever granted, a record of it remains with no
-		link to you — the account reference is removed and only a one-way hash of the email address is kept — so that the
-		refund policy cannot be avoided by closing an account.
+		Account data is kept until you delete your account. An account that is never confirmed by email is deleted automatically. 
+		Furthermore, if you reset your password without your Recovery Code or an active signed-in device, your encrypted collections and saved games 
+		are immediately and permanently deleted, as they become mathematically unreadable. Deleting your account removes your username, email address, 
+		password hash, collections, saved games, sessions and agent keys, immediately and irreversibly. If a refund was ever granted,
+		a record of it remains with no link to you — the account reference is removed and only a one-way hash of the email address is kept 
+		— so that the refund policy cannot be avoided by closing an account.
 	</p>
 
 	<h2>Your rights</h2>
@@ -78,7 +81,12 @@
 	</p>
 
 	<h2>Children</h2>
-	<p>The service is not intended for anyone under 16.</p>
+	<p> 
+		The service is not intended for anyone under 16, and we do not knowingly collect personal data from children. 
+		If you believe an account belongs to someone under 16, please contact PremovedPrep at
+		<a href="mailto:contact@premoved.com">contact&#64;premoved.com</a> 
+		and the account will be deleted immediately. 
+	</p>
 
 	<h2>Changes</h2>
 	<p>The date above changes when this policy does. A material change is announced by email.</p>
