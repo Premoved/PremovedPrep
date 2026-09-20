@@ -169,4 +169,15 @@ export interface StorageUsage {
 	 * goes further than it did - but the figure a person sees is the one they actually occupy.
 	 */
 	readonly bytesMaxRequest?: number;
+	/**
+	 * What each collection occupies, keyed by its id, when the server breaks the figure down.
+	 *
+	 * The allowance is two megabytes for the whole account, so deciding what to keep means deciding
+	 * about one collection against another - and a game count does not answer that: forty short
+	 * games are smaller than one heavily annotated study.
+	 *
+	 * Optional: an older server does not send it, and the interface then shows no size rather than
+	 * a wrong one.
+	 */
+	readonly perCollection?: Readonly<Record<string, number>>;
 }

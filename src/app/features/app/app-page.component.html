@@ -1,0 +1,60 @@
+<section class="page">
+	<header class="intro">
+		<app-desktop-app-logo class="mark"></app-desktop-app-logo>
+		<div>
+			<h1>Desktop app</h1>
+			<p>
+				An offline application with all the tools of this site, that enables you to use your own game archive as the Database, your own chess engine for analysis, and as much storage as your disk has.
+			</p>
+		</div>
+	</header>
+
+	@if (released()) {
+		<div class="card plan">
+			<h2>Premoved subscription</h2>
+		</div>
+	}
+
+	@if (mayDownload()) {
+		<div class="card downloads">
+			<h2>Download</h2>
+			<div class="builds">
+				@for (download of downloads; track download.platform) {
+					<a class="build" [href]="download.url" rel="noopener">
+						<span class="build-platform">{{ download.platform }}</span>
+						<span class="build-detail">{{ download.detail }}</span>
+					</a>
+				}
+			</div>
+			<p class="muted small">
+				Every build, with its checksums and release notes, is on
+				<a [href]="releasesUrl" target="_blank" rel="noopener">the releases page</a>.
+			</p>
+		</div>
+	} @else if (!auth.isLoggedIn()) {
+		<div class="card">
+			<p>Sign in to access all features.</p>
+			<p class="muted small"><a routerLink="/login">Sign in</a> or <a routerLink="/register">create an account</a>.</p>
+		</div>
+	} @else if (released()) {
+		<div class="card">
+			<h2>Premoved subscription</h2>
+			<p>The desktop app is part of Premoved subscription.</p>
+			<p class="muted small">
+				Start one from <a routerLink="/settings" fragment="account">Settings</a>, and the downloads appear here.
+			</p>
+		</div>
+	} @else {
+		<div class="card">
+			<h2>Coming soon...</h2>
+			<p>The app is currently under development.</p>
+			<p class="muted small">
+				The rest of this site is unaffected by its release, and everything available here today stays free.
+			</p>
+		</div>
+	}
+
+	<p class="muted small source">
+		The source is at <a [href]="sourceUrl" target="_blank" rel="noopener">{{ sourceUrl }}</a>.
+	</p>
+</section>

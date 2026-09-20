@@ -1091,8 +1091,8 @@ export class CollectionViewComponent {
 			/** The refusal quotes the allowance, not the request cap: the allowance is what it is about. */
 			const quota = this.cloud.usage()?.bytesQuota ?? limit;
 			this.notify.error(
-				`That file is ${megabytes(file.size)} MB. Each user is allocated only ${megabytes(quota)} MB ` +
-					`of cloud storage. Use the desktop agent to import it locally.`,
+				`That file is ${megabytes(file.size)} MB. This account is allocated ${megabytes(quota)} MB ` +
+					`of cloud storage. Keep a file this size on your own disk, with the desktop app.`,
 			);
 			return;
 		}
@@ -1132,7 +1132,7 @@ export class CollectionViewComponent {
 			const unreadable = result.skipped > 0 ? ` ${result.skipped} could not be read.` : '';
 			this.notify.error(
 				`${total}${detail}. ${result.skippedForSpace} left out — your cloud storage is full. ` +
-					`Make room, or connect a computer with the Desktop agent, and import the file again to get the rest.` +
+					`Make room, or keep the file on your own disk with the desktop app, and import it again to get the rest.` +
 					unreadable,
 			);
 			return;

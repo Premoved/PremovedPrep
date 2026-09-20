@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { access, copyFile, mkdir, readdir } from 'node:fs/promises';
+import { access, copyFile, mkdir, readdir, stat } from 'node:fs/promises';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,18 +14,26 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 
 async function outputDir() {
+	// The newest one, not the first: there is more than one application output now - the site's and
+	// the desktop shell's - and the notices belong to the build that has just run, which is the one
+	// whose folder was written last. Picking by name would put them in whichever sorts first and
+	// leave the other build conveying GPL code without its terms.
 	const projects = await readdir(DIST, { withFileTypes: true });
+	let newest = null;
 	for (const project of projects) {
 		if (!project.isDirectory()) continue;
 		const browser = join(DIST, project.name, 'browser');
 		try {
 			await access(browser);
-			return { project: join(DIST, project.name), browser };
+			const { mtimeMs } = await stat(browser);
+			if (newest === null || mtimeMs > newest.mtimeMs) {
+				newest = { project: join(DIST, project.name), browser, mtimeMs };
+			}
 		} catch {
 			// Not an application build output; keep looking.
 		}
 	}
-	return null;
+	return newest;
 }
 
 async function main() {

@@ -18,5 +18,9 @@
 /players             /search                  301
 /sitemap-players.xml /sitemap-opponents.xml   301
 
+# The Desktop Agent became the desktop app, and its page moved with it. The router redirects this
+# too, for a link followed inside the application; this is for the ones that arrive cold.
+/agent               /app                     301
+
 # Every other path is a route of the single-page application, answered by its shell.
 /*  /index.html  200

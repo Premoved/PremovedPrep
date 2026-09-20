@@ -81,14 +81,6 @@
 					</button>
 				</div>
 
-				@if (canFilterSource()) {
-					<div class="source-toggle" role="group" aria-label="Where to look">
-						<button type="button" [class.active]="source() === 'all'" (click)="setSource('all')">All</button>
-						<button type="button" [class.active]="source() === 'cloud'" (click)="setSource('cloud')">Cloud</button>
-						<button type="button" [class.active]="source() === 'local'" (click)="setSource('local')">Local</button>
-					</div>
-				}
-
 				<label class="search-field">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -149,7 +141,14 @@
 		<p class="notice">No collections match &ldquo;{{ search() }}&rdquo;.</p>
 	}
 
-	@if (showCloud()) {
+	@if (auth.isLoggedIn()) {
+		@if (storage(); as usage) {
+			<h2 class="shelf-heading">
+				In the cloud
+				<span class="shelf-figure">&mdash; {{ size(usage.bytesUsed) }} / {{ size(usage.bytesQuota) }}</span>
+			</h2>
+		}
+
 		<div class="grid">
 			@for (card of cards(); track card.collection.id; let i = $index) {
 				<button
@@ -180,50 +179,13 @@
 					</span>
 					<span class="card-count">
 						{{ card.collection.itemCount }} {{ card.collection.itemCount === 1 ? 'game' : 'games' }}
+						@if (cloudBytes(card.collection.id); as bytes) {
+							· {{ size(bytes) }}
+						}
 					</span>
 				</button>
 			}
 		</div>
-	}
-
-	@if (showLocal() && (localCards().length > 0 || localLoading())) {
-		<section class="local-shelf">
-			<h2 class="shelf-heading">
-				On this computer
-				@if (localFolderPath(); as path) {
-					<code class="shelf-path">{{ path }}</code>
-				}
-			</h2>
-
-			@if (localLoading() && localCards().length === 0) {
-				<p class="notice">Reading the linked folder&hellip;</p>
-			}
-
-			<div class="grid">
-				@for (card of localCards(); track card.collection.id) {
-					<button
-						type="button"
-						class="card local"
-						(click)="openLocal(card.collection)"
-						[attr.aria-label]="card.collection.name + ', ' + card.collection.itemCount + ' games, on this computer'"
-					>
-						<app-collection-icon class="card-icon" icon="book"></app-collection-icon>
-						<span class="card-name">
-							@if (card.highlight.match) {
-								{{ card.highlight.pre }}<mark>{{ card.highlight.match }}</mark
-								>{{ card.highlight.post }}
-							} @else {
-								{{ card.collection.name }}
-							}
-						</span>
-						<span class="card-count">
-							{{ card.collection.itemCount }}{{ card.collection.truncated ? '+' : '' }}
-							{{ card.collection.itemCount === 1 ? 'game' : 'games' }} · {{ size(card.collection.bytes) }}
-						</span>
-					</button>
-				}
-			</div>
-		</section>
 	}
 </div>
 

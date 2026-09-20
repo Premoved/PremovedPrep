@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-	selector: 'app-desktop-agent-logo',
+	selector: 'app-desktop-app-logo',
 	imports: [],
 	template: `
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="53.2863 191.186 148.0488 174.3392">
@@ -151,4 +151,4 @@ import { Component } from '@angular/core';
 		`,
 	],
 })
-export class DesktopAgentLogoComponent {}
+export class DesktopAppLogoComponent {}

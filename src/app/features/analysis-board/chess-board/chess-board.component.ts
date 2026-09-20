@@ -30,7 +30,7 @@ import { Color, PieceType, SquareName } from '../../../core/models/chess-enums';
 import { MoveNode, PlyNode } from '../../../core/models/move-node.model';
 import { NotificationService } from '../../../core/services/notification.service';
 import { PreferencesStore } from '../../../core/services/preferences.store';
-import { MoveSoundService } from '../../../core/sound/move-sound.service';
+import { BoardSound, MoveSoundService } from '../../../core/sound/move-sound.service';
 import { arrowBrushes } from '../../../core/models/preferences.model';
 import { GamePreviewStore } from '../state/game-preview.store';
 import { MoveTreeStore } from '../state/move-tree.store';
@@ -486,7 +486,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 		const step = previous && !previous.isRoot && previous.parent === current ? previous : current;
 		if (step.isRoot) return;
 
-		this.sounds.play(step.san.includes('x') ? 'capture' : 'move', true);
+		this.sounds.play(soundFor(step.san), true);
 	}
 
 	selectMove(node: MoveNode): void {
@@ -1020,4 +1020,18 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 
 		return (String.fromCharCode(97 + finalCol) + (finalRow + 1)) as Key;
 	}
+}
+
+/**
+ * Which recording a move gets.
+ *
+ * Castling is its own sound because it is its own move - two pieces, and the one moment in a game
+ * where the board changes in two places at once. SAN spells it "O-O" or "O-O-O", with an optional
+ * check or mate mark after it.
+ */
+function soundFor(san: string): BoardSound {
+	if (/^O-O(-O)?[+#]?$/.test(san)) {
+		return 'castle';
+	}
+	return san.includes('x') ? 'capture' : 'move';
 }

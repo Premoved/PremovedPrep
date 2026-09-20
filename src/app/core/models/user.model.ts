@@ -53,15 +53,41 @@ export interface SessionSummary {
 	readonly lastUsedAt: string;
 }
 
+/** How the one plan - "Premoved subscription" - stands for this account. */
 export interface SubscriptionView {
+	/** Whether it can be bought at all: the application is out, and Stripe is configured. */
 	readonly selling: boolean;
-	readonly entitled: boolean;
-	/** Minor units: 299 is EUR 2.99. */
-	readonly priceMinor: number;
-	readonly currency: string;
+	/** What unlocks the desktop application and the larger cloud allowance. */
+	readonly active: boolean;
 	readonly status: SubscriptionStatus;
+	readonly interval: PlanInterval | null;
+	/** Minor units: 124 is EUR 1.24. */
+	readonly monthlyPriceMinor: number;
+	readonly yearlyPriceMinor: number;
+	readonly currency: string;
 	readonly renewsAt: string | null;
 	readonly canceledAt: string | null;
-	readonly refundEligible: boolean;
-	readonly refundWindowDays: number;
+	readonly cancelAtPeriodEnd: boolean;
+	/** Whether there is a Stripe customer behind this, and therefore a portal to open. */
+	readonly managed: boolean;
+	readonly storageQuotaBytes: number;
+}
+
+export type PlanInterval = 'MONTH' | 'YEAR';
+
+/** Where to send the browser next. Every billing endpoint answers with this and nothing else. */
+export interface BillingRedirect {
+	readonly url: string;
+}
+
+export type AppStage = 'PREVIEW' | 'LAUNCHED';
+
+/**
+ * Whether this account may run the desktop application, as the server decides it. `reason` is OK,
+ * PREVIEW or PLAN - what the refusal is, not why an account was let through.
+ */
+export interface DesktopAppAccess {
+	readonly allowed: boolean;
+	readonly reason: 'OK' | 'PREVIEW' | 'PLAN';
+	readonly stage: AppStage;
 }

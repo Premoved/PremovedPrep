@@ -177,7 +177,7 @@ export class SessionService {
 		return request;
 	}
 
-	/** The token the Desktop Agent is handed, renewed first if the one in hand is nearly out. */
+	/** A token with life left in it, for a caller that cannot retry: renewed first if it is nearly out. */
 	async freshToken(): Promise<string | null> {
 		if (accessTokenFresh(60_000)) {
 			return readAccessToken();

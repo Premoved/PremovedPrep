@@ -3,7 +3,6 @@ import { DrawShape } from '@lichess-org/chessground/draw';
 import { Key } from '@lichess-org/chessground/types';
 import {
 	DeviceCapabilities,
-	LocalEngineAvailability,
 	SEARCH_TIME_STEPS,
 	maxThreads,
 	readDeviceCapabilities,
@@ -12,9 +11,7 @@ import {
 	unsupportedReason,
 } from '../../../core/engine/engine-capabilities';
 import { DEFAULT_ENGINE_ID, EngineDefinition, engineById } from '../../../core/engine/engine-catalogue';
-import { EngineTransport, createLocalEngine, createWasmEngine } from '../../../core/engine/engine-transport';
-import { AgentBridgeService } from '../../../core/agent/agent-bridge.service';
-import { AgentSelectionStore } from '../../../core/agent/agent-selection.store';
+import { EngineTransport, createWasmEngine } from '../../../core/engine/engine-transport';
 import { EngineLine, parseInfoLine, parseUciMove } from '../../../core/engine/uci';
 import { UciSession } from '../../../core/engine/uci-session';
 import { GamePreviewStore } from './game-preview.store';
@@ -36,9 +33,6 @@ const ARROW_WIDTHS = [13, 10, 8, 6, 5];
 export class EngineStore {
 	private readonly tree = inject(MoveTreeStore);
 	private readonly preview = inject(GamePreviewStore);
-
-	private readonly bridge = inject(AgentBridgeService);
-	private readonly agentSelection = inject(AgentSelectionStore);
 
 	private readonly boardTree = computed(() => this.preview.tree() ?? this.tree);
 
@@ -86,36 +80,15 @@ export class EngineStore {
 		return lines.map((line, rank) => arrowFor(line, line.multipv === hovered ? 0 : rank));
 	});
 
-	private readonly localAvailability = computed(() => ({
-		connected: this.bridge.connected(),
-		selected: this.agentSelection.engine() !== null,
-	}));
+	readonly maxThreads = computed(() => maxThreads(this.capabilities, this._definition()));
 
-	readonly maxThreads = computed(() => {
-		const local = this.localEngine();
-		if (local) {
-			return local.threads ? Math.max(1, local.maxThreads ?? this.capabilities.cores) : 1;
-		}
-		return maxThreads(this.capabilities, this._definition());
-	});
-
-	readonly recommendedThreads = computed(() => {
-		const local = this.localEngine();
-		if (local) {
-			return local.threads ? Math.max(1, Math.min(this.maxThreads(), this.capabilities.cores - 1)) : 1;
-		}
-		return recommendedThreads(this.capabilities, this._definition());
-	});
+	readonly recommendedThreads = computed(() => recommendedThreads(this.capabilities, this._definition()));
 
 	readonly recommendedHashMb = computed(() => recommendedHashMb(this.capabilities, this._definition()));
 
-	readonly unsupported = computed(() =>
-		unsupportedReason(this._definition(), this.capabilities, this.localAvailability()),
-	);
+	readonly unsupported = computed(() => unsupportedReason(this._definition(), this.capabilities));
 
-	readonly localEngine = computed(() => (this._definition().kind === 'local' ? this.agentSelection.engine() : null));
-
-	readonly displayName = computed(() => this.localEngine()?.name ?? this._definition().shortLabel);
+	readonly displayName = computed(() => this._definition().shortLabel);
 
 	private transport: EngineTransport | null = null;
 	private loadedKey = '';
@@ -129,13 +102,12 @@ export class EngineStore {
 			const definition = this._definition();
 			const settings = this._settings();
 			const fen = this.positionFen();
-			const local = this.localAvailability();
 
 			if (!enabled) {
 				this.shutDown();
 				return;
 			}
-			this.start(definition, settings, fen, local);
+			this.start(definition, settings, fen);
 		});
 	}
 
@@ -171,13 +143,8 @@ export class EngineStore {
 		};
 	}
 
-	private start(
-		definition: EngineDefinition,
-		settings: EngineSettings,
-		fen: string,
-		local: LocalEngineAvailability,
-	): void {
-		const reason = unsupportedReason(definition, this.capabilities, local);
+	private start(definition: EngineDefinition, settings: EngineSettings, fen: string): void {
+		const reason = unsupportedReason(definition, this.capabilities);
 		if (reason) {
 			this.shutDown();
 			this._status.set('failed');
@@ -201,14 +168,8 @@ export class EngineStore {
 			this._error.set(this.withEngineOutput(message));
 		};
 
-		if (definition.kind === 'local') {
-			const local = this.agentSelection.engine();
-			if (!local) return;
-			this.transport = createLocalEngine(this.bridge, local.id, (line) => this.onLine(line), onError);
-		} else {
-			if (!definition.worker) return;
-			this.transport = createWasmEngine(definition.worker, (line) => this.onLine(line), onError);
-		}
+		if (!definition.worker) return;
+		this.transport = createWasmEngine(definition.worker, (line) => this.onLine(line), onError);
 
 		const setOptions: string[] = [];
 		if (definition.threads) setOptions.push(`name Threads value ${settings.threads}`);
@@ -234,8 +195,7 @@ export class EngineStore {
 
 	/** What has to change for the engine to be rebuilt. */
 	private keyFor(definition: EngineDefinition, settings: EngineSettings): string {
-		const local = definition.kind === 'local' ? (this.agentSelection.engine()?.id ?? 'none') : '';
-		return [definition.id, local, settings.threads, settings.hashMb, settings.multiPv].join('|');
+		return [definition.id, settings.threads, settings.hashMb, settings.multiPv].join('|');
 	}
 
 	private search(fen: string): void {

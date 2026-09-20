@@ -47,25 +47,7 @@ export function hashStepsFor(engine: EngineDefinition): readonly number[] {
 	return HASH_STEPS_MB.filter((step) => step <= engine.maxHashMb);
 }
 
-export interface LocalEngineAvailability {
-	readonly connected: boolean;
-	readonly selected: boolean;
-}
-
-export function unsupportedReason(
-	engine: EngineDefinition,
-	caps: DeviceCapabilities,
-	local?: LocalEngineAvailability,
-): string | null {
-	if (engine.kind === 'local') {
-		if (!local?.connected) {
-			return 'The Desktop Agent is not connected. Open it, or set it up from the Desktop agent page.';
-		}
-		if (!local.selected) {
-			return 'No local engine is selected. Choose one on the Desktop agent page.';
-		}
-		return null;
-	}
+export function unsupportedReason(engine: EngineDefinition, caps: DeviceCapabilities): string | null {
 	if (engine.requiresIsolation && !caps.isolated) {
 		return 'Needs a cross-origin isolated page; this one is not isolated, so shared memory is unavailable.';
 	}

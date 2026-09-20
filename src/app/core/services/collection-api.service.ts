@@ -74,23 +74,51 @@ export class CollectionApiService {
 			.pipe(switchMap((row) => from(this.openCollection(row))));
 	}
 
+	/**
+	 * A new folder - and, for a repertoire, the empty main line it is created holding.
+	 *
+	 * A repertoire without a trunk is a folder that cannot do the thing a repertoire is for: model
+	 * games attach to theory, and with no theory there is nowhere for any of them to go. The server
+	 * wrote that first entry itself until the entries were sealed; it has no key now, so the sealed
+	 * document is sent with the folder and filed in the same transaction.
+	 */
 	create(
 		kind: CollectionKind,
 		name: string,
 		icon: string,
 		color?: RepertoireColor | null,
+		/**
+		 * False when the caller is about to import a file that already holds theory - a copy of a
+		 * repertoire from somewhere else. Seeding then would leave the copy with an empty main line
+		 * in front of the real ones, which is not what was copied.
+		 */
+		seedTrunk = true,
 	): Observable<CollectionSummary> {
-		return from(this.vault.seal('collection-name', name)).pipe(
-			switchMap((nameCipher) =>
-				this.http.post<WireCollectionSummary>(this.baseUrl, {
-					kind,
-					nameCipher,
-					icon,
-					color: color ?? null,
-				}),
-			),
+		return from(this.newFolderBody(kind, name, icon, color ?? null, seedTrunk)).pipe(
+			switchMap((body) => this.http.post<WireCollectionSummary>(this.baseUrl, body)),
 			switchMap((row) => from(this.openCollection(row))),
 		);
+	}
+
+	private async newFolderBody(
+		kind: CollectionKind,
+		name: string,
+		icon: string,
+		color: RepertoireColor | null,
+		seedTrunk: boolean,
+	): Promise<Record<string, unknown>> {
+		return {
+			kind,
+			nameCipher: await this.vault.seal('collection-name', name),
+			icon,
+			color,
+			trunkPayload: kind === 'REPERTOIRE' && seedTrunk ? await this.sealedEmptyTrunk() : null,
+		};
+	}
+
+	/** The one document every repertoire starts with, sealed. */
+	private sealedEmptyTrunk(): Promise<string> {
+		return this.sealItem({ pgn: EMPTY_MAIN_LINE_PGN, title: null, author: null });
 	}
 
 	update(id: number, changes: { name?: string; icon?: string; sortOrder?: number }): Observable<CollectionSummary> {
@@ -460,7 +488,7 @@ export class CollectionApiService {
 				collectionId: source.id,
 				nameCipher: name === null ? null : await this.vault.seal('collection-name', name),
 				items: retyped,
-				trunkPayload: needsTrunk ? await this.sealItem({ pgn: EMPTY_MAIN_LINE_PGN, title: null, author: null }) : null,
+				trunkPayload: needsTrunk ? await this.sealedEmptyTrunk() : null,
 			});
 		}
 		return planned;

@@ -220,7 +220,7 @@ nav {
 	border-top: 1px solid var(--bg-border);
 }
 
-.agent-slot {
+.app-slot {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
@@ -675,7 +675,7 @@ nav {
 	display: none;
 }
 
-.shell.mobile .agent-slot {
+.shell.mobile .app-slot {
 	justify-content: flex-start;
 	padding-bottom: 0;
 }

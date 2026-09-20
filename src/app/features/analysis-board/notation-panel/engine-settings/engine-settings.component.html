@@ -4,9 +4,7 @@
 		@for (definition of catalogue; track definition.id) {
 			<option [value]="definition.id" [selected]="definition.id === engine.definition().id">
 				{{ definition.label }}
-				@if (definition.kind === 'local' && localEngineName()) {
-					&nbsp;· {{ localEngineName() }}
-				} @else if (definition.downloadMb > 0) {
+				@if (definition.downloadMb > 0) {
 					&nbsp;· {{ definition.downloadMb }}MB
 				}
 			</option>

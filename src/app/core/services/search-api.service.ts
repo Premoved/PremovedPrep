@@ -1,9 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-/** `from` is aliased because opponentGames takes a parameter of the same name. */
-import { Observable, from as observableFrom, firstValueFrom } from 'rxjs';
-import { AgentBridgeService } from '../agent/agent-bridge.service';
-import { AgentSelectionStore } from '../agent/agent-selection.store';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { OpeningTree } from '../models/opening-tree.model';
 import {
@@ -20,12 +17,10 @@ const PAGE_SIZE = 100;
 
 export const RECENT_PREVIEW_SIZE = 30;
 
-/** /api/search and the FIDE autocomplete. Routes to the Desktop Agent when a local database is selected. */
+/** /api/search and the FIDE autocomplete. */
 @Injectable({ providedIn: 'root' })
 export class SearchApiService {
 	private readonly http = inject(HttpClient);
-	private readonly bridge = inject(AgentBridgeService);
-	private readonly selection = inject(AgentSelectionStore);
 	private readonly baseUrl = `${environment.apiBaseUrl}/search`;
 
 	/** Autocomplete for the opponent box: always the FIDE list. */
@@ -35,43 +30,8 @@ export class SearchApiService {
 		});
 	}
 
-	/** Autocomplete for the Advanced tab's name boxes: the selected archive's own names. */
-	suggestArchivePlayers(query: string, limit = 12): Observable<PlayerSuggestion[]> {
-		const local = this.selection.database();
-		if (!local) {
-			return this.suggestPlayers(query, limit);
-		}
-		return observableFrom(
-			this.bridge
-				.request<LocalPlayerSuggestion[]>('db.players', { databaseId: local.id, q: query, limit })
-				.then<PlayerSuggestion[]>((rows) =>
-					rows.map((row) => ({
-						/** 0 is the agreed 'not a FIDE player' id for a name taken from a PGN. */
-						fideId: 0,
-						name: row.name,
-						federation: null,
-						title: null,
-						standardRating: row.topElo,
-					})),
-				),
-		);
-	}
-
 	playerProfile(fideId: number): Observable<PlayerProfile> {
 		return this.http.get<PlayerProfile>(`${this.baseUrl}/player/${fideId}`);
-	}
-
-	private readonly identities = new Map<number, Promise<PlayerIdentity>>();
-
-	private identity(fideId: number): Promise<PlayerIdentity> {
-		let cached = this.identities.get(fideId);
-		if (!cached) {
-			cached = firstValueFrom(this.http.get<PlayerIdentity>(`${this.baseUrl}/player/${fideId}/identity`)).catch(
-				() => ({ keys: [], spellings: [] }) as PlayerIdentity,
-			);
-			this.identities.set(fideId, cached);
-		}
-		return cached;
 	}
 
 	opponentGames(
@@ -83,25 +43,6 @@ export class SearchApiService {
 		ascending: boolean,
 		page: number,
 	): Observable<SearchResultPage> {
-		const local = this.selection.database();
-		if (local) {
-			return observableFrom(
-				this.identity(fideId).then((identity) =>
-					this.bridge.request<SearchResultPage>('db.opponent', {
-						databaseId: local.id,
-						nameKeys: identity.keys,
-						color,
-						from: from ?? undefined,
-						to: to ?? undefined,
-						sort,
-						ascending,
-						page,
-						size: PAGE_SIZE,
-					}),
-				),
-			);
-		}
-
 		let params = new HttpParams()
 			.set('fideId', fideId)
 			.set('color', color)
@@ -116,22 +57,6 @@ export class SearchApiService {
 	}
 
 	opponentOpeningTree(scope: OpponentScope, fen: string): Observable<OpeningTree> {
-		const local = this.selection.database();
-		if (local) {
-			return observableFrom(
-				this.identity(scope.fideId).then((identity) =>
-					this.bridge.request<OpeningTree>('db.opponentTree', {
-						databaseId: local.id,
-						nameKeys: identity.keys,
-						color: scope.color,
-						from: scope.from ?? undefined,
-						to: scope.to ?? undefined,
-						fen,
-					}),
-				),
-			);
-		}
-
 		let params = new HttpParams().set('fideId', scope.fideId).set('color', scope.color).set('fen', fen);
 		params = withOptional(params, 'from', scope.from);
 		params = withOptional(params, 'to', scope.to);
@@ -140,20 +65,6 @@ export class SearchApiService {
 	}
 
 	recent(sort: SearchSortKey, ascending: boolean, size = RECENT_PREVIEW_SIZE): Observable<SearchResultPage> {
-		const local = this.selection.database();
-		if (local) {
-			return observableFrom(
-				this.bridge.request<SearchResultPage>('db.search', {
-					databaseId: local.id,
-					results: [],
-					sort,
-					ascending,
-					page: 0,
-					size,
-				}),
-			);
-		}
-
 		const params = new HttpParams().set('sort', sort).set('ascending', ascending).set('size', size);
 		return this.http.get<SearchResultPage>(`${this.baseUrl}/recent`, { params });
 	}
@@ -164,32 +75,6 @@ export class SearchApiService {
 		ascending: boolean,
 		page: number,
 	): Observable<SearchResultPage> {
-		/** The agent takes the criteria as a JSON object rather than as query parameters. */
-		const local = this.selection.database();
-		if (local) {
-			return observableFrom(
-				this.bridge.request<SearchResultPage>('db.search', {
-					databaseId: local.id,
-					white: blankToUndefined(criteria.white),
-					black: blankToUndefined(criteria.black),
-					ignoreColours: criteria.ignoreColours,
-					whiteEloMin: numberOrUndefined(criteria.whiteEloMin),
-					whiteEloMax: numberOrUndefined(criteria.whiteEloMax),
-					blackEloMin: numberOrUndefined(criteria.blackEloMin),
-					blackEloMax: numberOrUndefined(criteria.blackEloMax),
-					from: blankToUndefined(criteria.from),
-					to: blankToUndefined(criteria.to),
-					event: blankToUndefined(criteria.event),
-					eco: blankToUndefined(criteria.eco),
-					results: criteria.results,
-					sort,
-					ascending,
-					page,
-					size: PAGE_SIZE,
-				}),
-			);
-		}
-
 		let params = new HttpParams()
 			.set('sort', sort)
 			.set('ascending', ascending)
@@ -221,29 +106,4 @@ export class SearchApiService {
 function withOptional(params: HttpParams, key: string, value: string | null | undefined): HttpParams {
 	const trimmed = value?.trim();
 	return trimmed ? params.set(key, trimmed) : params;
-}
-
-function blankToUndefined(value: string | null | undefined): string | undefined {
-	const trimmed = value?.trim();
-	return trimmed ? trimmed : undefined;
-}
-
-function numberOrUndefined(value: string | null | undefined): number | undefined {
-	const trimmed = value?.trim();
-	if (!trimmed) {
-		return undefined;
-	}
-	const parsed = Number(trimmed);
-	return Number.isFinite(parsed) ? parsed : undefined;
-}
-
-interface PlayerIdentity {
-	readonly keys: readonly string[];
-	readonly spellings: readonly string[];
-}
-
-interface LocalPlayerSuggestion {
-	readonly name: string;
-	readonly games: number;
-	readonly topElo: number | null;
 }

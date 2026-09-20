@@ -253,6 +253,7 @@ export class GameResultsComponent {
 	}
 
 	openInNewTab(row: SearchResultGame): void {
+		this.closeMenu();
 		window.open(`/analysis?game=${row.id}`, '_blank', 'noopener');
 	}
 
@@ -261,7 +262,9 @@ export class GameResultsComponent {
 	onContextMenu(event: MouseEvent, game: SearchResultGame): void {
 		event.preventDefault();
 		event.stopPropagation();
-		this.openMenu.set({ game, anchor: (event.currentTarget as HTMLElement).getBoundingClientRect() });
+		/** The pointer, not the row. A row here is the width of the table, so anchoring the menu to it
+		    put the menu against the far edge of the screen rather than under the cursor. */
+		this.openMenu.set({ game, anchor: new DOMRect(event.clientX, event.clientY, 0, 0) });
 	}
 
 	@HostListener('document:click')

@@ -12,7 +12,6 @@ import { engineById } from './engine-catalogue';
 const MULTI = engineById('sf18-lite');
 const SINGLE = engineById('sf18-lite-single');
 const ASM = engineById('sf18-asm');
-const LOCAL = engineById('local');
 
 function device(overrides: Partial<DeviceCapabilities> = {}): DeviceCapabilities {
 	return { cores: 8, memoryGb: 8, isolated: true, ...overrides };
@@ -80,18 +79,5 @@ describe('unsupportedReason', () => {
 
 	it('allows it once the headers are in place', () => {
 		expect(unsupportedReason(MULTI, device({ isolated: true }))).toBeNull();
-	});
-
-	it('refuses the local entry when the caller cannot see the agent at all', () => {
-		expect(unsupportedReason(LOCAL, device())).toContain('Desktop Agent');
-	});
-
-	it('refuses it when the agent is there but no engine has been chosen', () => {
-		const reason = unsupportedReason(LOCAL, device(), { connected: true, selected: false });
-		expect(reason).toContain('No local engine is selected');
-	});
-
-	it('allows it once the agent is connected and an engine is chosen', () => {
-		expect(unsupportedReason(LOCAL, device(), { connected: true, selected: true })).toBeNull();
 	});
 });

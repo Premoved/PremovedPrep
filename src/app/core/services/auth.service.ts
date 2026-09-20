@@ -280,7 +280,7 @@ export class AuthService {
 		return this.session.restore();
 	}
 
-	/** For the Desktop Agent handshake, which needs a token that will still be valid when it lands. */
+	/** For a call that needs a token still valid when it lands rather than when it was asked for. */
 	freshAccessToken(): Promise<string | null> {
 		return this.session.freshToken();
 	}

@@ -11,12 +11,10 @@ import {
 	CollectionKind,
 	CollectionSummary,
 	RepertoireColor,
+	StorageUsage,
 } from '../../core/models/collection.model';
 import { AuthService } from '../../core/services/auth.service';
 import { SignedOutNoticeComponent } from '../../shared/signed-out/signed-out-notice.component';
-import { AgentBridgeService } from '../../core/agent/agent-bridge.service';
-import { LocalShelfService } from '../../core/agent/local-shelf.service';
-import { LocalFolderCollection } from '../../core/agent/agent.models';
 import { CollectionIconComponent } from './collection-icon.component';
 import { BishopLogoComponent } from '../../shared/logo/bishop-logo.component';
 import { RookLogoComponent } from '../../shared/logo/rook-logo.component';
@@ -41,13 +39,6 @@ interface CollectionCard {
 }
 
 type SortMode = 'manual' | 'alpha-asc' | 'alpha-desc';
-
-type ShelfSource = 'all' | 'cloud' | 'local';
-
-interface LocalCard {
-	readonly collection: LocalFolderCollection;
-	readonly highlight: Highlight;
-}
 
 /** The grid of collections. Serves both /library and /repertoire. */
 const MENU_FOOTPRINT = { width: 208, height: 132 };
@@ -79,8 +70,6 @@ export class CollectionsPageComponent {
 	private readonly confirmDialog = inject(ConfirmService);
 	private readonly clipboard = inject(ClipboardStore);
 	readonly auth = inject(AuthService);
-	private readonly localShelf = inject(LocalShelfService);
-	readonly bridge = inject(AgentBridgeService);
 
 	readonly kind = input.required<CollectionKind>();
 	readonly title = input('Collections');
@@ -113,40 +102,13 @@ export class CollectionsPageComponent {
 	readonly saving = signal(false);
 
 	readonly isRepertoire = computed(() => this.kind() === 'REPERTOIRE');
-	readonly isEmpty = computed(
-		() => !this.loading() && this.collections().length === 0 && this.localCollections().length === 0,
-	);
+	readonly isEmpty = computed(() => !this.loading() && this.collections().length === 0);
 
 	readonly sortMode = signal<SortMode>('manual');
 	readonly search = signal('');
 
-	readonly source = signal<ShelfSource>('all');
-	readonly localCollections = signal<readonly LocalFolderCollection[]>([]);
-	readonly localLoading = signal(false);
-
-	readonly canFilterSource = computed(() => this.bridge.connected());
-
-	readonly localFolderPath = computed(() => this.bridge.backup()?.root ?? null);
-
-	readonly showCloud = computed(() => this.auth.isLoggedIn() && (!this.canFilterSource() || this.source() !== 'local'));
-	readonly showLocal = computed(() => this.auth.isLoggedIn() && this.canFilterSource() && this.source() !== 'cloud');
-
-	readonly localCards = computed<readonly LocalCard[]>(() => {
-		const query = this.search().trim().toLowerCase();
-		let list = this.localCollections();
-
-		if (query) {
-			list = list.filter((collection) => collection.name.toLowerCase().includes(query));
-		}
-
-		const mode = this.sortMode();
-		if (mode !== 'manual') {
-			const direction = mode === 'alpha-asc' ? 1 : -1;
-			list = [...list].sort((a, b) => direction * a.name.localeCompare(b.name));
-		}
-
-		return list.map((collection) => ({ collection, highlight: highlightMatch(collection.name, query) }));
-	});
+	/** The account's allowance, so what is left is visible before deciding what to keep where. */
+	readonly storage = signal<StorageUsage | null>(null);
 
 	/** Dragging only works in the server's order, unsorted and unfiltered. */
 	readonly canReorder = computed(() => this.sortMode() === 'manual' && this.search().trim().length === 0);
@@ -169,10 +131,7 @@ export class CollectionsPageComponent {
 	});
 
 	readonly searchEmpty = computed(
-		() =>
-			!this.loading() &&
-			this.collections().length + this.localCollections().length > 0 &&
-			this.cards().length + this.localCards().length === 0,
+		() => !this.loading() && this.collections().length > 0 && this.cards().length === 0,
 	);
 
 	readonly dragIndex = signal<number | null>(null);
@@ -190,13 +149,6 @@ export class CollectionsPageComponent {
 			}
 			this.load(kind, color);
 		});
-
-		effect(() => {
-			const kind = this.kind();
-			const color = this.color();
-			const connected = this.bridge.connected();
-			void this.loadLocal(kind, kind === 'REPERTOIRE' ? color : null, connected);
-		});
 	}
 
 	private load(kind: CollectionKind, color: RepertoireColor | null): void {
@@ -207,6 +159,7 @@ export class CollectionsPageComponent {
 			next: (collections) => {
 				this.collections.set(collections);
 				this.loading.set(false);
+				this.loadStorage();
 			},
 			error: (err: Error) => {
 				this.error.set(err.message);
@@ -215,30 +168,27 @@ export class CollectionsPageComponent {
 		});
 	}
 
-	private async loadLocal(kind: CollectionKind, color: RepertoireColor | null, connected: boolean): Promise<void> {
-		if (!connected) {
-			this.localCollections.set([]);
-			return;
-		}
-
-		this.localLoading.set(true);
-		try {
-			this.localCollections.set(await this.localShelf.shelf(kind, color));
-		} finally {
-			this.localLoading.set(false);
-		}
-	}
-
 	private reload(): void {
 		this.load(this.kind(), this.requestColor());
 	}
 
-	setSource(source: ShelfSource): void {
-		this.source.set(source);
+	/**
+	 * The allowance, and - when the server sends it - what each collection occupies of it.
+	 *
+	 * Somebody deciding what to keep in an account with two megabytes in it is deciding about a
+	 * number, and it is not one they can work out from a game count.
+	 */
+	private loadStorage(): void {
+		this.api.storage().subscribe({
+			next: (usage) => this.storage.set(usage),
+			error: () => this.storage.set(null),
+		});
 	}
 
-	openLocal(collection: LocalFolderCollection): void {
-		void this.router.navigate([this.basePath(), 'local', collection.id]);
+	/** What one cloud collection occupies, if the server broke the figure down. */
+	cloudBytes(id: number): number | null {
+		const bytes = this.storage()?.perCollection?.[String(id)];
+		return typeof bytes === 'number' ? bytes : null;
 	}
 
 	size(bytes: number): string {

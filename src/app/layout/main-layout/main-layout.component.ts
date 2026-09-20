@@ -9,7 +9,7 @@ import { KnightLogoComponent } from '../../shared/logo/knight-logo.component';
 import { RookLogoComponent } from '../../shared/logo/rook-logo.component';
 import { BishopLogoComponent } from '../../shared/logo/bishop-logo.component';
 import { PawnLogoComponent } from '../../shared/logo/pawn-logo.component';
-import { DesktopAgentLogoComponent } from '../../shared/logo/desktop-agent-logo.component';
+import { DesktopAppLogoComponent } from '../../shared/logo/desktop-app-logo.component';
 import { ConfirmDialogComponent } from '../../shared/confirm-dialog/confirm-dialog.component';
 import { environment } from '../../../environments/environment';
 import { fitOnScreen } from '../../core/browser/menu-placement';
@@ -42,7 +42,7 @@ const NAV_MENU_FOOTPRINT = { width: 176, height: 44 };
 		RookLogoComponent,
 		BishopLogoComponent,
 		PawnLogoComponent,
-		DesktopAgentLogoComponent,
+		DesktopAppLogoComponent,
 		ConfirmDialogComponent,
 	],
 	templateUrl: './main-layout.component.html',

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import {
 	AdvancedCriteria,
 	EMPTY_ADVANCED_CRITERIA,
@@ -10,7 +10,6 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AnalyticsService } from '../../../core/analytics/analytics.service';
 import { AnalyticsEvent } from '../../../core/analytics/analytics.events';
 import { AuthService } from '../../../core/services/auth.service';
-import { AgentSelectionStore } from '../../../core/agent/agent-selection.store';
 import { SearchApiService } from '../../../core/services/search-api.service';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
 import { GameResultsComponent } from '../game-results/game-results.component';
@@ -38,12 +37,8 @@ export class AdvancedSearchComponent {
 	private readonly api = inject(SearchApiService);
 	private readonly notify = inject(NotificationService);
 	private readonly viewport = inject(ViewportService);
-	/** Which archive the page is answering from. */
-	private readonly selection = inject(AgentSelectionStore);
 	private readonly auth = inject(AuthService);
 	private readonly analytics = inject(AnalyticsService);
-
-	readonly previewLabel = computed(() => this.selection.database()?.name ?? 'the archive');
 
 	readonly results = RESULTS;
 
@@ -114,10 +109,7 @@ export class AdvancedSearchComponent {
 	);
 
 	constructor() {
-		effect(() => {
-			this.selection.database();
-			this.loadPreview();
-		});
+		this.loadPreview();
 	}
 
 	private loadPreview(): void {
@@ -184,7 +176,7 @@ export class AdvancedSearchComponent {
 
 	private fetchSuggestions(key: 'white' | 'black', query: string): void {
 		const request = ++this.suggestRequestIds[key];
-		this.api.suggestArchivePlayers(query).subscribe({
+		this.api.suggestPlayers(query).subscribe({
 			next: (list) => {
 				if (request !== this.suggestRequestIds[key]) return;
 				this.suggestionsFor(key).set(list.map((player) => player.name));
@@ -234,7 +226,6 @@ export class AdvancedSearchComponent {
 		this.analytics.capture(AnalyticsEvent.opponentSearch, {
 			mode: 'advanced',
 			authenticated: this.auth.isAuthenticated(),
-			source: this.selection.usingLocalDatabase() ? 'local' : 'cloud',
 		});
 
 		this.active = this.criteria();

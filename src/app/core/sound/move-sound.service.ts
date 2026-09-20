@@ -3,11 +3,11 @@ import { Injectable, signal } from '@angular/core';
 const MANIFEST = 'sound/manifest.json';
 const ASSET_ROOT = 'sound/';
 
-export type BoardSound = 'move' | 'capture';
+export type BoardSound = 'move' | 'capture' | 'castle';
 
 const GAIN = 0.55;
 
-/** The board's move and capture sounds, over Web Audio. */
+/** The board's move, capture and castling sounds, over Web Audio. */
 @Injectable({ providedIn: 'root' })
 export class MoveSoundService {
 	private readonly installed = signal(false);
@@ -34,7 +34,7 @@ export class MoveSoundService {
 			if (!declared || typeof declared !== 'object') return;
 
 			const found = new Map<BoardSound, readonly string[]>();
-			for (const key of ['move', 'capture'] as const) {
+			for (const key of ['move', 'capture', 'castle'] as const) {
 				const paths = declared[key];
 				if (!Array.isArray(paths)) continue;
 				const urls = paths.filter((path): path is string => typeof path === 'string' && path.length > 0);

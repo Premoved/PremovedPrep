@@ -1,5 +1,5 @@
 @if (scope() === 'database') {
-	<p class="database" [class.local]="archive.local()" [title]="archive.label()">{{ archive.label() }}</p>
+	<p class="database" [title]="archive.label()">{{ archive.label() }}</p>
 } @else if (hasHeaders()) {
 	@let game = tree.headers();
 

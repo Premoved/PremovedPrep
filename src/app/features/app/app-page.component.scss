@@ -1,0 +1,127 @@
+.page {
+	max-width: 64rem;
+	padding: 2rem 1.75rem 3rem;
+	margin: 0 auto;
+}
+
+.intro {
+	display: flex;
+	gap: 1.1rem;
+	align-items: flex-start;
+	margin-bottom: 1.5rem;
+}
+
+.intro .mark {
+	width: 3.75rem;
+	height: 3.75rem;
+	flex-shrink: 0;
+}
+
+h1 {
+	margin: 0 0 0.35rem;
+	font-size: 1.45rem;
+}
+
+.intro p {
+	margin: 0;
+	color: var(--text-muted);
+	line-height: 1.6;
+	max-width: 48rem;
+}
+
+h2 {
+	margin: 0 0 0.5rem;
+	font-size: 1.05rem;
+}
+
+.card {
+	border: 1px solid var(--bg-border);
+	border-radius: 10px;
+	background: var(--bg-elevated);
+	padding: 1.25rem;
+	margin-bottom: 1.1rem;
+}
+
+.card p {
+	max-width: 46rem;
+	line-height: 1.6;
+}
+
+.muted {
+	color: var(--text-muted);
+}
+
+.small {
+	font-size: 0.82rem;
+}
+
+.source {
+	margin-top: 1.5rem;
+}
+
+.points {
+	margin: 0;
+	padding-left: 1.1rem;
+	line-height: 1.7;
+	max-width: 46rem;
+}
+
+.points li + li {
+	margin-top: 0.3rem;
+}
+
+/* Downloads */
+
+.builds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+	margin: 0.9rem 0 0.8rem;
+}
+
+.build {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	min-width: 11rem;
+	padding: 0.7rem 0.9rem;
+	border: 1px solid var(--bg-border);
+	border-radius: 8px;
+	text-decoration: none;
+	color: inherit;
+	background: var(--bg-main);
+}
+
+.build:hover {
+	border-color: var(--accent-blue);
+}
+
+.build-platform {
+	font-weight: 600;
+}
+
+.build-detail {
+	font-size: 0.8rem;
+	color: var(--text-muted);
+}
+
+/* Phone layout */
+:host-context(.shell.mobile) {
+	.page {
+		padding: 1.25rem 0.9rem 2.5rem;
+	}
+
+	.intro {
+		gap: 0.8rem;
+	}
+
+	.intro .mark {
+		width: 2.75rem;
+		height: 2.75rem;
+	}
+
+	.build {
+		min-width: 0;
+		flex: 1 1 100%;
+	}
+}

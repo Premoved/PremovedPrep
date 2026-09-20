@@ -4,7 +4,6 @@ import {
 	Component,
 	ElementRef,
 	computed,
-	effect,
 	inject,
 	signal,
 	viewChild,
@@ -23,7 +22,6 @@ import { NotificationService } from '../../../core/services/notification.service
 import { AnalyticsService } from '../../../core/analytics/analytics.service';
 import { AnalyticsEvent } from '../../../core/analytics/analytics.events';
 import { AuthService } from '../../../core/services/auth.service';
-import { AgentSelectionStore } from '../../../core/agent/agent-selection.store';
 import { SearchApiService } from '../../../core/services/search-api.service';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
 import { AdvancedReportComponent } from '../advanced-report/advanced-report.component';
@@ -53,8 +51,6 @@ export class OpponentSearchComponent {
 	private readonly router = inject(Router);
 	private readonly notify = inject(NotificationService);
 	private readonly viewport = inject(ViewportService);
-	/** Which archive the page is answering from. */
-	private readonly selection = inject(AgentSelectionStore);
 	private readonly auth = inject(AuthService);
 	private readonly analytics = inject(AnalyticsService);
 
@@ -90,10 +86,7 @@ export class OpponentSearchComponent {
 	readonly previewLoading = signal(false);
 
 	constructor() {
-		effect(() => {
-			this.selection.database();
-			this.loadPreview();
-		});
+		this.loadPreview();
 	}
 
 	readonly canSearch = computed(() => !this.loading());
@@ -327,7 +320,6 @@ export class OpponentSearchComponent {
 		this.analytics.capture(AnalyticsEvent.opponentSearch, {
 			mode: 'opponent',
 			authenticated: this.auth.isAuthenticated(),
-			source: this.selection.usingLocalDatabase() ? 'local' : 'cloud',
 			color: this.color(),
 		});
 		this.scope.set({

@@ -1,4 +1,4 @@
-export type EngineKind = 'wasm' | 'local';
+export type EngineKind = 'wasm';
 
 export interface EngineDefinition {
 	readonly id: string;
@@ -52,17 +52,6 @@ export const ENGINE_CATALOGUE: readonly EngineDefinition[] = [
 		requiresIsolation: false,
 		maxHashMb: 256,
 		downloadMb: 11,
-	},
-	{
-		id: 'local',
-		kind: 'local',
-		label: 'Local engine · via Desktop Agent',
-		shortLabel: 'Local engine',
-		worker: null,
-		threads: true,
-		requiresIsolation: false,
-		maxHashMb: 16384,
-		downloadMb: 0,
 	},
 ];
 

@@ -55,12 +55,12 @@ covered by this project's licence**; each set carries its own, recorded in lila'
 
 ## Sound
 
-`npm run assets:sounds` downloads the move and capture sounds of lila's `sfx` set into
-`public/sound/sfx/`.
+The move, capture and castling recordings in `public/sound/premoved/` are Premoved's own and are
+covered by this project's licence. Nothing is downloaded: they are checked in, and
+`public/sound/manifest.json` lists them.
 
-| Set | Author | Licence |
-|---|---|---|
-| sfx | [Enigmahack](https://github.com/Enigmahack) | AGPL-3.0-or-later |
+Lichess's `sfx` set (AGPL-3.0-or-later, [Enigmahack](https://github.com/Enigmahack)) was used until
+2026-09-19 and is no longer shipped.
 
 ## Icons
 

@@ -78,8 +78,8 @@
 						@if (storageLevel() === 'full') {
 							<span class="field-note">
 								Full. Existing games are safe and nothing was lost — but nothing new can be saved until you make room,
-								or
-								<a routerLink="/" fragment="account">use your own disk</a>
+								or keep the file on
+								<a routerLink="/app">your own disk</a>
 								instead.
 							</span>
 						}
@@ -95,20 +95,31 @@
 				</div>
 
 				@if (plan(); as subscription) {
-					@if (subscription.selling) {
+					@if (subscription.selling || subscription.active) {
 						<div class="account-rule" aria-hidden="true"></div>
 						<div class="account-field">
 							<span class="field-label">Plan</span>
 							<span class="field-value">
 								{{ planLabel() }}
-								<button type="button" class="link-btn" (click)="openPlan()">{{ planAction() }}</button>
+								@if (subscription.active) {
+									@if (subscription.managed) {
+										<button type="button" class="link-btn" [disabled]="planBusy()" (click)="openPortal()">Manage</button>
+									}
+								} @else if (subscription.selling) {
+									<button type="button" class="link-btn" [disabled]="planBusy()" (click)="subscribe('MONTH')">
+										Monthly
+									</button>
+									<button type="button" class="link-btn" [disabled]="planBusy()" (click)="subscribe('YEAR')">
+										Yearly
+									</button>
+								}
 							</span>
 						</div>
 					}
 				}
 			</div>
 
-			@if (planRefundNote(); as note) {
+			@if (planNote(); as note) {
 				<p class="line-note">{{ note }}</p>
 			}
 

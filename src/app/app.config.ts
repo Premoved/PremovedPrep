@@ -8,7 +8,6 @@ import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
 import { PreferencesStore } from './core/services/preferences.store';
-import { AgentBridgeService } from './core/agent/agent-bridge.service';
 import { MoveSoundService } from './core/sound/move-sound.service';
 import { AnalyticsService } from './core/analytics/analytics.service';
 
@@ -32,8 +31,6 @@ export const appConfig: ApplicationConfig = {
 			const sounds = inject(MoveSoundService);
 			void sounds.load();
 			sounds.primeOnFirstGesture(() => prefs.sound());
-			// Instantiated eagerly so the Desktop Agent starts searching on init
-			inject(AgentBridgeService);
 			// Initializes analytics: does nothing if no configuration key is provided.
 			inject(AnalyticsService).init();
 			return inject(AuthService).restoreSession();

@@ -28,7 +28,6 @@ import { OpponentScope, SearchColor } from '../../core/models/search.model';
 import { NotificationService } from '../../core/services/notification.service';
 import { CloudStorageService } from '../../core/services/cloud-storage.service';
 import { CollectionApiService } from '../../core/services/collection-api.service';
-import { LocalShelfService } from '../../core/agent/local-shelf.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { OpeningExplorerService } from '../../core/services/opening-explorer.service';
 import { ViewportService } from '../../core/layout/viewport.service';
@@ -83,7 +82,6 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 	private readonly notify = inject(NotificationService);
 	private readonly cloud = inject(CloudStorageService);
 	private readonly collections = inject(CollectionApiService);
-	private readonly localShelf = inject(LocalShelfService);
 	private readonly router = inject(Router);
 	private readonly confirmDialog = inject(ConfirmService);
 
@@ -94,11 +92,6 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 
 	/** ?item=<id> opens an entry from the Library or Repertoire. */
 	readonly item = input<string | undefined>(undefined);
-
-	/** ?local=<id> opens a game from a file in the agent's linked folder. */
-	readonly local = input<string | undefined>(undefined);
-
-	private loadedLocal?: string;
 
 	private loadedItem?: string;
 
@@ -304,7 +297,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 		/** A board opened with nothing in the URL is this tab's own analysis, from where it left off. */
 		effect(() => {
 			const board = this.board();
-			if (!board || this.draftRestored || this.game() || this.item() || this.local()) {
+			if (!board || this.draftRestored || this.game() || this.item()) {
 				return;
 			}
 			this.draftRestored = true;
@@ -421,27 +414,6 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 				},
 			});
 		});
-
-		effect(() => {
-			const id = this.local();
-			const board = this.board();
-			if (!id || this.game() || this.item() || !board || this.loadedLocal === id) return;
-
-			this.loadedLocal = id;
-
-			this.localShelf
-				.entry(id)
-				.then((detail) => {
-					const parsed = this.pgn.parse(detail.pgn);
-					this.tree.adopt(parsed.root, parsed.headers, detail.itemType === 'STUDY');
-					board.refresh();
-					this.openAtPly(board);
-					this.tree.markSaved();
-				})
-				.catch((error: Error) => {
-					this.notify.error(error.message);
-				});
-		});
 	}
 
 	private readonly openItemType = signal<ItemType | null>(null);
@@ -518,11 +490,11 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 	};
 
 	private detachFromEntry(): void {
-		if (!this.game() && !this.item() && !this.local() && !this.ply() && !this.line()) {
+		if (!this.game() && !this.item() && !this.ply() && !this.line()) {
 			return;
 		}
 		void this.router.navigate([], {
-			queryParams: { game: null, item: null, local: null, ply: null, line: null },
+			queryParams: { game: null, item: null, ply: null, line: null },
 			queryParamsHandling: 'merge',
 		});
 	}

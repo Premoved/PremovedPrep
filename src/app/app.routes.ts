@@ -80,15 +80,6 @@ export const routes: Routes = [
 							import('./features/collections/collection-view.component').then((m) => m.CollectionViewComponent),
 						data: { kind: 'LIBRARY' },
 					},
-					// View a local file/collection linked via the desktop agent.
-					{
-						path: 'local/:id',
-						loadComponent: () =>
-							import('./features/collections/local-collection-view.component').then(
-								(m) => m.LocalCollectionViewComponent,
-							),
-						data: { kind: 'LIBRARY' },
-					},
 				],
 			},
 			{
@@ -108,14 +99,6 @@ export const routes: Routes = [
 						path: 'c/:id',
 						loadComponent: () =>
 							import('./features/collections/collection-view.component').then((m) => m.CollectionViewComponent),
-						data: { kind: 'REPERTOIRE' },
-					},
-					{
-						path: 'local/:id',
-						loadComponent: () =>
-							import('./features/collections/local-collection-view.component').then(
-								(m) => m.LocalCollectionViewComponent,
-							),
 						data: { kind: 'REPERTOIRE' },
 					},
 				],
@@ -147,10 +130,17 @@ export const routes: Routes = [
 				},
 			},
 			{
-				path: 'agent',
-				loadComponent: () => import('./features/agent/agent-page.component').then((m) => m.AgentPageComponent),
-				data: { title: 'Desktop agent' },
+				path: 'app',
+				loadComponent: () => import('./features/app/app-page.component').then((m) => m.AppPageComponent),
+				data: {
+					title: 'Desktop app',
+					description:
+						'PremovedPrep on your own computer: your own game archive as the database, your own engine, and your own disk. Downloads for Windows, macOS and Linux.',
+				},
 			},
+
+			// Where this page used to live. Kept so a bookmark and a shared link still land on it.
+			{ path: 'agent', pathMatch: 'full', redirectTo: 'app' },
 			{
 				path: 'settings',
 				loadComponent: () => import('./features/settings/settings-page.component').then((m) => m.SettingsPageComponent),

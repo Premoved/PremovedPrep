@@ -481,43 +481,6 @@ button.ghost {
 	}
 }
 
-.source-toggle {
-	display: inline-flex;
-	border: 1px solid var(--bg-border);
-	border-radius: 6px;
-	overflow: hidden;
-}
-
-.source-toggle button {
-	display: flex;
-	align-items: center;
-	height: 38px;
-	padding: 0 14px;
-	border: none;
-	background: var(--bg-elevated);
-	color: var(--text-muted);
-	font-family: inherit;
-	font-size: 0.85rem;
-	cursor: default;
-}
-
-.source-toggle button + button {
-	border-left: 1px solid var(--bg-border);
-}
-
-.source-toggle button.active {
-	background: var(--bg-active-move);
-	color: var(--text-strong);
-	font-weight: 600;
-}
-
-/* The linked folder's shelf */
-.local-shelf {
-	margin-top: 2rem;
-	padding-top: 1.1rem;
-	border-top: 1px solid var(--bg-border);
-}
-
 .shelf-heading {
 	display: flex;
 	flex-wrap: wrap;
@@ -531,17 +494,9 @@ button.ghost {
 	color: var(--text-muted);
 }
 
-.shelf-path {
-	font-family: 'Consolas', 'Menlo', monospace;
-	font-size: 0.72rem;
-	font-weight: 400;
-	letter-spacing: 0;
-	text-transform: none;
-	word-break: break-all;
-	color: var(--text-muted);
-}
-
-.card.local {
-	border-style: dashed;
-	cursor: default;
+/** The account's allowance, beside the heading. The same rule the application has. */
+.shelf-figure {
+	font: inherit;
+	letter-spacing: inherit;
+	color: inherit;
 }

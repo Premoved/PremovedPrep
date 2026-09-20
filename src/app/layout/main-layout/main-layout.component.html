@@ -186,19 +186,19 @@
 
 				<hr class="nav-divider" />
 
-				<div class="agent-slot">
+				<div class="app-slot">
 					<a
-						routerLink="/agent"
+						routerLink="/app"
 						routerLinkActive="active"
 						class="nav-item"
 						(mouseenter)="showRailTooltip($event)"
 						(mouseleave)="hideRailTooltip()"
 						(focus)="showRailTooltip($event)"
 						(blur)="hideRailTooltip()"
-						(contextmenu)="onNavContextMenu($event, '/agent')"
+						(contextmenu)="onNavContextMenu($event, '/app')"
 					>
-						<app-desktop-agent-logo class="icon logo"></app-desktop-agent-logo>
-						<span class="nav-label">Desktop agent</span>
+						<app-desktop-app-logo class="icon logo"></app-desktop-app-logo>
+						<span class="nav-label">Desktop app</span>
 					</a>
 				</div>
 			</nav>

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MAX_MULTI_PV, hashStepsFor } from '../../../../core/engine/engine-capabilities';
-import { AgentSelectionStore } from '../../../../core/agent/agent-selection.store';
 import { ENGINE_CATALOGUE } from '../../../../core/engine/engine-catalogue';
 import { EngineStore } from '../../state/engine.store';
 
@@ -22,12 +21,9 @@ interface StepSlider {
 })
 export class EngineSettingsComponent {
 	readonly engine = inject(EngineStore);
-	private readonly agentSelection = inject(AgentSelectionStore);
 
 	readonly catalogue = ENGINE_CATALOGUE;
 	readonly maxMultiPv = MAX_MULTI_PV;
-
-	readonly localEngineName = computed(() => this.agentSelection.engine()?.name ?? null);
 
 	/** Search time */
 
