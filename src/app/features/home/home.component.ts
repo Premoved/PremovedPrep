@@ -16,7 +16,6 @@ import { BishopLogoComponent } from '../../shared/logo/bishop-logo.component';
 import { KnightLogoComponent } from '../../shared/logo/knight-logo.component';
 import { RookLogoComponent } from '../../shared/logo/rook-logo.component';
 import { PawnLogoComponent } from '../../shared/logo/pawn-logo.component';
-import { DesktopAppLogoComponent } from '../../shared/logo/desktop-app-logo.component';
 
 interface GuideSection {
 	readonly id: string;
@@ -26,14 +25,7 @@ interface GuideSection {
 @Component({
 	selector: 'app-home',
 	standalone: true,
-	imports: [
-		RouterLink,
-		PawnLogoComponent,
-		RookLogoComponent,
-		KnightLogoComponent,
-		BishopLogoComponent,
-		DesktopAppLogoComponent,
-	],
+	imports: [RouterLink, PawnLogoComponent, RookLogoComponent, KnightLogoComponent, BishopLogoComponent],
 	templateUrl: './home.component.html',
 	styleUrl: './home.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,7 +41,7 @@ export class HomeComponent {
 		{ id: 'library', label: 'Library' },
 		{ id: 'repertoire', label: 'Repertoire' },
 		{ id: 'database-search', label: 'Database Search' },
-		{ id: 'account', label: 'Account & Desktop app' },
+		{ id: 'account', label: 'Account' },
 	];
 
 	readonly active = signal<string>(this.sections[0].id);
