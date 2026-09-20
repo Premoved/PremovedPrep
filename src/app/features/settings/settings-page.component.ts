@@ -138,9 +138,7 @@ export class SettingsPageComponent {
 
 		if (subscription.active) {
 			const period = subscription.interval === 'YEAR' ? 'year' : 'month';
-			const price = subscription.interval
-				? ` · ${this.money(subscription, subscription.interval)} / ${period}`
-				: '';
+			const price = subscription.interval ? ` · ${this.money(subscription, subscription.interval)} / ${period}` : '';
 			const renews = subscription.renewsAt ? ` · renews ${this.day(subscription.renewsAt)}` : '';
 			return `Premoved subscription${price}${subscription.cancelAtPeriodEnd ? '' : renews}`;
 		}

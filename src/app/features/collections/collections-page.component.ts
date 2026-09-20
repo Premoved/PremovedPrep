@@ -130,9 +130,7 @@ export class CollectionsPageComponent {
 		return list.map((collection) => ({ collection, highlight: highlightMatch(collection.name, query) }));
 	});
 
-	readonly searchEmpty = computed(
-		() => !this.loading() && this.collections().length > 0 && this.cards().length === 0,
-	);
+	readonly searchEmpty = computed(() => !this.loading() && this.collections().length > 0 && this.cards().length === 0);
 
 	readonly dragIndex = signal<number | null>(null);
 	readonly dropIndex = signal<number | null>(null);

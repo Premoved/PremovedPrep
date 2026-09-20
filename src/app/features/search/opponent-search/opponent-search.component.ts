@@ -1,13 +1,5 @@
 import { Router } from '@angular/router';
-import {
-	ChangeDetectionStrategy,
-	Component,
-	ElementRef,
-	computed,
-	inject,
-	signal,
-	viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import {
 	OpponentScope,
 	PlayerProfile,

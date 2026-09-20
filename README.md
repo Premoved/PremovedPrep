@@ -36,7 +36,6 @@ npm start # http://localhost:4200
 ```
 src/app/
   core/        
-    agent/     
     board/     board themes and piece sets
     captcha/   the premove-mate bot check inspired by lichess
     chess/     PGN parsing and serialisation, FEN utilities, notation
@@ -46,7 +45,7 @@ src/app/
     analysis-board/   
     collections/      
     search/          
-    agent/           
+    app/             
     auth/  home/  settings/
   layout/      the application shell
   shared/      shared components

@@ -56,11 +56,7 @@ covered by this project's licence**; each set carries its own, recorded in lila'
 ## Sound
 
 The move, capture and castling recordings in `public/sound/premoved/` are Premoved's own and are
-covered by this project's licence. Nothing is downloaded: they are checked in, and
-`public/sound/manifest.json` lists them.
-
-Lichess's `sfx` set (AGPL-3.0-or-later, [Enigmahack](https://github.com/Enigmahack)) was used until
-2026-09-19 and is no longer shipped.
+covered by this project's licence. 
 
 ## Icons
 
