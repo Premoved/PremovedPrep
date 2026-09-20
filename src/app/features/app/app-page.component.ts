@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DesktopAppLogoComponent } from '../../shared/logo/desktop-app-logo.component';
+import { SignedOutNoticeComponent } from '../../shared/signed-out/signed-out-notice.component';
 import { AuthService } from '../../core/services/auth.service';
 import { DesktopAppApiService } from '../../core/services/desktop-app.service';
 import { AppStage, DesktopAppAccess } from '../../core/models/user.model';
@@ -15,7 +16,7 @@ interface Download {
 /** Desktop app page: what the application is, and whether this account may download it yet. */
 @Component({
 	selector: 'app-app-page',
-	imports: [RouterLink, DesktopAppLogoComponent],
+	imports: [RouterLink, DesktopAppLogoComponent, SignedOutNoticeComponent],
 	templateUrl: './app-page.component.html',
 	styleUrl: './app-page.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,7 +29,6 @@ export class AppPageComponent {
 	readonly access = signal<DesktopAppAccess | null>(null);
 
 	readonly releasesUrl = environment.desktopApp.releasesUrl;
-	readonly sourceUrl = environment.desktopApp.repoUrl;
 
 	/** The release's own asset URLs. A new build changes the file behind them, not the page. */
 	readonly downloads: readonly Download[] = environment.desktopApp.builds.map((build) => ({

@@ -32,10 +32,7 @@
 			</p>
 		</div>
 	} @else if (!auth.isLoggedIn()) {
-		<div class="card">
-			<p>Sign in to access all features.</p>
-			<p class="muted small"><a routerLink="/login">Sign in</a> or <a routerLink="/register">create an account</a>.</p>
-		</div>
+		<app-signed-out-notice />
 	} @else if (released()) {
 		<div class="card">
 			<h2>Premoved subscription</h2>
@@ -53,8 +50,4 @@
 			</p>
 		</div>
 	}
-
-	<p class="muted small source">
-		The source is at <a [href]="sourceUrl" target="_blank" rel="noopener">{{ sourceUrl }}</a>.
-	</p>
 </section>
