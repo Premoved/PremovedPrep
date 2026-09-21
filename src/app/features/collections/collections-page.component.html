@@ -131,24 +131,26 @@
 
 	@if (!auth.isLoggedIn()) {
 		<app-signed-out-notice what="your collections live in your account" />
-	} @else if (error(); as message) {
-		<p class="notice failed" role="alert">{{ message }}</p>
-	} @else if (loading() && collections().length === 0) {
-		<p class="notice">Loading&hellip;</p>
-	} @else if (isEmpty()) {
-		<p class="notice">Nothing here yet.</p>
-	} @else if (searchEmpty()) {
-		<p class="notice">No collections match &ldquo;{{ search() }}&rdquo;.</p>
-	}
-
-	@if (auth.isLoggedIn()) {
+	} @else {
 		@if (storage(); as usage) {
 			<h2 class="shelf-heading">
-				In the cloud
+				Cloud storage
 				<span class="shelf-figure">&mdash; {{ size(usage.bytesUsed) }} / {{ size(usage.bytesQuota) }}</span>
 			</h2>
 		}
 
+		@if (error(); as message) {
+			<p class="notice failed" role="alert">{{ message }}</p>
+		} @else if (loading() && collections().length === 0) {
+			<p class="notice">Loading&hellip;</p>
+		} @else if (isEmpty()) {
+			<p class="notice">Nothing here yet.</p>
+		} @else if (searchEmpty()) {
+			<p class="notice">No collections match &ldquo;{{ search() }}&rdquo;.</p>
+		}
+	}
+
+	@if (auth.isLoggedIn()) {
 		<div class="grid">
 			@for (card of cards(); track card.collection.id; let i = $index) {
 				<button

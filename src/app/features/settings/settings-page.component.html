@@ -358,11 +358,7 @@
 					<div class="group">
 						<h3 class="group-title">Piece sound <span class="group-source"></span></h3>
 						@if (!soundInstalled()) {
-							<p class="group-hint">
-								The recordings are not installed. Run <code>npm run assets:sounds</code> in
-								<code>premoved-prep-frontend</code> to download them from Lichess into <code>public/sound/</code>; the
-								setting works the next time the page loads.
-							</p>
+							<p class="group-hint">The sounds could not be loaded, so this setting has no effect right now.</p>
 						}
 						<div class="segmented">
 							<button
