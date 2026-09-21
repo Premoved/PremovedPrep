@@ -243,7 +243,8 @@ export class AppPageComponent {
 		const refund = view.refundUntil
 			? ` You are within 14 days of your first payment, so the plan ends now and the ${this.paidPrice(view)} you paid is refunded in full, automatically.`
 			: '';
-		const until = !refund && view.renewsAt ? ` It stays active until ${this.day(view.renewsAt)}, and will not renew.` : '';
+		const until =
+			!refund && view.renewsAt ? ` It stays active until ${this.day(view.renewsAt)}, and will not renew.` : '';
 		const sure = await this.confirm.ask(`Cancel your Premoved Plan?${refund}${until}`, {
 			confirmLabel: 'Cancel subscription',
 			cancelLabel: 'Keep my plan',
