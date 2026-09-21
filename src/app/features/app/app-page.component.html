@@ -167,8 +167,10 @@
 
 		<!-- A screenshot, larger: over the page, not instead of it. -->
 		@if (zoomedShot(); as shot) {
-			<div class="lightbox" (click)="closeZoom()">
-				<figure class="lightbox-card" (click)="$event.stopPropagation()">
+			<div class="lightbox">
+				<!-- The backdrop is a button of its own, so a click beside the picture closes it. -->
+				<button type="button" class="backdrop" aria-label="Close" tabindex="-1" (click)="closeZoom()"></button>
+				<figure class="lightbox-card">
 					<img [src]="shot.image" [alt]="shot.title" />
 					<figcaption>
 						<button type="button" class="nav" aria-label="Previous picture" (click)="step(-1)">&#8249;</button>
