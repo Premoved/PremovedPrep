@@ -71,6 +71,15 @@ export interface SubscriptionView {
 	/** Whether there is a Stripe customer behind this, and therefore a portal to open. */
 	readonly managed: boolean;
 	readonly storageQuotaBytes: number;
+	/** Whether this account can still start its one free trial. Started from the Desktop App. */
+	readonly trialAvailable?: boolean;
+	/** When a running or past free trial ends, or null when there never was one. */
+	readonly trialEndsAt?: string | null;
+	/**
+	 * Until when cancelling refunds the first payment in full and ends the plan at once - fourteen
+	 * days from the account's first payment. Null once that has passed, or when nothing was paid.
+	 */
+	readonly refundUntil?: string | null;
 }
 
 export type PlanInterval = 'MONTH' | 'YEAR';

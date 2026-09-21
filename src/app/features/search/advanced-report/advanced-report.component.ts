@@ -29,6 +29,7 @@ import { ViewportService } from '../../../core/layout/viewport.service';
 import { AnalyticsService } from '../../../core/analytics/analytics.service';
 import { AnalyticsEvent } from '../../../core/analytics/analytics.events';
 import { AuthService } from '../../../core/services/auth.service';
+import { AdvancedReportCache, scopeKey } from './advanced-report-cache';
 
 const MIN_TREE_PX = 340;
 const DEFAULT_TREE_PX = 460;
@@ -60,6 +61,8 @@ export class AdvancedReportComponent {
 	private readonly analytics = inject(AnalyticsService);
 	readonly viewport = inject(ViewportService);
 	private readonly tree = inject(MoveTreeStore);
+	/** The page's copy of the last report, so coming back to this panel does not generate it again. */
+	private readonly cache = inject(AdvancedReportCache, { optional: true });
 
 	readonly report = inject(ReportStore);
 	readonly engine = inject(EngineStore);
@@ -105,7 +108,7 @@ export class AdvancedReportComponent {
 			if (!scope || !board) {
 				return;
 			}
-			const key = `${scope.fideId}|${scope.color}|${scope.from}|${scope.to}`;
+			const key = scopeKey(scope);
 			if (this.requested === key) {
 				return;
 			}
@@ -139,11 +142,20 @@ export class AdvancedReportComponent {
 		if (!scope) {
 			return;
 		}
-		this.status.set('loading');
 		this.error.set(null);
 
+		const kept = this.cache?.get(scope);
+		if (kept) {
+			this.report.build(kept);
+			board.refresh();
+			this.status.set('ready');
+			return;
+		}
+
+		this.status.set('loading');
 		this.api.advanced(scope).subscribe({
 			next: (data) => {
+				this.cache?.set(scope, data);
 				this.report.build(data);
 				board.refresh();
 				this.status.set('ready');

@@ -1,13 +1,11 @@
 import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
 import { BoardThemeService } from '../../core/board/board-theme.service';
 import { BOARD_THEMES } from '../../core/board/board-themes';
 import { pieceSetFor } from '../../core/board/piece-sets';
-import { BillingService } from '../../core/services/billing.service';
 import { CloudStorageService } from '../../core/services/cloud-storage.service';
-import { BillingRedirect, PlanInterval, SessionSummary, SubscriptionView } from '../../core/models/user.model';
+import { SessionSummary } from '../../core/models/user.model';
 import { ARROW_PALETTE, ARROW_SLOTS, MoveDestStyle } from '../../core/models/preferences.model';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -125,72 +123,7 @@ export class SettingsPageComponent {
 	}
 
 	private readonly cloud = inject(CloudStorageService);
-	private readonly billing = inject(BillingService);
 	readonly storage = this.cloud.usage;
-
-	readonly plan = signal<SubscriptionView | null>(null);
-
-	readonly planBusy = signal(false);
-
-	readonly planLabel = computed(() => {
-		const subscription = this.plan();
-		if (!subscription) return '';
-
-		if (subscription.active) {
-			const period = subscription.interval === 'YEAR' ? 'year' : 'month';
-			const price = subscription.interval ? ` · ${this.money(subscription, subscription.interval)} / ${period}` : '';
-			const renews = subscription.renewsAt ? ` · renews ${this.day(subscription.renewsAt)}` : '';
-			return `Premoved subscription${price}${subscription.cancelAtPeriodEnd ? '' : renews}`;
-		}
-		if (subscription.status === 'CANCELED') {
-			return 'Ended';
-		}
-		return `${this.money(subscription, 'MONTH')} / month or ${this.money(subscription, 'YEAR')} / year`;
-	});
-
-	readonly planNote = computed(() => {
-		const subscription = this.plan();
-		if (!subscription) return null;
-
-		if (subscription.active && subscription.cancelAtPeriodEnd && subscription.renewsAt) {
-			return `Your plan runs until ${this.day(subscription.renewsAt)} and will not renew.`;
-		}
-		if (!subscription.active && subscription.selling) {
-			return 'The plan unlocks the desktop app and raises cloud storage from 2 MB to 5 MB.';
-		}
-		return null;
-	});
-
-	private money(subscription: SubscriptionView, interval: PlanInterval): string {
-		const minor = interval === 'YEAR' ? subscription.yearlyPriceMinor : subscription.monthlyPriceMinor;
-		return `${subscription.currency} ${(minor / 100).toFixed(2)}`;
-	}
-
-	private day(iso: string): string {
-		return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-	}
-
-	/** Both of these end on a Stripe page, which is why the answer is a URL and not a state change. */
-	subscribe(interval: PlanInterval): void {
-		this.leaveFor(this.billing.checkout(interval));
-	}
-
-	openPortal(): void {
-		this.leaveFor(this.billing.portal());
-	}
-
-	private leaveFor(request: Observable<BillingRedirect>): void {
-		this.planBusy.set(true);
-		request.subscribe({
-			next: (redirect) => {
-				window.location.href = redirect.url;
-			},
-			error: (err: Error) => {
-				this.planBusy.set(false);
-				this.notify.error(err.message);
-			},
-		});
-	}
 
 	readonly storagePercent = computed(() => Math.min(100, this.cloud.percent()));
 
@@ -388,11 +321,6 @@ export class SettingsPageComponent {
 		if (!this.auth.isLoggedIn()) return;
 		this.cloud.refresh();
 		this.loadSessions();
-
-		this.auth.subscription().subscribe({
-			next: (view) => this.plan.set(view),
-			error: () => this.plan.set(null),
-		});
 	}
 
 	formatBytes(bytes: number): string {

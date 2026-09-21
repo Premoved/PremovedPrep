@@ -37,7 +37,6 @@ covered by this project's licence**; each set carries its own, recorded in lila'
 |---|---|---|
 | cburnett (default, bundled) | Colin M.L. Burnett | GPL-2.0-or-later |
 | merida | Armando Hernandez Marroquin | GPL-2.0-or-later |
-| mono | Thibault Duplessis, Colin M.L. Burnett | GPL-2.0-or-later |
 | mpchess | Maxime Chupin | GPL-3.0-or-later |
 | letter | usolando | AGPL-3.0-or-later |
 | pirouetti | pirouetti | AGPL-3.0-or-later |
@@ -48,7 +47,6 @@ covered by this project's licence**; each set carries its own, recorded in lila'
 | spatial | Maurizio Monge | MIT |
 | rhosgfx | RhosGFX | CC0-1.0 |
 | shapes | flugsio | CC BY-SA 4.0 |
-| Firi | James Faure | CC BY 4.0 |
 | kiwen-suwi | neverRare | CC BY 4.0 |
 | papercut | Nikolay Anzarov | CC BY 4.0 |
 | totoy | Kosal Sen | CC BY 4.0 |

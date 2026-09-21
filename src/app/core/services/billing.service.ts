@@ -2,26 +2,22 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { BillingRedirect, PlanInterval } from '../models/user.model';
+import { SubscriptionView } from '../models/user.model';
 
 /**
- * Starting and managing the plan, both of which happen on Stripe's own pages. Nothing here holds a
- * card number, a price or a decision: each call answers with a URL, and the browser goes there.
+ * The website's one billing action: cancelling the plan.
+ *
+ * The Premoved Plan is bought in the Desktop App, and nothing on this site starts or changes one.
+ * Cancelling is the exception, so that stopping a payment never needs the application installed:
+ * the plan stops renewing and runs until the end of the period already paid for.
  */
 @Injectable({ providedIn: 'root' })
 export class BillingService {
 	private readonly http = inject(HttpClient);
 	private readonly baseUrl = `${environment.apiBaseUrl}/billing`;
 
-	checkout(interval: PlanInterval): Observable<BillingRedirect> {
-		return this.http.post<BillingRedirect>(
-			`${this.baseUrl}/checkout?interval=${interval}`,
-			{},
-			{ withCredentials: true },
-		);
-	}
-
-	portal(): Observable<BillingRedirect> {
-		return this.http.post<BillingRedirect>(`${this.baseUrl}/portal`, {}, { withCredentials: true });
+	/** Answers with the plan as it now stands - still active, and ending on the date it says. */
+	cancel(): Observable<SubscriptionView> {
+		return this.http.post<SubscriptionView>(`${this.baseUrl}/cancel`, {}, { withCredentials: true });
 	}
 }

@@ -56,7 +56,7 @@ export const routes: Routes = [
 					import('./features/analysis-board/analysis-board.component').then((m) => m.AnalysisBoardComponent),
 				canDeactivate: [unsavedChangesGuard],
 				data: {
-					title: 'Analysis board',
+					title: 'Analysis Board',
 					description:
 						'An analysis board with an engine, an opening tree over the game archive, and repertoire tools. Paste a PGN or a FEN and start from any position.',
 				},
@@ -115,7 +115,7 @@ export const routes: Routes = [
 				path: 'search/opponent/:slug',
 				loadComponent: () => import('./features/search/search-page.component').then((m) => m.SearchPageComponent),
 				data: {
-					title: 'Database search',
+					title: 'Database Search',
 					description:
 						'Search the game archive by opponent or by position: every game a FIDE player has in the database, their openings by colour, and the lines they repeat.',
 				},
@@ -124,7 +124,7 @@ export const routes: Routes = [
 				path: 'search',
 				loadComponent: () => import('./features/search/search-page.component').then((m) => m.SearchPageComponent),
 				data: {
-					title: 'Database search',
+					title: 'Database Search',
 					description:
 						'Search the game archive by opponent or by position: every game a FIDE player has in the database, their openings by colour, and the lines they repeat.',
 				},
@@ -133,7 +133,7 @@ export const routes: Routes = [
 				path: 'app',
 				loadComponent: () => import('./features/app/app-page.component').then((m) => m.AppPageComponent),
 				data: {
-					title: 'Desktop app',
+					title: 'Desktop App',
 					description:
 						'PremovedPrep on your own computer: your own game archive as the database, your own engine, and your own disk. Downloads for Windows, macOS and Linux.',
 				},

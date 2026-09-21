@@ -15,9 +15,11 @@ const FILES = ['wP', 'wN', 'wB', 'wR', 'wQ', 'wK', 'bP', 'bN', 'bB', 'bR', 'bQ',
  * "Exceptions (non-free)" and every CC BY-NC-SA set is deliberately absent: PremovedPrep plans a paid
  * tier, so NC and freeware terms do not apply to it. Adding a set here is a licensing decision - see
  * THIRD-PARTY.md and docs/legal/asset-licences.md.
+ *
+ * Firi and mono were here and are not: lila no longer serves a complete set under either name (wP.svg
+ * answered 404), so neither ever installed.
  */
 const SETS = [
-	'Firi',
 	'cburnett',
 	'celtic',
 	'chessnut',
@@ -25,7 +27,6 @@ const SETS = [
 	'kiwen-suwi',
 	'letter',
 	'merida',
-	'mono',
 	'mpchess',
 	'papercut',
 	'pirouetti',

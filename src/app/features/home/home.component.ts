@@ -17,6 +17,21 @@ import { KnightLogoComponent } from '../../shared/logo/knight-logo.component';
 import { RookLogoComponent } from '../../shared/logo/rook-logo.component';
 import { PawnLogoComponent } from '../../shared/logo/pawn-logo.component';
 
+/** What a reader does to scroll by hand, as opposed to the smooth scroll a click starts. */
+const RELEASE_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const;
+const SCROLL_KEYS: ReadonlySet<string> = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
+
+/** The nearest ancestor that scrolls, or null when it is the window. */
+function scrollParentOf(element: HTMLElement): HTMLElement | null {
+	for (let node = element.parentElement; node !== null; node = node.parentElement) {
+		const { overflowY } = getComputedStyle(node);
+		if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+			return node;
+		}
+	}
+	return null;
+}
+
 interface GuideSection {
 	readonly id: string;
 	readonly label: string;
@@ -35,18 +50,42 @@ export class HomeComponent {
 	readonly viewport = inject(ViewportService);
 	private readonly route = inject(ActivatedRoute);
 
+	/** In the order the guide below is written in. */
 	readonly sections: readonly GuideSection[] = [
-		{ id: 'default-tools', label: 'Default tools' },
 		{ id: 'analysis-board', label: 'Analysis Board' },
 		{ id: 'library', label: 'Library' },
 		{ id: 'repertoire', label: 'Repertoire' },
 		{ id: 'database-search', label: 'Database Search' },
 		{ id: 'account', label: 'Account' },
+		{ id: 'default-tools', label: 'Default tools' },
 	];
 
 	readonly active = signal<string>(this.sections[0].id);
 	private readonly bodyEl = viewChild<ElementRef<HTMLElement>>('guideBody');
 	private observer: IntersectionObserver | null = null;
+
+	/**
+	 * The section a click in the index asked for, held until the reader scrolls by hand.
+	 *
+	 * The last sections are shorter than the window, so a click on one cannot bring its heading to
+	 * the top: the page stops at the bottom with an earlier heading still in view, and the scroll
+	 * spy, asked what is on screen, named that one instead. What was clicked is what is being read.
+	 */
+	private pinned: string | null = null;
+	/** Whatever actually scrolls: the application's content pane, or the window. */
+	private scrollTarget: EventTarget | null = null;
+	/** The element of it that has a scroll position - the pane, or the document's for the window. */
+	private scroller: Element | null = null;
+	private readonly onScroll = () => this.recompute();
+	private readonly release = (event: Event) => {
+		if (event instanceof KeyboardEvent && !SCROLL_KEYS.has(event.key)) {
+			return;
+		}
+		if (this.pinned !== null) {
+			this.pinned = null;
+			this.recompute();
+		}
+	};
 
 	constructor() {
 		afterNextRender(() => {
@@ -75,6 +114,7 @@ export class HomeComponent {
 			return;
 		}
 
+		this.pinned = id;
 		this.active.set(id);
 		target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 	}
@@ -90,8 +130,20 @@ export class HomeComponent {
 	}
 
 	private recompute(): void {
+		if (this.pinned !== null) {
+			this.active.set(this.pinned);
+			return;
+		}
+
 		const headings = this.headingElements();
 		if (headings.length === 0) {
+			return;
+		}
+
+		/** At the very end the last section is the one being read, whatever else is still in view. */
+		const last = headings[headings.length - 1].parentElement?.id;
+		if (last && this.atBottom()) {
+			this.active.set(last);
 			return;
 		}
 
@@ -134,11 +186,31 @@ export class HomeComponent {
 			this.observer.observe(heading);
 		}
 
+		const body = this.bodyEl()?.nativeElement;
+		const pane = body ? scrollParentOf(body) : null;
+		this.scroller = pane ?? document.scrollingElement;
+		this.scrollTarget = pane ?? window;
+		this.scrollTarget.addEventListener('scroll', this.onScroll, { passive: true });
+		for (const type of RELEASE_EVENTS) {
+			document.addEventListener(type, this.release, { capture: true, passive: true });
+		}
+
 		this.recompute();
 	}
 
 	private stopScrollSpy(): void {
 		this.observer?.disconnect();
 		this.observer = null;
+		this.scrollTarget?.removeEventListener('scroll', this.onScroll);
+		this.scrollTarget = null;
+		this.scroller = null;
+		for (const type of RELEASE_EVENTS) {
+			document.removeEventListener(type, this.release, { capture: true });
+		}
+	}
+
+	private atBottom(): boolean {
+		const element = this.scroller;
+		return element !== null && element.scrollTop + element.clientHeight >= element.scrollHeight - 2;
 	}
 }

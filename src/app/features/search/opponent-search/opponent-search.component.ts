@@ -17,6 +17,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { SearchApiService } from '../../../core/services/search-api.service';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
 import { AdvancedReportComponent } from '../advanced-report/advanced-report.component';
+import { AdvancedReportCache } from '../advanced-report/advanced-report-cache';
 import { GameResultsComponent } from '../game-results/game-results.component';
 import { OpponentExplorerComponent } from '../opponent-explorer/opponent-explorer.component';
 import { ViewportService } from '../../../core/layout/viewport.service';
@@ -31,6 +32,8 @@ export type ResultPanel = 'games' | 'tree' | 'report';
 	selector: 'app-opponent-search',
 	standalone: true,
 	imports: [GameResultsComponent, DatePickerComponent, OpponentExplorerComponent, AdvancedReportComponent],
+	/** The generated Advanced Report stays with the page while its panels are switched. */
+	providers: [AdvancedReportCache],
 	templateUrl: './opponent-search.component.html',
 	styleUrl: './opponent-search.component.scss',
 	host: {

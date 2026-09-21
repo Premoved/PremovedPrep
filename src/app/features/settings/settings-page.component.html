@@ -93,35 +93,7 @@
 						<button type="button" class="link-btn" (click)="recovery.startGenerating()">Generate new</button>
 					</span>
 				</div>
-
-				@if (plan(); as subscription) {
-					@if (subscription.selling || subscription.active) {
-						<div class="account-rule" aria-hidden="true"></div>
-						<div class="account-field">
-							<span class="field-label">Plan</span>
-							<span class="field-value">
-								{{ planLabel() }}
-								@if (subscription.active) {
-									@if (subscription.managed) {
-										<button type="button" class="link-btn" [disabled]="planBusy()" (click)="openPortal()">Manage</button>
-									}
-								} @else if (subscription.selling) {
-									<button type="button" class="link-btn" [disabled]="planBusy()" (click)="subscribe('MONTH')">
-										Monthly
-									</button>
-									<button type="button" class="link-btn" [disabled]="planBusy()" (click)="subscribe('YEAR')">
-										Yearly
-									</button>
-								}
-							</span>
-						</div>
-					}
-				}
 			</div>
-
-			@if (planNote(); as note) {
-				<p class="line-note">{{ note }}</p>
-			}
 
 			@if (usernameError()) {
 				<p class="line-problem">{{ usernameError() }}</p>

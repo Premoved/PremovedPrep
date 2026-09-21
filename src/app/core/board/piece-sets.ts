@@ -12,7 +12,6 @@ export const BUNDLED_PIECE_SET: PieceSet = { id: DEFAULT_PIECE_SET, name: 'Cburn
 
 /** Names for the sets tools/fetch-lichess-pieces.mjs installs. Keep the two lists in step. */
 const PIECE_SET_NAMES: Readonly<Record<string, string>> = {
-	Firi: 'Firi',
 	cburnett: 'Cburnett',
 	celtic: 'Celtic',
 	chessnut: 'Chessnut',
@@ -20,7 +19,6 @@ const PIECE_SET_NAMES: Readonly<Record<string, string>> = {
 	'kiwen-suwi': 'Kiwen Suwi',
 	letter: 'Letter',
 	merida: 'Merida',
-	mono: 'Mono',
 	mpchess: 'MPChess',
 	papercut: 'Papercut',
 	pirouetti: 'Pirouetti',
