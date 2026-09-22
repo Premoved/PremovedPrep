@@ -394,7 +394,8 @@ h2 {
 	font-size: 1.3rem;
 	font-weight: 700;
 	letter-spacing: -0.01em;
-	color: var(--text-strong);
+	/** A dark grey rather than full black: a label over the benefits, below the headline's weight. */
+	color: var(--text-strong-muted);
 }
 
 .benefits {

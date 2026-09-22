@@ -87,7 +87,11 @@ export class AppPageComponent {
 	readonly suggested = computed(() => this.downloads.find((build) => build.platform === detectPlatform()) ?? null);
 	readonly others = computed(() => this.downloads.filter((build) => build !== this.suggested()));
 
-	readonly released = computed(() => this.stage() === 'LAUNCHED');
+	/**
+	 * The stage as this account sees it when signed in - LAUNCHED for a tester while the deployment
+	 * is still in preview - and the deployment's otherwise.
+	 */
+	readonly released = computed(() => (this.access()?.stage ?? this.stage()) === 'LAUNCHED');
 	readonly mayDownload = computed(() => this.access()?.allowed === true);
 
 	/**
@@ -177,19 +181,19 @@ export class AppPageComponent {
 			image: 'plan/collections.webp',
 		},
 		{
-			title: 'Access the cloud resources any time',
-			text: "The Analysis Board with Stockfish running at native speed on your computer, and the Openings Book built from the site's cloud database, which the app can still query.",
-			image: 'plan/analysis-board.webp',
-		},
-		{
-			title: 'Search offline your own local databases',
+			title: 'Search your local databases offline',
 			text: 'Use the advanced search by multiple criteria to query your local databases any time.',
 			image: 'plan/database-search.webp',
 		},
 		{
 			title: 'Advanced Report',
-			text: 'The Advanced Report and Search Opponent functions, using the selected local database and the main lines from all collections, local and in cloud.',
+			text: 'Power your Advanced Reports and Search Opponent functions, using any selected local database and the main lines from all your repertoire collections.',
 			image: 'plan/advanced-report.webp',
+		},
+		{
+			title: 'Access the cloud resources any time',
+			text: "Use any setup you like and query the site's cloud database any time",
+			image: 'plan/analysis-board.webp',
 		},
 	];
 
