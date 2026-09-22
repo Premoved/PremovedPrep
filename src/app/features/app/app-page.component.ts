@@ -173,7 +173,7 @@ export class AppPageComponent {
 		{
 			title: 'Local Resources',
 			text: 'Select a local folder for saving your collections, use Stockfish or any other UCI engine you add, and index any local PGN databases on your own computer.',
-			image: 'plan/local-resources.webp',
+			image: 'plan/local-resources-indexed.webp',
 		},
 		{
 			title: 'Cloud and local, kept in sync',
