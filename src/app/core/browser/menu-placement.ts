@@ -1,6 +1,5 @@
 const EDGE_MARGIN = 8;
 
-/** Clamps a position: fixed menu inside the viewport. */
 export function fitOnScreen(
 	x: number,
 	y: number,

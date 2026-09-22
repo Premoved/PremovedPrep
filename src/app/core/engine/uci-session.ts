@@ -1,7 +1,4 @@
-/**
- * The UCI conversation as a state machine: handshake, options, search, stop, and the timeouts around each.
- */
-
+// The UCI conversation as a state machine: handshake, options, search, stop, and the timeouts around each.
 export interface Timers {
 	set(run: () => void, ms: number): unknown;
 	clear(handle: unknown): void;
@@ -48,7 +45,7 @@ export class UciSession {
 
 	private stopRequested = false;
 
-	/** bestmove replies belonging to searches this session has already abandoned. */
+	// bestmove replies belonging to searches this session has already abandoned.
 	private strayBestMoves = 0;
 
 	private readyTimer: unknown = null;
@@ -96,7 +93,7 @@ export class UciSession {
 		}
 
 		if (this.awaitingBestMove) {
-			/** The previous search has to end before the next can start, and stop is how it is asked. */
+			// The previous search has to end before the next can start, and stop is how it is asked.
 			if (!this.stopRequested) {
 				this.stopRequested = true;
 				this.callbacks.send('stop');
@@ -240,6 +237,12 @@ export class UciSession {
 		this.awaitingBestMove = false;
 		this.stopRequested = false;
 		this.strayBestMoves++;
-		this.beginPending();
+		if (this.pendingFen !== null) {
+			this.beginPending();
+			return;
+		}
+		this.timers.clear(this.searchTimer);
+		this.searchTimer = null;
+		this.callbacks.onIdle?.();
 	}
 }

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-/** Claims the <piece> tag so Angular recognises it as a known element. */
+// Claims the <piece> tag chessground renders so Angular treats it as a known element, not an error.
 @Component({
 	selector: 'piece',
 	standalone: true,

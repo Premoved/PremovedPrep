@@ -85,19 +85,19 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 	private readonly router = inject(Router);
 	private readonly confirmDialog = inject(ConfirmService);
 
-	/** ?game=<id> opens a game from the archive. */
+	// ?game=<id> opens a game from the archive.
 	readonly game = input<string | undefined>(undefined);
 
 	private loadedGame?: string;
 
-	/** ?item=<id> opens an entry from the Library or Repertoire. */
+	// ?item=<id> opens an entry from the Library or Repertoire.
 	readonly item = input<string | undefined>(undefined);
 
 	private loadedItem?: string;
 
 	private loadedReport?: string;
 
-	/** ?ply=<n> opens n half-moves into whatever was loaded. */
+	// ?ply=<n> opens n half-moves into whatever was loaded.
 	readonly ply = input<string | undefined>(undefined);
 
 	private openAtPly(board: ChessBoardComponent): void {
@@ -116,7 +116,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 		board.refresh();
 	}
 
-	/** ?line=e2e4,e7e5,g1f3 does the same as ?ply= for a specific line. */
+	// ?line=e2e4,e7e5,g1f3 does the same as ?ply= for a specific line.
 	readonly line = input<string | undefined>(undefined);
 
 	readonly opponent = input<string | undefined>(undefined);
@@ -125,7 +125,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 	readonly oppTo = input<string | undefined>(undefined);
 	readonly oppName = input<string | undefined>(undefined);
 
-	/** ?report=1 reads the same opponent as an Advanced Report. */
+	// ?report=1 reads the same opponent as an Advanced Report.
 	readonly reportMode = input(false, {
 		// eslint-disable-next-line @angular-eslint/no-input-rename -- 'report' is the query parameter's own name
 		alias: 'report',
@@ -194,10 +194,10 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 
 	readonly handleActive = signal(false);
 
-	/** Below this pane width the board freezes and the pane scrolls. */
+	// Below this pane width the board freezes and the pane scrolls.
 	private static readonly MIN_BOARD_PANE_PX = 370;
 
-	/** First guess at the board pane's width, before the board has measured itself. */
+	// First guess at the board pane's width, before the board has measured itself.
 	private static readonly BOARD_PANE_AT_MAX_PX = 767;
 
 	private dividerWidth(): number {
@@ -223,10 +223,10 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 	private draftTimer: ReturnType<typeof setTimeout> | null = null;
 	private draftRestored = false;
 
-	/**
-	 * The board's work in progress, kept in this tab's own slot in the browser. Dirty work is written;
-	 * saving to the account clears it, because at that point the entry itself is the copy that counts.
-	 */
+	// Set once a draft write fails, so the notification is shown once rather than on every keystroke.
+	private draftWriteFailed = false;
+
+	// Dirty work is written to this tab's draft slot; saving to the account clears it instead.
 	private scheduleDraft(): void {
 		if (this.draftTimer !== null) {
 			clearTimeout(this.draftTimer);
@@ -239,7 +239,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 			}
 			const headers = this.tree.headers();
 			const root = this.tree.root();
-			this.drafts.write({
+			const kept = this.drafts.write({
 				pgn: composePgnFile({
 					headers,
 					startFen: root?.fen ?? DEFAULT_FEN,
@@ -251,10 +251,18 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 				itemId: this.openItemId(),
 				savedAt: Date.now(),
 			});
+			if (!kept) {
+				if (!this.draftWriteFailed) {
+					this.draftWriteFailed = true;
+					this.notify.error('This analysis is too large to autosave.');
+				}
+			} else {
+				this.draftWriteFailed = false;
+			}
 		}, 700);
 	}
 
-	/** Root to cursor, in the spelling ?line= and goToLine already share. */
+	// Root to cursor, in the spelling ?line= and goToLine already share.
 	private cursorLine(): string[] {
 		const line: string[] = [];
 		for (let node = this.tree.currentNode(); !node.isRoot; node = node.parent) {
@@ -263,10 +271,8 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 		return line;
 	}
 
-	/**
-	 * Puts a draft back on the board. It stays dirty on purpose: it was never saved, and saying
-	 * otherwise would let the next navigation discard it without asking.
-	 */
+	// Stays dirty on purpose: it was never saved, and marking it saved would let the next
+	// navigation discard it without asking.
 	private restoreDraft(board: ChessBoardComponent, forItem: number | null): boolean {
 		const draft = this.drafts.read();
 		if (!draft || draft.itemId !== forItem) {
@@ -278,9 +284,10 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 			board.refresh();
 			this.tree.goToLine(draft.line);
 			board.refresh();
+			this.tree.markDirty();
 			return true;
 		} catch {
-			/** Unreadable: a shape from an older build. Better dropped than shown as an empty board. */
+			// Unreadable: a shape from an older build. Better dropped than shown as an empty board.
 			this.drafts.clear();
 			return false;
 		}
@@ -294,7 +301,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 			untracked(() => this.scheduleDraft());
 		});
 
-		/** A board opened with nothing in the URL is this tab's own analysis, from where it left off. */
+		// A board opened with nothing in the URL is this tab's own analysis, from where it left off.
 		effect(() => {
 			const board = this.board();
 			if (!board || this.draftRestored || this.game() || this.item()) {
@@ -403,7 +410,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 					board.refresh();
 					this.openAtPly(board);
 					this.tree.markSaved();
-					/** Unsaved work this tab left on the same entry is newer than what the server holds. */
+					// Unsaved work this tab left on the same entry is newer than what the server holds.
 					this.restoreDraft(board, Number(id));
 					this.loadSiblings(detail.collectionId);
 
@@ -440,7 +447,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 			if (!target) {
 				return;
 			}
-			/** Only on the way in: a save must not pull the cursor back. */
+			// Only on the way in: a save must not pull the cursor back.
 			if (reopen) {
 				this.openAtPly(target);
 				this.tree.markSaved();
@@ -507,7 +514,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 			confirmLabel: 'Save',
 			cancelLabel: 'Discard',
 		});
-		/** The cross, or Escape: stay where we are, with the work still unsaved and still there. */
+		// Cross or Escape: stay, work remains unsaved.
 		if (answer === 'dismiss') {
 			return false;
 		}
@@ -537,7 +544,7 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 			this.collections.updateItem(itemId, pgn).subscribe({
 				next: () => {
 					this.tree.markSaved();
-					/** A trunk's own moves may also be moves a model game plays, so the layer is re-read. */
+					// A trunk's own moves may also be moves a model game plays, so the layer is re-read.
 					if (this.openItemType() === 'MAIN_LINE') {
 						this.refreshRepertoire(itemId);
 					}

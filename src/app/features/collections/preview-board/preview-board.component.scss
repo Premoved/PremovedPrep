@@ -309,8 +309,6 @@
 	border-color: var(--accent-blue);
 }
 
-/* Board context menu */
-
 .board-context-menu {
 	position: fixed;
 	z-index: 99999;
@@ -392,8 +390,6 @@
 	display: flex;
 	align-items: baseline;
 	flex-wrap: wrap;
-	/* Centred rather than left-aligned: the block is the full width of the phone and the names are
-	   short, so left alignment left a wide empty margin on the right of every line. */
 	justify-content: center;
 	gap: 0.35rem;
 	margin: 0;

@@ -1,5 +1,3 @@
-/** The per-position Game List, as the backend sends it. */
-
 export type GameSortKey =
 	'STRENGTH' | 'WHITE_NAME' | 'WHITE_ELO' | 'RESULT' | 'BLACK_NAME' | 'BLACK_ELO' | 'DATE' | 'EVENT';
 

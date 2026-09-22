@@ -10,7 +10,6 @@ export interface ClipboardContents {
 	readonly label: string;
 }
 
-/** The application's own clipboard, for Ctrl+X / Ctrl+C / Ctrl+V. */
 @Injectable({ providedIn: 'root' })
 export class ClipboardStore {
 	private readonly _contents = signal<ClipboardContents | null>(null);

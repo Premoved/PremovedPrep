@@ -13,7 +13,6 @@ interface RenderedLine {
 
 const PV_MOVES = 12;
 
-/** The engine's principal variations, below the engine bar. */
 @Component({
 	selector: 'app-engine-lines',
 	standalone: true,
@@ -28,7 +27,7 @@ export class EngineLinesComponent {
 	readonly moveRequested = output<UciMove>();
 
 	readonly lines = computed<readonly RenderedLine[]>(() => {
-		/** The position the engine searched, not wherever the tree happens to be. */
+		// The position the engine searched, not wherever the tree happens to be.
 		const fen = this.engine.positionFen();
 		const turn = activeColor(fen);
 

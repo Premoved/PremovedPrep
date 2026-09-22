@@ -6,7 +6,7 @@ export class CustomThemeService {
 	private readonly current = signal<CustomColors>(null);
 	readonly colors = this.current.asReadonly();
 
-	/** Idempotent and cheap: called on every drag of a colour input. */
+	// Idempotent and cheap: called on every drag of a colour input.
 	apply(colors: CustomColors): void {
 		this.current.set(colors);
 

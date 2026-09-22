@@ -1,22 +1,11 @@
 import { ItemDetail } from '../models/collection.model';
 import { PgnTreeNode, STANDARD_EPD, parsePgnTree } from '../chess/pgn-tree';
 
-/**
- * Everything one colour of a user's repertoire says, merged into a single tree.
- *
- * The port of the backend's RepertoireBook, moved here for the same reason everything else moved:
- * it is built out of the trunks' moves, and the moves are sealed now. It is built from entries the
- * browser has already decrypted for the collection list, so the work is a replay over PGNs in hand
- * rather than a second trip to the database.
- */
-
-/** Which of the user's trunk files a position came from. */
 export interface BookSource {
 	readonly itemId: number;
 	readonly title: string;
 }
 
-/** A position in the merged repertoire. */
 export interface BookNode {
 	readonly parent: BookNode | null;
 	readonly uci: string | null;
@@ -30,24 +19,14 @@ export interface BookNode {
 
 export interface Book {
 	readonly root: BookNode;
-	/** How many trunk files went into it. */
 	readonly files: number;
 }
 
-/** How deep the book is read, in half-moves. */
 const MAX_PLY = 60;
 
 const DEFAULT_TITLE = 'Main line';
 
-/**
- * Merges every trunk of one colour into one tree.
- *
- * `trunks` is the MAIN_LINE entries of every repertoire collection of that colour, decrypted. A
- * trunk that does not begin from the opening array is skipped: nothing in a set-up position is
- * reachable from move one, so nothing in it could ever be matched against a game that was played.
- * That is the rule the server used, kept exactly - a repertoire that quietly started counting
- * set-up studies would change every report anyone had already read.
- */
+// A trunk not starting from the standard position is skipped: unreachable from move one.
 export function buildBook(trunks: readonly ItemDetail[]): Book {
 	const root: BookNode = {
 		parent: null,
@@ -86,7 +65,6 @@ export function bookPathOf(node: BookNode): string[] {
 	return path;
 }
 
-/** Copies one file's tree into the merged one. */
 function merge(into: BookNode, from: PgnTreeNode, source: BookSource): void {
 	if (!into.sources.some((existing) => existing.itemId === source.itemId)) {
 		into.sources.push(source);

@@ -11,13 +11,11 @@ import { NoticeBarComponent } from './shared/notice-bar/notice-bar.component';
 	templateUrl: './app.html',
 })
 export class App {
-	/** Sets up global document-level long-press listeners */
 	private readonly longPress = inject(LongPressService);
 
 	private readonly seo = inject(SeoService);
 
 	constructor() {
-		/** Title, description and canonical follow the route from here on. */
 		this.seo.start();
 	}
 }

@@ -3,8 +3,6 @@ import { Key } from '@lichess-org/chessground/types';
 
 export type FromTo = string;
 
-/** Mate detection and move legality for the bot check, on chess.js. */
-
 export function mateIn(fen: string): FromTo | null {
 	let game: Chess;
 	try {

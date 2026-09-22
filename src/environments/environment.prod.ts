@@ -6,10 +6,10 @@ export const environment = {
 	desktopApp: {
 		repoUrl: 'https://github.com/Premoved/PremovedPrep-App',
 		releasesUrl: 'https://github.com/Premoved/PremovedPrep-App/releases',
+		// Only what the release actually carries: a link to a missing asset answers 404.
 		builds: [
 			{ platform: 'Windows', detail: '64-bit installer', file: 'PremovedPrep-Setup.exe' },
-			{ platform: 'macOS', detail: 'Apple silicon and Intel', file: 'PremovedPrep.dmg' },
-			{ platform: 'Linux', detail: 'AppImage, x86-64', file: 'PremovedPrep.AppImage' },
+			{ platform: 'Windows portable', detail: 'no installer, runs as it is', file: 'PremovedPrep-Portable.exe' },
 		],
 	},
 };

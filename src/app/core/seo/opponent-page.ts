@@ -1,17 +1,4 @@
-/**
- * The address a player is searched at: /search/opponent/magnus-carlsen-1503014
- *
- * One URL per player, and it is the search page itself rather than a page about them - which is
- * also the URL a search engine indexes, so somebody arriving from one lands inside the tool with
- * that player already loaded.
- *
- * Twin of `canonicalSlug` in functions/search/opponent/[slug].ts and `slug` in
- * functions/sitemap-opponents.xml.ts. The id is the trailing number, so the words in front of it
- * may disagree with the server's spelling without breaking anything - the page resolves on the id
- * and then redirects, once, to the spelling it holds. Which is a reason to keep these three in
- * step rather than to rely on it: a link built here from a stale name costs every visitor a round
- * trip. If one of the three changes, change the others.
- */
+/** Mirror functions/search/opponent/[slug].ts and sitemap-opponents.xml.ts; keep all three in step. */
 export function opponentSearchPath(name: string, fideId: number): string {
 	const words = name
 		.normalize('NFD')
@@ -22,7 +9,7 @@ export function opponentSearchPath(name: string, fideId: number): string {
 	return `/search/opponent/${words ? `${words}-${fideId}` : fideId}`;
 }
 
-/** The id a slug carries, or null when it carries none. Mirrors the function's own reading. */
+/** The id a slug carries, or null when it carries none. */
 export function fideIdFromSlug(slug: string): number | null {
 	const match = /(\d+)$/.exec(slug);
 	if (!match) {

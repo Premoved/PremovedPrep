@@ -1,29 +1,18 @@
 import { Chess } from 'chess.js';
 
-/**
- * A PGN read as the tree it is, variations included, replayed on a real board.
- *
- * This is the port of the backend's PgnTree, and it is one parser rather than two on purpose. Both
- * things that used to read a user's repertoire on the server - the repertoire linker and the
- * Advanced Report's book - now read it here, and the moment they each grew their own idea of what a
- * PGN says is the moment a game would attach to one and not the other for reasons nobody could
- * explain.
- */
-
+// Port of the backend's PgnTree: one parser, used both by the repertoire linker and the Advanced
+// Report's book, so a game cannot attach to one and not the other over a parsing difference.
 export interface PgnTreeNode {
 	readonly parent: PgnTreeNode | null;
-	/** Long algebraic, "g1f3" or "e7e8q". Null on the root. */
 	readonly uci: string | null;
-	/** What the file called the move, kept for display. Null on the root. */
 	readonly san: string | null;
 	readonly fen: string;
-	/** The first four FEN fields: what "the same position" means. */
 	readonly epd: string;
 	readonly ply: number;
 	readonly children: PgnTreeNode[];
 }
 
-/** A ceiling on how much of one document is read, counted in nodes. */
+// Ceiling on how much of one document is read, counted in nodes.
 const MAX_NODES = 20_000;
 
 export const STANDARD_EPD = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
@@ -54,13 +43,13 @@ export function parsePgnTree(pgn: string | null, startFen: string | null): PgnTr
 		}
 
 		if (token === '(') {
-			/** A variation replaces the move just played, so it hangs off that move's parent. */
+			// A variation replaces the move just played, so it hangs off that move's parent.
 			branchPoints.push(node);
 			node = node.parent ?? root;
 			continue;
 		}
 		if (token === ')') {
-			/** An unbalanced ')' is a broken file, not a reason to throw. */
+			// An unbalanced ')' is a broken file, not a reason to throw.
 			node = branchPoints.pop() ?? root;
 			continue;
 		}
@@ -106,7 +95,6 @@ export function pathOf(node: PgnTreeNode): string[] {
 	return path;
 }
 
-/** The mainline only: the same walk, taking the first child each time. */
 export function mainlineOf(root: PgnTreeNode): PgnTreeNode[] {
 	const line: PgnTreeNode[] = [];
 	for (let node = root; node.children.length > 0; node = node.children[0]) {
@@ -115,12 +103,6 @@ export function mainlineOf(root: PgnTreeNode): PgnTreeNode[] {
 	return line;
 }
 
-/**
- * The movetext as tokens, with the parentheses kept as tokens of their own.
- *
- * Comments, NAGs, move numbers and result tokens are dropped; everything else is offered to the
- * board, which refuses what is not a move. A user's file is allowed to be wrong.
- */
 export function movetextTokens(pgn: string): string[] {
 	const text = pgn
 		.replace(/^[ \t]*\[[^\]]*][ \t]*$/gm, ' ')
@@ -150,7 +132,6 @@ export function movetextTokens(pgn: string): string[] {
 export function cleanSan(token: string): string {
 	let san = token.replace(/[?!]+/g, '').trim();
 
-	/** '0-0' and '0-0-0' are castling, not two results. */
 	if (/^[0O](-[0O]){1,2}[+#]?$/.test(san)) {
 		san = san.replace(/0/g, 'O');
 	}
@@ -160,13 +141,8 @@ export function cleanSan(token: string): string {
 	return san.replace(/^\d+\.{1,3}/, '');
 }
 
-/**
- * Plays one move, answering both spellings of it.
- *
- * UCI because it is a join key: two writers spell the same move "0-0" and "O-O", or "exd5" and "ed",
- * and from-square plus to-square is the same for both. SAN because it is what gets drawn, and what
- * the file itself called the move reads better than anything re-derived.
- */
+// UCI (from+to) is the join key: two writers spell the same move differently ("0-0" vs "O-O",
+// "exd5" vs "ed"), but from-square plus to-square agree. SAN is kept because it draws better.
 export function tryMove(board: Chess, san: string): { uci: string; san: string } | null {
 	try {
 		const move = board.move(san);
@@ -188,7 +164,6 @@ export function boardAtFen(fen: string): Chess {
 	return boardAt(fen);
 }
 
-/** The first four FEN fields: placement, side, castling, en passant. */
 export function epdOf(board: Chess): string {
 	return board.fen().split(' ').slice(0, 4).join(' ');
 }

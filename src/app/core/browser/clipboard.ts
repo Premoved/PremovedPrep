@@ -1,4 +1,3 @@
-/** Copies text, falling back to execCommand where the Clipboard API is unavailable. */
 export async function copyText(text: string): Promise<boolean> {
 	if (!text) return false;
 

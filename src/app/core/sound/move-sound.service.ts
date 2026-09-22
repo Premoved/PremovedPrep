@@ -7,7 +7,6 @@ export type BoardSound = 'move' | 'capture' | 'castle';
 
 const GAIN = 0.55;
 
-/** The board's move, capture and castling sounds, over Web Audio. */
 @Injectable({ providedIn: 'root' })
 export class MoveSoundService {
 	private readonly installed = signal(false);
@@ -18,7 +17,7 @@ export class MoveSoundService {
 	private context: AudioContext | null = null;
 	private gain: GainNode | null = null;
 	private readonly buffers = new Map<BoardSound, AudioBuffer>();
-	/** In-flight decodes, so a held key does not start the same download twice. */
+	// In-flight decodes, so a held key does not start the same download twice.
 	private readonly loading = new Map<BoardSound, Promise<AudioBuffer | null>>();
 
 	async load(): Promise<void> {
@@ -26,9 +25,8 @@ export class MoveSoundService {
 			const response = await fetch(`${baseUrl()}${MANIFEST}`, { cache: 'no-cache' });
 			if (!response.ok) return;
 
-			/**
-			 * The dev server's SPA fallback answers a missing file with index.html, so the content type is checked.
-			 */
+			// The dev server's SPA fallback answers a missing file with index.html; .json() below
+			// throws on that, which the catch below treats the same as no manifest.
 			const body = (await response.json()) as { sounds?: Record<string, unknown> };
 			const declared = body.sounds;
 			if (!declared || typeof declared !== 'object') return;
@@ -127,7 +125,7 @@ export class MoveSoundService {
 					this.buffers.set(sound, buffer);
 					return buffer;
 				} catch {
-					// This container did not decode here: try the next one.
+					// This source did not decode: try the next one.
 				}
 			}
 

@@ -10,7 +10,7 @@ function fingerprint(node: MoveNode): unknown {
 		san: node.san,
 		annotation: node.annotation ?? null,
 		comment: node.comment ?? null,
-		/** Sorted because the serialiser writes circles before arrows, so a round trip may reorder them. */
+		// Sorted because the serialiser writes circles before arrows, so a round trip may reorder them.
 		drawings: (node.drawings ?? [])
 			.map((shape) => `${shape.brush}:${shape.orig}${shape.dest && shape.dest !== shape.orig ? `-${shape.dest}` : ''}`)
 			.sort(),
@@ -140,7 +140,7 @@ describe('PGN parser and serializer', () => {
 			expect(tree.children[0].children.map((node) => node.san)).toEqual(['e5']);
 		});
 
-		/** The black king on e5 keeps the promotion from being check, so chess.js does not normalise the SAN. */
+		// The black king on e5 keeps the promotion from being check, so chess.js does not normalise the SAN.
 		const PROMOTION_FEN = '8/P7/8/4k3/8/8/8/4K3 w - - 0 1';
 
 		it('does not annotate a promotion', () => {

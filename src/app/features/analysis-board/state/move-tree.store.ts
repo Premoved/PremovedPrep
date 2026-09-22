@@ -23,10 +23,7 @@ const DECIDED_RESULTS: ReadonlySet<string> = new Set(['1-0', '0-1', '1/2-1/2']);
 export type ForwardStep =
 	{ kind: 'none' } | { kind: 'drawings' } | { kind: 'moved' } | { kind: 'branch'; variations: PlyNode[] };
 
-/**
- * The analysis tree and the cursor into it. Nodes are mutated in place; `revision` is what views subscribe
- * to.
- */
+/** Analysis tree and cursor. Nodes mutate in place; views subscribe to `revision`. */
 @Injectable()
 export class MoveTreeStore {
 	private readonly _root = signal<RootNode>(createRootNode(DEFAULT_FEN, Color.WHITE));
@@ -35,7 +32,7 @@ export class MoveTreeStore {
 
 	private readonly _headers = signal<GameHeaders>(NO_GAME_HEADERS);
 
-	/** Bumped whenever the tree is mutated in place. */
+	// Bumped whenever the tree is mutated in place.
 	private readonly _revision = signal(0);
 
 	private readonly _savedRevision = signal(0);
@@ -67,12 +64,17 @@ export class MoveTreeStore {
 		this._savedRevision.set(this._revision());
 	}
 
+	// Forces isDirty() without mutating the tree, so a restored draft is not read as saved.
+	markDirty(): void {
+		this._revision.update((value) => value + 1);
+	}
+
 	readonly isAtRoot = computed(() => this._currentNode().isRoot);
 
 	readonly canGoForward = computed(() => {
 		this._revision();
 		const node = this._currentNode();
-		/** A collapsed solution boundary blocks forward movement. */
+		// A collapsed solution boundary blocks forward movement.
 		if (node.solutionFold === 'collapsed') return false;
 		if (node.drawings.length > 0 && !this._drawingsVisible()) return true;
 		return node.children.length > 0;
@@ -86,8 +88,6 @@ export class MoveTreeStore {
 	visibleDrawings(): DrawShape[] {
 		return this._drawingsVisible() ? this._currentNode().drawings : [];
 	}
-
-	/** Tree lifecycle */
 
 	reset(fen: string): void {
 		const root = createRootNode(fen, activeColor(fen));
@@ -159,14 +159,12 @@ export class MoveTreeStore {
 		};
 
 		parent.children.push(node);
-		/** Writing a move under a suggested one accepts the suggestion. */
+		// Writing a move under a suggested one accepts the suggestion.
 		this.promoteGenerated(parent);
 		this.setCurrent(node);
 		this._revision.update((value) => value + 1);
 		return node;
 	}
-
-	/** The repertoire's derived layer. */
 
 	applyRepertoireTree(tree: RepertoireTree | null): void {
 		const wasDirty = this.isDirty();
@@ -285,8 +283,6 @@ export class MoveTreeStore {
 		}
 	}
 
-	/** Drawings */
-
 	setDrawingsVisible(visible: boolean): void {
 		this._drawingsVisible.set(visible);
 	}
@@ -308,8 +304,6 @@ export class MoveTreeStore {
 		this._revision.update((value) => value + 1);
 		return node.drawings;
 	}
-
-	/** Editing */
 
 	setAnnotation(node: MoveNode, annotation: Annotation | undefined): void {
 		this.promoteGenerated(node);
@@ -346,7 +340,7 @@ export class MoveTreeStore {
 			this._drawingsVisible.set(false);
 		}
 
-		/** Deleting a branch can take every solution boundary with it. */
+		// Deleting a branch can take every solution boundary with it.
 		if (this._isStudy() && !this.hasAnySolutionFold()) {
 			this._root().solutionFold = 'collapsed';
 		}
@@ -381,8 +375,6 @@ export class MoveTreeStore {
 		return false;
 	}
 
-	/** Folding */
-
 	insertFoldingPoint(node: PlyNode): void {
 		this.collapse(node);
 	}
@@ -414,8 +406,6 @@ export class MoveTreeStore {
 
 		this._revision.update((value) => value + 1);
 	}
-
-	/** Solution folding (study only) */
 
 	private walk(node: MoveNode, visit: (node: MoveNode) => void): void {
 		visit(node);
@@ -491,8 +481,6 @@ export class MoveTreeStore {
 
 		this._revision.update((value) => value + 1);
 	}
-
-	/** Navigation */
 
 	private setCurrent(node: MoveNode): void {
 		this._currentNode.set(node);
@@ -571,7 +559,7 @@ export class MoveTreeStore {
 			return;
 		}
 
-		/** Hide the drawings first; the next press leaves the move. */
+		// Hide the drawings first; the next press leaves the move.
 		if (node.drawings.length > 0 && this._drawingsVisible()) {
 			this._drawingsVisible.set(false);
 			return;

@@ -8,7 +8,7 @@ import { BotCheck } from '../../core/captcha/bot-check';
 import { CaptchaAnswer } from '../../core/captcha/captcha.model';
 import { PasswordRevealDirective } from '../../shared/password-reveal/password-reveal.directive';
 
-/** Must match the @Pattern on AuthDtos.RegisterRequest. */
+// Must match the @Pattern on AuthDtos.RegisterRequest.
 const USERNAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 @Component({
@@ -28,10 +28,8 @@ export class RegisterComponent {
 	readonly email = signal('');
 	readonly password = signal('');
 
-	/** Required: the server refuses the registration without it, and records the version accepted. */
 	readonly acceptedTerms = signal(false);
 
-	/** Set once a field has been left, so a rule is not shown while the user is still typing. */
 	readonly touchedUsername = signal(false);
 	readonly touchedPassword = signal(false);
 
@@ -56,12 +54,7 @@ export class RegisterComponent {
 		if (value.length === 0) {
 			return null;
 		}
-		/**
-		 * The rule now lives only here. Since end-to-end encryption the server is sent a 43-character
-		 * derived secret and never sees the password, so it cannot check the length of one - which also
-		 * means BCrypt's 72-character ceiling no longer applies to what a person may choose. The cap
-		 * below is for the person's sake, not the hash's.
-		 */
+		// The server only ever sees a derived secret, not the password, so it cannot enforce a length cap.
 		if (value.length > 200) {
 			return 'At most 200 characters.';
 		}
@@ -120,18 +113,12 @@ export class RegisterComponent {
 			)
 			.subscribe({
 				next: (created) => {
-					/** verificationSent is false when the mail provider refused. */
+					// False when the mail provider refused; the account exists either way.
 					if (!created.verificationSent) {
 						this.notices.error(
 							'Your account was created, but we could not send the confirmation email. Try sending it again.',
 						);
 					}
-					/**
-					 * The recovery code made here is deliberately not shown. It cannot survive the trip
-					 * through the inbox and back, and keeping it in between would mean storing the one
-					 * thing that must never be stored. The first sign-in replaces it with one the person
-					 * actually sees - see VaultService.ensureRecoveryCode.
-					 */
 					this.router.navigateByUrl('/verify-email', { state: { email: created.email } });
 				},
 				error: (err: Error) => {

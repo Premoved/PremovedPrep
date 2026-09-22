@@ -5,7 +5,7 @@ export interface AnnotationOption {
 	readonly label: string;
 }
 
-/** The annotation palette, in display order. Each value is also the glyph rendered. */
+// Display order; each value is also the glyph rendered.
 export const ANNOTATION_OPTIONS: readonly AnnotationOption[] = [
 	{ value: Annotation.EMPTY, label: 'Clear annotation' },
 	{ value: Annotation.EQUAL_POSITION, label: 'Equal position' },

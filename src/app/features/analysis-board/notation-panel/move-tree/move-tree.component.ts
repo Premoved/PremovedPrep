@@ -82,11 +82,10 @@ export class MoveTreeComponent implements OnDestroy {
 	});
 
 	private pressTimer?: ReturnType<typeof setTimeout>;
-	/** Set when a long press opened the menu, so the click that follows is ignored. */
+	// Set when a long press opened the menu, so the click that follows is ignored.
 	private longPressFired = false;
 
-	/** Solution icon: identifying nodes for drag-and-drop. */
-
+	// Bidirectional: templates key nodes by string for drag hit-testing to resolve back to a node.
 	private readonly nodeKeys = new Map<MoveNode, string>();
 	private readonly keyToNode = new Map<string, MoveNode>();
 	private nodeKeyCounter = 0;
@@ -106,7 +105,7 @@ export class MoveTreeComponent implements OnDestroy {
 	}
 
 	constructor() {
-		/** Keeping the cursor visible is the notation panel's job, not the board's. */
+		// Keeping the cursor visible is the notation panel's job, not the board's.
 		effect(() => {
 			this.tree.currentNode();
 			this.tree.revision();
@@ -118,8 +117,6 @@ export class MoveTreeComponent implements OnDestroy {
 		clearTimeout(this.pressTimer);
 	}
 
-	/** Rendering helpers */
-
 	protected readonly moveNumber = moveNumberPrefix;
 
 	showsMoveNumber(node: PlyNode): boolean {
@@ -128,7 +125,7 @@ export class MoveTreeComponent implements OnDestroy {
 
 	private isFirstInVariation(node: PlyNode): boolean {
 		const parent = node.parent;
-		/** With the root hidden, the first move on screen has no context above it. */
+		// With the root hidden, the first move on screen has no context above it.
 		if (parent.isRoot) return true;
 		return parent.children.length > 1 && parent.children[0] !== node;
 	}
@@ -136,8 +133,6 @@ export class MoveTreeComponent implements OnDestroy {
 	showsDrawings(node: MoveNode): boolean {
 		return this.tree.currentNode() === node && this.tree.drawingsVisible();
 	}
-
-	/** Selection */
 
 	onMoveClick(node: PlyNode): void {
 		if (this.longPressFired) {
@@ -147,8 +142,6 @@ export class MoveTreeComponent implements OnDestroy {
 		this.closeMenu();
 		this.moveSelected.emit(node);
 	}
-
-	/** Context menu */
 
 	onContextMenu(event: MouseEvent, node: MoveNode): void {
 		event.preventDefault();
@@ -181,7 +174,7 @@ export class MoveTreeComponent implements OnDestroy {
 		this.openMenu.set(null);
 	}
 
-	/** Dismiss on pointerdown rather than click. */
+	// Dismiss on pointerdown rather than click.
 	@HostListener('document:pointerdown', ['$event'])
 	onDocumentPointerDown(event: PointerEvent): void {
 		const target = event.target as HTMLElement;
@@ -198,8 +191,6 @@ export class MoveTreeComponent implements OnDestroy {
 		this.closeMenu();
 		this.closeIconMenu();
 	}
-
-	/** Menu actions */
 
 	promote(node: MoveNode): void {
 		if (!node.isRoot) this.tree.promoteLine(node);
@@ -224,8 +215,6 @@ export class MoveTreeComponent implements OnDestroy {
 		this.closeMenu();
 		this.positionChanged.emit();
 	}
-
-	/** Folding */
 
 	hasFoldingPoint(node: MoveNode): boolean {
 		if (node.isRoot) return false;
@@ -259,8 +248,6 @@ export class MoveTreeComponent implements OnDestroy {
 		this.positionChanged.emit();
 	}
 
-	/** Solution icon */
-
 	readonly iconMenu = signal<OpenMenu | null>(null);
 
 	readonly dropTarget = signal<MoveNode | null>(null);
@@ -280,7 +267,7 @@ export class MoveTreeComponent implements OnDestroy {
 		this.dragMoved = false;
 		this.dragStartX = event.clientX;
 		this.dragStartY = event.clientY;
-		/** Capturing on the icon itself, so the gesture survives leaving it. */
+		// Capturing on the icon itself, so the gesture survives leaving it.
 		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 	}
 
@@ -381,8 +368,6 @@ export class MoveTreeComponent implements OnDestroy {
 		this.positionChanged.emit();
 	}
 
-	/** Comments */
-
 	readonly editingNode = signal<MoveNode | null>(null);
 
 	startComment(node: MoveNode): void {
@@ -412,10 +397,8 @@ export class MoveTreeComponent implements OnDestroy {
 		this.editingNode.set(null);
 	}
 
-	/** The repertoire's model games. */
-
 	openModelGame(game: RepertoireGame): void {
-		/** ply is what opens the game where the branch left it. */
+		// ply is what opens the game where the branch left it.
 		window.open(`/analysis?item=${game.itemId}&ply=${game.ply}`, '_blank', 'noopener');
 	}
 
@@ -430,8 +413,6 @@ export class MoveTreeComponent implements OnDestroy {
 		const facts = [game.event, when, game.eco].filter((part) => part).join(' · ');
 		return facts ? `${facts} — open on its own board` : 'Open this game on its own board';
 	}
-
-	/** The Advanced Report's endpoints. */
 
 	openReportGame(game: ReportGame): void {
 		window.open(`/analysis?game=${game.id}&ply=${game.ply}`, '_blank', 'noopener');
@@ -457,10 +438,8 @@ export class MoveTreeComponent implements OnDestroy {
 		return point.kind === 'DEVIATION' ? this.report.deviations().length : this.report.overlaps().length;
 	}
 
-	/** Scrolling */
-
 	private scrollActiveIntoView(): void {
-		/** Scrolling out from under an open menu would leave it pointing at nothing. */
+		// Scrolling out from under an open menu would leave it pointing at nothing.
 		if (this.openMenu() || this.iconMenu()) return;
 
 		const host = this.host.nativeElement as HTMLElement;

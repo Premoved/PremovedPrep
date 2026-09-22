@@ -22,41 +22,13 @@ import { compareItems } from './item-sort';
 import { EMPTY_MAIN_LINE_PGN, ItemPayload, readPayload, writePayload } from './item-payload';
 import { buildZip } from '../browser/zip';
 
-/**
- * /api/collections - both the Library and the Repertoire.
- *
- * THIS CLASS IS THE ENCRYPTION BOUNDARY
- *
- * Its method signatures are the ones it always had: callers pass a PGN and a name and get back an
- * ItemSummary and a CollectionSummary. What changed is underneath. Nothing leaves here in the clear
- * and nothing arrives here readable; every PGN is sealed on the way out and every row is opened on
- * the way in, and the three components that use this service did not have to learn that.
- *
- * Keeping the surface identical was the point. An encryption layer that every caller has to
- * remember to use is one that some caller eventually forgets, and the forgetting is silent - the
- * feature works, and the data is in the clear. Here there is no way to reach /api/collections
- * except through a method that seals.
- *
- * WHAT MOVED IN HERE FROM THE SERVER
- *
- *   sorting     the server ordered by SQL columns derived from the PGN; those columns are gone, so
- *               a collection is fetched whole, decrypted, and sorted by compareItems
- *   importing   the server split a multi-game file; splitPgn does it here and posts the pieces
- *   exporting   the server concatenated and zipped; buildZip does it here and never sends anything
- *   linking     the repertoire tree was replayed on the server; repertoire-linker does it here
- *
- * Each of those is more code in the browser than it was on the server. That is the bill for the
- * guarantee, and it is paid once.
- */
+// Encryption boundary: every PGN is sealed going out and every row opened coming in. There is no
+// path to /api/collections here that skips it.
 @Injectable({ providedIn: 'root' })
 export class CollectionApiService {
 	private readonly http = inject(HttpClient);
 	private readonly vault = inject(VaultService);
 	private readonly baseUrl = `${environment.apiBaseUrl}/collections`;
-
-	// -----------------------------------------------------------------
-	// Collections
-	// -----------------------------------------------------------------
 
 	list(kind: CollectionKind, color?: RepertoireColor | null): Observable<CollectionSummary[]> {
 		let params = new HttpParams().set('kind', kind);
@@ -74,24 +46,13 @@ export class CollectionApiService {
 			.pipe(switchMap((row) => from(this.openCollection(row))));
 	}
 
-	/**
-	 * A new folder - and, for a repertoire, the empty main line it is created holding.
-	 *
-	 * A repertoire without a trunk is a folder that cannot do the thing a repertoire is for: model
-	 * games attach to theory, and with no theory there is nowhere for any of them to go. The server
-	 * wrote that first entry itself until the entries were sealed; it has no key now, so the sealed
-	 * document is sent with the folder and filed in the same transaction.
-	 */
 	create(
 		kind: CollectionKind,
 		name: string,
 		icon: string,
 		color?: RepertoireColor | null,
-		/**
-		 * False when the caller is about to import a file that already holds theory - a copy of a
-		 * repertoire from somewhere else. Seeding then would leave the copy with an empty main line
-		 * in front of the real ones, which is not what was copied.
-		 */
+		// False when importing a file that already holds theory, so the copy is not seeded with an
+		// empty main line in front of the real ones.
 		seedTrunk = true,
 	): Observable<CollectionSummary> {
 		return from(this.newFolderBody(kind, name, icon, color ?? null, seedTrunk)).pipe(
@@ -116,7 +77,6 @@ export class CollectionApiService {
 		};
 	}
 
-	/** The one document every repertoire starts with, sealed. */
 	private sealedEmptyTrunk(): Promise<string> {
 		return this.sealItem({ pgn: EMPTY_MAIN_LINE_PGN, title: null, author: null });
 	}
@@ -141,14 +101,8 @@ export class CollectionApiService {
 		return this.http.delete<void>(`${this.baseUrl}/${id}`);
 	}
 
-	/**
-	 * Moves or copies whole folders onto the other shelf.
-	 *
-	 * Three things the server used to work out for itself have to be worked out here, because all
-	 * three are reading: what each entry becomes on the new shelf (it depends on the starting
-	 * position), what a copy should be called when the name is taken, and what the empty trunk a
-	 * repertoire cannot be without looks like.
-	 */
+	// What each entry becomes on the new shelf, what a copy is called when the name is taken, and
+	// the empty trunk a repertoire needs are all decided here, since all three require reading.
 	transferCollections(
 		kind: CollectionKind,
 		color: RepertoireColor | null,
@@ -175,33 +129,13 @@ export class CollectionApiService {
 		);
 	}
 
-	// -----------------------------------------------------------------
-	// Entries
-	// -----------------------------------------------------------------
-
-	/**
-	 * One collection's entries, decrypted and sorted here.
-	 *
-	 * `sort` and `ascending` keep the signature they had; what they no longer do is travel. The
-	 * server hands back the collection in manual order and this sorts it, which is both the only
-	 * thing that can work now and - for a folder of a few hundred entries that had to be fetched
-	 * whole anyway - indistinguishable in speed from what it replaced.
-	 */
+	// Sorted client-side: entries are only readable after decryption.
 	listItems(collectionId: number, sort: ItemSortKey, ascending?: boolean): Observable<ItemSummary[]> {
 		return this.listDetails(collectionId).pipe(map((items) => sortItems(items, sort, ascending)));
 	}
 
-	/**
-	 * The same fetch, with the PGN still attached.
-	 *
-	 * Everything that used to be a separate server endpoint - export, the repertoire tree, the
-	 * Advanced Report's book, deciding what an entry becomes on the other shelf - needs the moves and
-	 * not just the columns, and they are in hand already: opening a row produces the whole document,
-	 * and listItems throws the text away only because ItemSummary is what the table binds to.
-	 *
-	 * Public for the report, which builds its book out of the trunks and is the one caller outside
-	 * this class with a reason to see them.
-	 */
+	// Public for the report, which builds its book from the trunks and needs the moves, not just
+	// the columns listItems throws away.
 	listDetails(collectionId: number): Observable<ItemDetail[]> {
 		return this.http
 			.get<ItemRow[]>(`${this.baseUrl}/${collectionId}/items`)
@@ -212,7 +146,6 @@ export class CollectionApiService {
 		return this.http.get<ItemRow>(`${this.baseUrl}/items/${itemId}`).pipe(switchMap((row) => from(this.openItem(row))));
 	}
 
-	/** The PGN is sealed here; the server stores an envelope and derives nothing from it. */
 	createItem(
 		collectionId: number,
 		itemType: ItemType,
@@ -226,7 +159,6 @@ export class CollectionApiService {
 		);
 	}
 
-	/** Omitting itemType leaves the existing type unchanged. */
 	updateItem(
 		itemId: number,
 		pgn: string,
@@ -256,18 +188,13 @@ export class CollectionApiService {
 			.pipe(switchMap((rows) => from(this.openItems(rows))));
 	}
 
-	/**
-	 * A file, split here and posted as entries.
-	 *
-	 * The split is the same one the server did, in the same order, so a file that imported as
-	 * fourteen games before imports as fourteen games now. Games with neither moves nor tags are
-	 * dropped exactly as they were - an exporter's trailing newline is not an entry.
-	 */
+	// Split into games in file order; an entry with no moves and no tags is dropped.
 	importPgn(collectionId: number, pgn: string, itemType?: ItemType): Observable<ImportResult> {
 		return this.get(collectionId).pipe(
 			switchMap((collection) => {
-				const games = splitPgn(pgn).filter((game) => game.plyCount > 0 || Object.keys(game.tags).length > 0);
-				const skipped = splitPgn(pgn).length - games.length;
+				const parsed = splitPgn(pgn);
+				const games = parsed.filter((game) => game.plyCount > 0 || Object.keys(game.tags).length > 0);
+				const skipped = parsed.length - games.length;
 
 				if (games.length === 0) {
 					throw new Error('That file contains no games');
@@ -305,10 +232,6 @@ export class CollectionApiService {
 		);
 	}
 
-	/**
-	 * Moves or copies entries into another folder. The target type for each one is decided here, for
-	 * the same reason it is in transferCollections: it depends on the starting position.
-	 */
 	transferItems(targetCollectionId: number, itemIds: readonly number[], copy: boolean): Observable<ItemSummary[]> {
 		return forkJoin({
 			target: this.get(targetCollectionId),
@@ -327,10 +250,6 @@ export class CollectionApiService {
 		);
 	}
 
-	// -----------------------------------------------------------------
-	// Export, which no longer leaves the browser
-	// -----------------------------------------------------------------
-
 	exportCollection(id: number): Observable<Blob> {
 		return this.listDetails(id).pipe(map((items) => new Blob([joinPgn(items)], { type: 'application/x-chess-pgn' })));
 	}
@@ -348,21 +267,12 @@ export class CollectionApiService {
 		);
 	}
 
-	/** The name the export downloads as. The rule the server's fileName() used, unchanged. */
+	// Same rule the server's fileName() used.
 	fileNameFor(name: string): string {
 		const cleaned = fileNameSafe(name.trim()).trim().slice(0, 80).trim();
 		return cleaned.length === 0 ? 'collection' : cleaned;
 	}
 
-	// -----------------------------------------------------------------
-
-	/**
-	 * Where a repertoire's model games join its theory.
-	 *
-	 * Built here, from entries this browser has decrypted, by the port of what RepertoireLinkService
-	 * used to do. It is a local computation with an Observable around it so that the call site reads
-	 * the way it always did.
-	 */
 	repertoireTree(itemId: number): Observable<RepertoireTree> {
 		return this.getItem(itemId).pipe(
 			switchMap((trunk) =>
@@ -383,10 +293,6 @@ export class CollectionApiService {
 	storage(): Observable<StorageUsage> {
 		return this.http.get<StorageUsage>(`${this.baseUrl}/storage`);
 	}
-
-	// -----------------------------------------------------------------
-	// Sealing and opening
-	// -----------------------------------------------------------------
 
 	private sealItem(payload: ItemPayload): Promise<string> {
 		return this.vault.seal('item', writePayload(payload));
@@ -409,19 +315,7 @@ export class CollectionApiService {
 		};
 	}
 
-	/**
-	 * A collection, opened all at once.
-	 *
-	 * Sequential rather than Promise.all over hundreds of entries: each one is a decrypt and a
-	 * decompress, and firing a folder's worth at the event loop together makes the tab unresponsive
-	 * for as long as it takes rather than for each step.
-	 *
-	 * A single entry that will not open is dropped and logged - one damaged row must not make a whole
-	 * folder unreadable. A LOCKED vault is the opposite case and is rethrown: every row would fail,
-	 * and swallowing them would hand the screen an empty list. "You have no games" and "this browser
-	 * does not have your key yet" are different sentences, and showing the first when the second is
-	 * true reads to a person as their work having been deleted.
-	 */
+	// Sequential decrypts keep the tab responsive. A locked vault rethrows; a bad row is dropped.
 	private async openItems(rows: readonly ItemRow[]): Promise<ItemDetail[]> {
 		const opened: ItemDetail[] = [];
 		for (const row of rows) {
@@ -441,7 +335,7 @@ export class CollectionApiService {
 		return { ...row, name: await this.vault.open('collection-name', row.nameCipher) };
 	}
 
-	/** Same rule as openItems: a bad row is dropped, a locked vault is a state and not a row. */
+	// Same rule as openItems: a bad row is dropped, a locked vault is rethrown.
 	private async openCollections(rows: readonly WireCollectionSummary[]): Promise<CollectionSummary[]> {
 		const opened: CollectionSummary[] = [];
 		for (const row of rows) {
@@ -457,7 +351,6 @@ export class CollectionApiService {
 		return opened;
 	}
 
-	/** The per-folder decisions a cross-shelf transfer needs, made where the names are readable. */
 	private async planCollectionTransfer(
 		kind: CollectionKind,
 		sources: readonly CollectionSummary[],
@@ -495,17 +388,9 @@ export class CollectionApiService {
 	}
 }
 
-/** The characters Windows forbids in a path component. */
+// The characters Windows forbids in a path component.
 const FORBIDDEN_IN_FILE_NAME: ReadonlySet<string> = new Set(['\\', '/', ':', '*', '?', '"', '<', '>', '|']);
 
-/**
- * A name made safe to use as a file name: the same set the server's fileName() removed, which is
- * those characters and the control characters below U+0020.
- *
- * Spelled as a test rather than as a character class because a class that reaches from U+0000 to
- * U+001F is a run of invisible characters in the source, which is a thing to be able to read and a
- * thing a linter is right to ask about. The set is unchanged; only where it is written moved.
- */
 function fileNameSafe(name: string): string {
 	let safe = '';
 	for (const character of name) {
@@ -515,7 +400,6 @@ function fileNameSafe(name: string): string {
 	return safe;
 }
 
-/** The sorting the server used to do in SQL, done here over what has just been decrypted. */
 function sortItems(items: readonly ItemDetail[], sort: ItemSortKey, ascending?: boolean): ItemSummary[] {
 	return compareItems(items, sort, ascending);
 }
@@ -538,7 +422,7 @@ function zipEntriesFor(collections: readonly CollectionSummary[], contents: read
 	});
 }
 
-/** 'Sicilian', then 'Sicilian (2)', until the name is free. The server's freeName(), moved. */
+// 'Sicilian', then 'Sicilian (2)', until the name is free. The server's freeName(), moved.
 function freeName(taken: ReadonlySet<string>, name: string): string {
 	if (!taken.has(name.toLowerCase())) {
 		return name;

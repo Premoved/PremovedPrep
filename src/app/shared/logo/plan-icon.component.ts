@@ -1,13 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-/**
- * The Premoved Plan's mark. The same drawing as the Desktop App's Subscription Plan icon, so the
- * plan looks like one thing on the site and in the app.
- *
- * The knight of the logo between two laurels. The knight keeps the logo's base colour and its three
- * database levels the accent blue, as the knight logo does; the laurels are gold, which is what
- * says premium. All three follow whichever theme is on.
- */
+/** Same drawing as the Desktop App's Subscription Plan icon; keep the two markups in sync. */
 @Component({
 	selector: 'app-plan-icon',
 	standalone: true,

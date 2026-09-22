@@ -26,7 +26,6 @@ interface NavContextMenu {
 	readonly y: number;
 }
 
-/** Context menu size, used for screen boundary detection */
 const NAV_MENU_FOOTPRINT = { width: 176, height: 44 };
 
 @Component({
@@ -70,7 +69,6 @@ export class MainLayoutComponent {
 		this.showTooltipFor(event);
 	}
 
-	/** Falls back to '.nav-label' content if no 'data-tooltip' is found */
 	private showTooltipFor(event: Event): void {
 		const el = event.currentTarget as HTMLElement;
 		const text = el.dataset['tooltip']?.trim() || el.querySelector('.nav-label')?.textContent?.trim();
@@ -134,12 +132,7 @@ export class MainLayoutComponent {
 
 	constructor() {
 		const navigation = this.router.events.subscribe((event) => {
-			/**
-			 * Start, not only End. The unsaved-changes guard asks its question during the navigation,
-			 * so waiting for the end put "Save changes?" underneath an open drawer - and if the guard
-			 * cancelled, the end never came at all. Collapsing on Start means the question is always
-			 * asked against the page it belongs to.
-			 */
+			// Start, not just End: the unsaved-changes guard prompts mid-navigation, before End fires.
 			if (event instanceof NavigationStart || event instanceof NavigationEnd) {
 				this.drawerOpen.set(false);
 			}
@@ -167,8 +160,8 @@ export class MainLayoutComponent {
 	readonly navContextMenu = signal<NavContextMenu | null>(null);
 
 	onNavContextMenu(event: MouseEvent, path: string): void {
-		// Prevents the global document click handler from immediately closing the opened menu
 		event.preventDefault();
+		// Stops the document:click listener below from closing this menu the instant it opens.
 		event.stopPropagation();
 		const at = fitOnScreen(event.clientX, event.clientY, NAV_MENU_FOOTPRINT);
 		this.navContextMenu.set({ path, x: at.x, y: at.y });

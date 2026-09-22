@@ -16,11 +16,9 @@ export class TablebaseService {
 	private readonly analytics = inject(AnalyticsService);
 
 	probe(fen: string): Observable<TablebaseResult | null> {
-		/** Counted here because this is the one place a request actually leaves. */
+		// Counted here because this is the one place a request actually leaves.
 		this.analytics.capture(AnalyticsEvent.tablebaseProbe, { pieces: pieceCount(fen) });
-		/**
-		 * HttpParams rather than string concatenation, because a FEN contains characters that must be encoded.
-		 */
+		// HttpParams rather than string concatenation: a FEN contains characters that must be encoded.
 		return this.http.get<TablebaseResult | null>(`${environment.apiBaseUrl}/tablebase`, {
 			params: new HttpParams().set('fen', fen),
 		});

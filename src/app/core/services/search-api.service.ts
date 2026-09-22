@@ -17,13 +17,11 @@ const PAGE_SIZE = 100;
 
 export const RECENT_PREVIEW_SIZE = 30;
 
-/** /api/search and the FIDE autocomplete. */
 @Injectable({ providedIn: 'root' })
 export class SearchApiService {
 	private readonly http = inject(HttpClient);
 	private readonly baseUrl = `${environment.apiBaseUrl}/search`;
 
-	/** Autocomplete for the opponent box: always the FIDE list. */
 	suggestPlayers(query: string, limit = 12): Observable<PlayerSuggestion[]> {
 		return this.http.get<PlayerSuggestion[]>(`${environment.apiBaseUrl}/players/search`, {
 			params: new HttpParams().set('q', query).set('limit', limit),
@@ -94,7 +92,7 @@ export class SearchApiService {
 		params = withOptional(params, 'to', criteria.to);
 		params = withOptional(params, 'event', criteria.event);
 		params = withOptional(params, 'eco', criteria.eco);
-		/** Repeatable parameters rather than comma-joined, which is what Spring reads back into a list. */
+		// Repeatable parameters rather than comma-joined, which is what Spring reads back into a list.
 		for (const token of criteria.results) {
 			params = params.append('results', token);
 		}

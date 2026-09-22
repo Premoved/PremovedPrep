@@ -35,16 +35,16 @@ export class PgnParserService {
 	}
 
 	private readTags(pgnText: string): Record<string, string> {
-		const tagPattern = /\[(\w+)\s+"([^"]+)"\]/g;
+		const tagPattern = /\[(\w+)\s+"((?:[^"\\]|\\.)*)"\]/g;
 		const tags: Record<string, string> = {};
 		let match: RegExpExecArray | null;
 		while ((match = tagPattern.exec(pgnText)) !== null) {
-			tags[match[1]] = match[2];
+			tags[match[1]] = match[2].replace(/\\"/g, '"').replace(/\\\\/g, '\\');
 		}
 		return tags;
 	}
 
-	/** Scans one parenthesis level and returns the index just past its closing ')'. */
+	// Scans one parenthesis level and returns the index just past its closing ')'.
 	private readSegment(text: string, startIndex: number, parentNode: MoveNode, fen: string): number {
 		let i = startIndex;
 		let lastNode: MoveNode = parentNode;
@@ -63,6 +63,7 @@ export class PgnParserService {
 			}
 
 			if (char === '(') {
+				// A variation replaces the last move played, so it branches from that move's parent.
 				const branchPoint: MoveNode = lastNode.isRoot ? lastNode : lastNode.parent;
 				i = this.readSegment(text, i + 1, branchPoint, branchPoint.fen);
 				continue;
@@ -116,7 +117,7 @@ export class PgnParserService {
 				piece: move.piece.toUpperCase() as PieceType,
 				from: move.from as SquareName,
 				to: move.to as SquareName,
-				/** The promotion piece is required here: the board suppresses its own move animation for it. */
+				// Required here: the board suppresses its own move animation when this is set.
 				promotion: move.promotion ? (move.promotion.toUpperCase() as PieceType) : undefined,
 				parent,
 				children: [],

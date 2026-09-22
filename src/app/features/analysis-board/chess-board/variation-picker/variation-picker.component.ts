@@ -12,7 +12,6 @@ import {
 import { moveNumberPrefix } from '../../../../core/chess/move-number';
 import { PlyNode } from '../../../../core/models/move-node.model';
 
-/** Branch selector, shown when going forward from a position with more than one continuation. */
 @Component({
 	selector: 'app-variation-picker',
 	standalone: true,

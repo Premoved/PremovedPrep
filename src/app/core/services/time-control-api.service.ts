@@ -9,7 +9,7 @@ export interface UserTimeControl {
 	readonly createdAt: string;
 }
 
-/** The account's saved Time Control presets, on top of the five built in for everyone. */
+// The account's saved presets, on top of the five built in for everyone.
 @Injectable({ providedIn: 'root' })
 export class TimeControlApiService {
 	private readonly http = inject(HttpClient);

@@ -25,37 +25,20 @@ interface Download {
 	readonly url: string;
 }
 
-/** One frame of the screenshot strip. `image` is relative to the base href, from public/plan. */
 interface Showcase {
 	readonly title: string;
 	readonly text: string;
 	readonly image: string;
 }
 
-/** What the "Your plan" line says. `tone` colours the dot. */
 interface PlanLine {
 	readonly label: string;
 	readonly detail: string | null;
 	readonly tone: 'on' | 'off';
 }
 
-/** Shown until the server's prices arrive, and if they never do. The same as the app's. */
 const DEFAULT_PRICES = { monthly: 124, yearly: 1199, currency: 'EUR' };
 
-/**
- * Desktop app page: what the application is, the downloads, what it looks like, and the plan it runs
- * on.
- *
- * The plan is presented here and bought in the application. That is the one thing this page must
- * not leave unclear: the website is free and asks for nothing, and the Premoved Plan belongs to the
- * Desktop App - its free trial and its payment both start from the app's Subscription Plan page.
- * So there are no buttons to buy anything here, only the way to get the app and a plain statement
- * of where the plan lives. The one billing action is the opposite one: an active plan that was paid
- * for can be cancelled from the "Your plan" line.
- *
- * A signed-out visitor sees the sign-in notice, whatever the stage. Signed in, the page has two
- * states: the presentation and the downloads, or "Coming soon".
- */
 @Component({
 	selector: 'app-app-page',
 	imports: [DesktopAppLogoComponent, PlanIconComponent, SignedOutNoticeComponent],
@@ -76,45 +59,31 @@ export class AppPageComponent {
 
 	readonly releasesUrl = environment.desktopApp.releasesUrl;
 
-	/** The release's own asset URLs. A new build changes the file behind them, not the page. */
 	readonly downloads: readonly Download[] = environment.desktopApp.builds.map((build) => ({
 		platform: build.platform,
 		detail: build.detail,
 		url: `${environment.desktopApp.releasesUrl}/latest/download/${build.file}`,
 	}));
 
-	/** The build for the system this browser runs on, offered first; the rest beside it. */
 	readonly suggested = computed(() => this.downloads.find((build) => build.platform === detectPlatform()) ?? null);
 	readonly others = computed(() => this.downloads.filter((build) => build !== this.suggested()));
 
-	/**
-	 * The stage as this account sees it when signed in - LAUNCHED for a tester while the deployment
-	 * is still in preview - and the deployment's otherwise.
-	 */
 	readonly released = computed(() => (this.access()?.stage ?? this.stage()) === 'LAUNCHED');
 	readonly mayDownload = computed(() => this.access()?.allowed === true);
 
-	/**
-	 * For a signed-in account the page has two states and nothing between them. Launched, every
-	 * account sees the presentation and the downloads, with a plan or not: the application asks for
-	 * the plan itself, and the site never does. Before the launch, only the accounts the server
-	 * already lets in see them; every other account sees "Coming soon". Signed out is neither - the
-	 * template shows the sign-in notice before it asks this.
-	 */
 	readonly showContent = computed(() => this.released() || this.mayDownload());
 
 	readonly monthly = computed(() => this.price(this.plan()?.monthlyPriceMinor ?? DEFAULT_PRICES.monthly));
 	readonly yearly = computed(() => this.price(this.plan()?.yearlyPriceMinor ?? DEFAULT_PRICES.yearly));
 
-	/** What the yearly price saves against twelve months, rounded down so it never overstates. */
 	readonly saving = computed(() => {
 		const monthly = this.plan()?.monthlyPriceMinor ?? DEFAULT_PRICES.monthly;
 		const yearly = this.plan()?.yearlyPriceMinor ?? DEFAULT_PRICES.yearly;
+		// Floor so the displayed saving never overstates the actual discount.
 		const percent = Math.floor((1 - yearly / (monthly * 12)) * 100);
 		return percent > 0 ? percent : null;
 	});
 
-	/** The same line the app's Subscription Plan page shows, read from the same answer. */
 	readonly line = computed<PlanLine | null>(() => {
 		if (!this.auth.isLoggedIn()) {
 			return null;
@@ -149,11 +118,6 @@ export class AppPageComponent {
 		};
 	});
 
-	/**
-	 * Whether the "Your plan" line offers to cancel: an active plan that was paid for through Stripe
-	 * and is not already ending. A trial, a granted plan and a plan already cancelled have nothing to
-	 * cancel here.
-	 */
 	readonly canCancel = computed(() => {
 		const view = this.plan();
 		return (
@@ -168,7 +132,6 @@ export class AppPageComponent {
 
 	readonly cancelling = signal(false);
 
-	/** The same five pictures, titles and texts as the app's Subscription Plan page. Change both together. */
 	readonly showcase: readonly Showcase[] = [
 		{
 			title: 'Local Resources',
@@ -197,7 +160,6 @@ export class AppPageComponent {
 		},
 	];
 
-	/** The screenshot shown enlarged, or null. Opened by clicking one, closed by the backdrop or Escape. */
 	readonly zoomed = signal<number | null>(null);
 	readonly zoomedShot = computed(() => {
 		const at = this.zoomed();
@@ -221,7 +183,6 @@ export class AppPageComponent {
 					next: (access) => this.access.set(access),
 					error: () => this.access.set(null),
 				});
-				/** For the line, the prices and whether the plan can be cancelled from here. */
 				this.auth.subscription().subscribe({
 					next: (plan) => this.plan.set(plan),
 					error: () => undefined,
@@ -230,20 +191,11 @@ export class AppPageComponent {
 		});
 	}
 
-	/**
-	 * Cancels the plan at the end of the period paid for, after asking. Nothing is refunded and
-	 * nothing is cut short: the line then says when the plan ends.
-	 */
 	async cancelPlan(): Promise<void> {
 		const view = this.plan();
 		if (!view || this.cancelling()) {
 			return;
 		}
-		/**
-		 * Two different cancellations, and the question says which one this is: within fourteen days
-		 * of the first payment the plan ends now and the payment comes back; after that it runs to the
-		 * end of the period paid for.
-		 */
 		const refund = view.refundUntil
 			? ` You are within 14 days of your first payment, so the plan ends now and the ${this.paidPrice(view)} you paid is refunded in full, automatically.`
 			: '';
@@ -285,7 +237,6 @@ export class AppPageComponent {
 		this.zoomed.set(null);
 	}
 
-	/** Left and right step through the pictures while one is enlarged, wrapping round at the ends. */
 	step(by: number): void {
 		const at = this.zoomed();
 		if (at !== null) {
@@ -311,7 +262,6 @@ export class AppPageComponent {
 		event.preventDefault();
 	}
 
-	/** What the account paid for the period it is in, by its interval. */
 	private paidPrice(view: SubscriptionView): string {
 		return this.price(view.interval === 'YEAR' ? view.yearlyPriceMinor : view.monthlyPriceMinor);
 	}
@@ -330,7 +280,6 @@ export class AppPageComponent {
 	}
 }
 
-/** Which of the builds' platforms this browser is on, as the builds name them. */
 function detectPlatform(): string | null {
 	if (typeof navigator === 'undefined') {
 		return null;

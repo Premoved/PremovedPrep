@@ -24,13 +24,13 @@ export class LoginComponent {
 	readonly email = signal('');
 	readonly password = signal('');
 
-	/** Unticked is the shorter of the two sessions: the cookie goes when the browser does. */
+	// Unticked: the session cookie is a browser-session cookie, cleared when the browser closes.
 	readonly keepSignedIn = signal(false);
 
 	readonly error = signal<string | null>(null);
 	readonly submitting = signal(false);
 
-	/** Set when the last failure was an unconfirmed address. */
+	// Set when the last login failure was a 403, i.e. an unconfirmed address.
 	readonly unconfirmed = signal(false);
 
 	readonly botCheck = new BotCheck();
@@ -71,19 +71,12 @@ export class LoginComponent {
 
 		this.auth.login(this.email().trim(), this.password(), this.keepSignedIn(), this.botCheck.take()).subscribe({
 			next: () => {
-				/**
-				 * An account that has never been shown a recovery code has just been given one, and the
-				 * dialog that shows it lives on the settings page. Going there rather than home puts the
-				 * code in front of the person with the profile behind it, which is where they will look
-				 * for it afterwards. Everyone else lands where they were going.
-				 */
 				if (this.auth.pendingRecoveryCode() !== null) {
 					this.router.navigateByUrl('/settings#account');
 					return;
 				}
 
 				const redirectTo = this.route.snapshot.queryParamMap.get('redirectTo') ?? '/home';
-				/** navigateByUrl only after the session is applied. */
 				this.router.navigateByUrl(redirectTo);
 			},
 			error: (err: Error) => {

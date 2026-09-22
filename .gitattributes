@@ -1,6 +1,4 @@
-# One line ending in the repository, whatever the machine that committed. Without this a Windows
-# checkout can commit CRLF, and `prettier --check` on the Linux CI runner fails on files nobody
-# edited.
+# LF everywhere: CRLF from a Windows checkout fails prettier --check in CI.
 * text=auto eol=lf
 
 # Binary, never converted.

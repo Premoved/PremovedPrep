@@ -9,18 +9,8 @@ import { CollectionApiService } from './collection-api.service';
 import { buildBook } from '../report/repertoire-book';
 import { buildAdvancedReport } from '../report/advanced-report';
 
-/**
- * The Advanced Report.
- *
- * `advanced(scope)` has the signature it always had and answers the same AdvancedReport, so the
- * screen that draws it is unchanged. What moved is where the work happens: the server sends the
- * opponent's games, and the overlay against the user's repertoire is computed here, because here is
- * the only place the repertoire is readable.
- *
- * The cost is honest and worth naming: up to four thousand games' movetext comes down the wire
- * instead of a finished tree. It is public archive text, it compresses well, and it is the price of
- * the server not holding the other half.
- */
+// The overlay against the user's repertoire runs here, the only place it is readable; up to four
+// thousand games' movetext comes down the wire instead of a finished tree.
 @Injectable({ providedIn: 'root' })
 export class ReportApiService {
 	private readonly http = inject(HttpClient);
@@ -28,7 +18,7 @@ export class ReportApiService {
 	private readonly baseUrl = `${environment.apiBaseUrl}/report`;
 
 	advanced(scope: OpponentScope): Observable<AdvancedReport> {
-		/** The colour we play is the opposite of the one the opponent had. */
+		// Our colour is the opposite of the opponent's.
 		const ourColor: RepertoireColor = scope.color === 'b' ? 'w' : 'b';
 
 		return forkJoin({
@@ -58,13 +48,7 @@ export class ReportApiService {
 		return this.http.get<OpponentGames>(`${this.baseUrl}/opponent-games`, { params });
 	}
 
-	/**
-	 * Every trunk of one colour, decrypted.
-	 *
-	 * One request per repertoire collection, which is how many a person has - a handful - and they
-	 * are the same requests the collections screen makes, so they are usually warm in the browser's
-	 * cache by the time a report is asked for.
-	 */
+	// One request per repertoire collection, usually already warm from the collections screen.
 	private trunks(color: RepertoireColor): Observable<ItemDetail[]> {
 		return this.collections.list('REPERTOIRE', color).pipe(
 			switchMap((collections) =>

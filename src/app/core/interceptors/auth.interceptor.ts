@@ -4,13 +4,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { SKIP_SESSION_RETRY, readAccessToken } from '../auth/access-token';
 import { SessionService } from '../auth/session.service';
 
-/**
- * Attaches the access token, and answers the one failure it is responsible for.
- *
- * It sits inside errorInterceptor rather than outside it, so what arrives here is the raw
- * HttpErrorResponse: a 401 recovered by a refresh never becomes an error the UI has to describe,
- * and one that is not recovered is translated on the way out exactly as before.
- */
+// Runs inside errorInterceptor, so a 401 it recovers by refreshing never becomes an ApiError.
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
 	const session = inject(SessionService);
 
@@ -22,10 +16,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 				return throwError(() => error);
 			}
 
-			/**
-			 * The token has lapsed, or the session was ended somewhere else. One refresh answers both,
-			 * and it is shared: a page firing six calls at once causes one refresh, not six.
-			 */
+			// renew() shares one in-flight refresh, so concurrent 401s trigger a single call.
 			return session
 				.renew()
 				.pipe(switchMap((token) => (token === null ? throwError(() => error) : next(withToken(req, token)))));

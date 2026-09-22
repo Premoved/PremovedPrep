@@ -14,7 +14,6 @@ export interface ReportEndpoint {
 	readonly point: ReportPoint;
 }
 
-/** The Advanced Report, once it is a tree. */
 @Injectable()
 export class ReportStore {
 	private readonly tree = inject(MoveTreeStore);
@@ -23,7 +22,7 @@ export class ReportStore {
 	private readonly _overlaps = signal<readonly ReportEndpoint[]>([]);
 	private readonly _deviations = signal<readonly ReportEndpoint[]>([]);
 
-	/** Where the reader is among each kind, 0-based, or -1 for not on one. */
+	// Where the reader is among each kind, 0-based, or -1 for not on one.
 	private readonly _overlapAt = signal(-1);
 	private readonly _deviationAt = signal(-1);
 
@@ -45,12 +44,8 @@ export class ReportStore {
 		this.tree.revision();
 		const node = this.tree.currentNode();
 
-		/**
-		 * The trunk: the repertoire moves the opponent actually played, one ply ahead of wherever you
-		 * are. Drawn everywhere the overlay reaches, including at a point of interest, so it stays
-		 * visible how the line got here and where it goes on. Moves the person plays themselves while
-		 * reading the report join the tree without reportGames, and are left alone.
-		 */
+		// Trunk: repertoire moves actually played by the opponent. Moves the reader adds while
+		// reading have no reportGames and are excluded.
 		const trunk = node.children
 			.filter((child) => child.reportGames !== undefined)
 			.map((child) => ({ orig: child.from as Key, dest: child.to as Key, brush: 'reportTrunk' }));
@@ -66,7 +61,7 @@ export class ReportStore {
 			.filter((move): move is { from: string; to: string; promotion?: string } => move !== null)
 			.map((move) => ({ orig: move.from as Key, dest: move.to as Key, brush }));
 
-		/** Trunk first, so a coloured arrow is drawn over a grey one where the two share a square. */
+		// Trunk first, so a coloured arrow is drawn over a grey one where the two share a square.
 		return [...trunk, ...coloured];
 	});
 
@@ -100,7 +95,7 @@ export class ReportStore {
 		}
 		const forward = delta >= 0;
 		const at = kind === 'OVERLAP' ? this._overlapAt() : this._deviationAt();
-		/** From nowhere, Next goes to the first and Previous to the last. */
+		// From nowhere, Next goes to the first and Previous to the last.
 		const next = at < 0 ? (forward ? 0 : list.length - 1) : (at + (forward ? 1 : -1) + list.length) % list.length;
 
 		if (kind === 'OVERLAP') {
@@ -144,7 +139,7 @@ function attach(parent: MoveNode, source: ReportNode, overlaps: ReportEndpoint[]
 	for (const child of source.children) {
 		const node = play(parent, child.uci);
 		if (node) {
-			/** The mark that separates a move the overlay found from one the reader played. */
+			// The mark that separates a move the overlay found from one the reader played.
 			node.reportGames = child.games;
 			attach(node, child, overlaps, deviations);
 		}

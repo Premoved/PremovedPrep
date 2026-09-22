@@ -1,5 +1,3 @@
-/** The endgame tablebase, as the backend sends it. */
-
 /** Free-form: an unknown category is treated as a draw. */
 export type TablebaseCategory = string;
 

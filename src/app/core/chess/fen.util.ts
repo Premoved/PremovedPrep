@@ -46,7 +46,7 @@ function hasPiece(pieces: Pieces, square: string, role: string, color: string): 
 	return !!piece && piece.role === role && piece.color === color;
 }
 
-/** A castling right is emitted only when the king and matching rook are on their home squares. */
+// Emits a right only when the king and matching rook are still on their home squares.
 export function castlingField(rights: CastlingRights, pieces: Pieces): string {
 	let field = '';
 	if (rights.wK && hasPiece(pieces, 'e1', 'king', 'white') && hasPiece(pieces, 'h1', 'rook', 'white')) field += 'K';
@@ -68,7 +68,7 @@ export function castlingRightsFrom(field: string | undefined): CastlingRights {
 	};
 }
 
-/** Every square that could legally be an en-passant target for `turn`, plus '-', sorted. */
+// Every square that could legally be an en-passant target for `turn`, plus '-', sorted.
 export function enPassantCandidates(pieces: Pieces, turn: 'w' | 'b'): string[] {
 	const options = new Set<string>(['-']);
 	const pawnAt = (file: string, rank: number, color: 'white' | 'black'): boolean => {

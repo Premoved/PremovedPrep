@@ -3,39 +3,15 @@ import { AdvancedReport, ArchiveGame, ReportGame, ReportMove, ReportNode, Report
 import { Book, BookNode, bookPathOf } from './repertoire-book';
 import { cleanSan } from '../chess/pgn-tree';
 
-/**
- * The Advanced Report: one player's games laid over one colour of the user's repertoire.
- *
- * WHY IT IS HERE AND NOT ON THE SERVER
- *
- * The overlay needs two things at once - the opponent's games, which are public, and the user's
- * repertoire, which is not. The server used to have both because it could read the repertoire. Since
- * it cannot, the only place the two can meet is the browser: the server sends the games it was
- * always allowed to send, and the book is built here from entries this browser has decrypted.
- *
- * WHAT IT DOES
- *
- * Every game is replayed against the book. Each node the game passes through is counted. The first
- * move a game plays that the book has no answer for is a departure, and it is recorded on the node
- * it left from, with a handful of sample games. Which of the two kinds of departure it is depends on
- * whose move it was: a move OUR side plays that the book does not cover is an OVERLAP - the opponent
- * chose a line we also play - and a move THEIR side plays that we have nothing prepared for is a
- * DEVIATION.
- *
- * This is a line-for-line port of AdvancedReportService. The figures, the ordering and the names are
- * the ones it used, because a report that came out differently after this change would be a report
- * nobody could compare to the one they read last week.
- */
-
-/** As deep as the book goes. */
 const MAX_PLY = 60;
 
-/** Games kept per departing move, newest first. */
 const SAMPLE_GAMES = 5;
 
-/** Prefix lengths retried when a game's movetext will not fully replay. */
+// Prefix lengths retried when a game's movetext will not fully replay.
 const RETRY_PREFIXES = [40, 24, 16, 10, 6, 4, 2];
 
+// Runs in the browser: the repertoire is end-to-end encrypted and the server cannot read it
+// to build this overlay, only the opponent's public games.
 export function buildAdvancedReport(
 	book: Book,
 	games: readonly ArchiveGame[],
@@ -66,7 +42,6 @@ export function buildAdvancedReport(
 	};
 }
 
-/** One departing move, and the games that played it. */
 class Departure {
 	games = 0;
 	private readonly sample: ReportGame[] = [];
@@ -74,7 +49,9 @@ class Departure {
 	constructor(
 		readonly uci: string,
 		readonly san: string,
-	) {}
+	) {
+		// Parameter properties only.
+	}
 
 	add(game: ArchiveGame, ply: number): void {
 		this.games++;
@@ -92,7 +69,6 @@ class Departure {
 	}
 
 	toMove(): ReportMove {
-		/** Newest first: what they played last year matters more. */
 		const sorted = [...this.sample].sort((a, b) => {
 			const byYear = (b.year ?? 0) - (a.year ?? 0);
 			return byYear !== 0 ? byYear : b.id - a.id;
@@ -141,9 +117,8 @@ class Walk {
 				continue;
 			}
 
-			/** The book has nothing to say here: this is where the theory stops. */
 			if (node.children.size > 0) {
-				/** The SAN is the archive's own token, not something re-derived. */
+				// The SAN is the archive's own token, not something re-derived.
 				const label = ply < san.length ? san[ply] : moves[ply];
 
 				let atNode = this.leaving.get(node);
@@ -168,12 +143,13 @@ class Walk {
 	}
 }
 
-/** Emits the trunk: the book cut down to the nodes at least one game reached. */
 class Emit {
 	overlaps = 0;
 	deviations = 0;
 
-	constructor(private readonly walk: Walk) {}
+	constructor(private readonly walk: Walk) {
+		// Parameter properties only.
+	}
 
 	node(node: BookNode): ReportNode {
 		const games = this.walk.visits.get(node) ?? 0;
@@ -195,11 +171,11 @@ class Emit {
 			return null;
 		}
 
+		// Leaving the book on our move = OVERLAP; on theirs = DEVIATION.
 		const ours = this.walk.oursToMove(node);
 		const kind = ours ? 'OVERLAP' : 'DEVIATION';
 		const index = ours ? ++this.overlaps : ++this.deviations;
 
-		/** Most played first. */
 		const moves = [...left.values()].map((departure) => departure.toMove()).sort((a, b) => b.games - a.games);
 
 		return {
@@ -212,12 +188,7 @@ class Emit {
 	}
 }
 
-/**
- * The archive's movetext as SAN tokens: move numbers and the result dropped, nothing re-derived.
- *
- * `moves_san` is the importer's own normalised text, so this is deliberately simpler than the parser
- * that reads a user's file - there are no comments, variations or annotations in it to strip.
- */
+// movesSan is already normalised (no comments/variations), so this only splits and cleans tokens.
 function sanMoves(movetext: string): string[] {
 	const moves: string[] = [];
 	for (const token of movetext.trim().split(/\s+/)) {
@@ -229,14 +200,7 @@ function sanMoves(movetext: string): string[] {
 	return moves;
 }
 
-/**
- * Replays a game into UCI, giving up gracefully.
- *
- * A game whose movetext will not fully replay is retried on shorter and shorter prefixes rather than
- * discarded: an archive game that goes wrong at move 38 still says everything worth knowing about
- * the opening, and dropping it would quietly change the counts. Only a game that will not replay at
- * all is skipped.
- */
+// Shrinks the prefix and retries rather than discarding a game that fails to fully replay.
 function replay(san: readonly string[]): string[] | null {
 	for (const limit of limits(san.length)) {
 		const board = new Chess();

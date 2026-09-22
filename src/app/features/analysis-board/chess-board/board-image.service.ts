@@ -10,7 +10,6 @@ const LIGHT_SQUARE = '#ebecd0';
 const DARK_SQUARE = '#b5b993';
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 const RANKS = ['1', '2', '3', '4', '5', '6', '7', '8'];
-/** Rendered at 2x so the result stays crisp on high-density displays. */
 const PIXEL_RATIO = 2;
 const JPEG_QUALITY = 0.95;
 
@@ -45,7 +44,7 @@ export class BoardImageService {
 		}
 		await this.paintPieces(ctx, boardElement, squareSize);
 
-		/** 'image/jpg' is not a registered MIME type; browsers silently fall back to PNG. */
+		// 'image/jpg' is not a registered MIME type; browsers fall back to PNG.
 		return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 	}
 
@@ -61,7 +60,7 @@ export class BoardImageService {
 	}
 
 	private squareColours(): { light: string; dark: string } {
-		/** Read from <body>, not <html>: BoardThemeService defines --board-light there. */
+		// BoardThemeService defines --board-light/--board-dark on <body>, not <html>.
 		const style = getComputedStyle(document.body);
 		const light = style.getPropertyValue('--board-light').trim();
 		const dark = style.getPropertyValue('--board-dark').trim();

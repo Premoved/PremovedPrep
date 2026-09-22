@@ -50,6 +50,7 @@
 	tabindex="0"
 	[id]="'notation-tabpanel-' + activeTab()"
 	[attr.aria-labelledby]="'notation-tab-' + activeTab()"
+	(mousedown)="onTabContentMouseDown($event)"
 >
 	@switch (activeTab()) {
 		@case ('notation') {

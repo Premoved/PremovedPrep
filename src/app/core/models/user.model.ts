@@ -1,7 +1,5 @@
 import { ResetVaultView } from '../crypto/vault.model';
 
-/** The account, as the backend sends it. */
-
 export type SubscriptionStatus = 'FREE' | 'ACTIVE' | 'CANCELED';
 
 export interface UserSummary {
@@ -10,7 +8,7 @@ export interface UserSummary {
 	readonly email: string;
 	readonly emailVerified: boolean;
 	readonly subscriptionStatus: SubscriptionStatus;
-	/** Legacy: nothing on the server counts or enforces this. */
+	// Not incremented or enforced by the server; it always reads as the plan maximum.
 	readonly freeReportsRemaining: number;
 	readonly themePreference: 'light' | 'dark';
 	readonly boardPreferences: string | null;
@@ -19,18 +17,10 @@ export interface UserSummary {
 /** Registering does not sign the user in, so this is not an AuthResponse. */
 export interface RegisterResponse {
 	readonly email: string;
-	/** False when the mail provider refused. The account exists either way. */
 	readonly verificationSent: boolean;
 }
 
-/**
- * What a password reset link turns out to be for, read without spending it.
- *
- * The address is here because the browser salts its key derivation with it and the person following
- * a link from their inbox has not typed it. The recovery wrap is here because re-sealing the master
- * key under the new password is the only way a reset can leave the account's contents readable. The
- * password wrap is deliberately not - see ResetVaultView.
- */
+/** The browser salts key derivation with `email`; the password wrap is deliberately not here. */
 export interface ResetContext {
 	readonly email: string;
 	readonly vault: ResetVaultView;
@@ -43,19 +33,15 @@ export interface AuthResponse {
 	readonly user: UserSummary;
 }
 
-/** One browser signed in to this account. */
 export interface SessionSummary {
 	readonly id: number;
-	/** "Chrome on Windows", or null when the browser said nothing useful about itself. */
 	readonly device: string | null;
 	readonly current: boolean;
 	readonly startedAt: string;
 	readonly lastUsedAt: string;
 }
 
-/** How the one plan - "Premoved subscription" - stands for this account. */
 export interface SubscriptionView {
-	/** Whether it can be bought at all: the application is out, and Stripe is configured. */
 	readonly selling: boolean;
 	/** What unlocks the desktop application and the larger cloud allowance. */
 	readonly active: boolean;
@@ -68,33 +54,25 @@ export interface SubscriptionView {
 	readonly renewsAt: string | null;
 	readonly canceledAt: string | null;
 	readonly cancelAtPeriodEnd: boolean;
-	/** Whether there is a Stripe customer behind this, and therefore a portal to open. */
 	readonly managed: boolean;
 	readonly storageQuotaBytes: number;
-	/** Whether this account can still start its one free trial. Started from the Desktop App. */
 	readonly trialAvailable?: boolean;
-	/** When a running or past free trial ends, or null when there never was one. */
 	readonly trialEndsAt?: string | null;
-	/**
-	 * Until when cancelling refunds the first payment in full and ends the plan at once - fourteen
-	 * days from the account's first payment. Null once that has passed, or when nothing was paid.
-	 */
+	/** Fourteen days from the account's first payment; null once passed or when nothing was paid. */
 	readonly refundUntil?: string | null;
+	// The plan is free for this account: prices are hidden rather than explained.
+	readonly complimentary?: boolean;
 }
 
 export type PlanInterval = 'MONTH' | 'YEAR';
 
-/** Where to send the browser next. Every billing endpoint answers with this and nothing else. */
 export interface BillingRedirect {
 	readonly url: string;
 }
 
 export type AppStage = 'PREVIEW' | 'LAUNCHED';
 
-/**
- * Whether this account may run the desktop application, as the server decides it. `reason` is OK,
- * PREVIEW or PLAN - what the refusal is, not why an account was let through.
- */
+/** `reason` is what the refusal is (OK, PREVIEW or PLAN), not why an account was let through. */
 export interface DesktopAppAccess {
 	readonly allowed: boolean;
 	readonly reason: 'OK' | 'PREVIEW' | 'PLAN';

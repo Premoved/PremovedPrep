@@ -3,7 +3,6 @@ import { MoveNode } from '../../../../core/models/move-node.model';
 import { ReportPointKind } from '../../../../core/models/report.model';
 import { ReportStore } from '../../state/report.store';
 
-/** The Advanced Report's bar: two pairs of buttons, and the two counts they walk. */
 @Component({
 	selector: 'app-report-bar',
 	standalone: true,

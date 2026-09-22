@@ -5,7 +5,7 @@ import { composePgnFile } from './pgn-file';
 
 const CUSTOM_FEN = '8/8/8/4k3/8/8/4K3/4R3 w - - 0 1';
 
-/** The tags a Lichess export carries beyond the seven the roster requires. */
+// The tags a Lichess export carries beyond the seven the roster requires.
 const IMPORTED = {
 	Event: 'Rated blitz game',
 	Site: 'https://lichess.org/abcd1234',

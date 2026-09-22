@@ -1,14 +1,9 @@
-/**
- * Static check of component bindings: every [input] and (output) used in a template must exist on the
- * target component, and template reference variables must not shadow class members.
- */
-
+// Checks that every [input]/(output) used in a template exists on the target component, and that no
+// template reference variable shadows a class member.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 
 const ROOT = process.argv[2] ?? 'src';
-
-// Collect files.
 
 function walk(dir) {
 	const out = [];
@@ -26,9 +21,9 @@ function walk(dir) {
 const files = walk(ROOT);
 const tsFiles = files.filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'));
 
-/** selector -> { file, inputs, outputs, className } */
+// selector -> { file, inputs, outputs, className }
 const bySelector = new Map();
-/** file -> component record */
+// file -> component record
 const byFile = new Map();
 
 for (const file of tsFiles) {
@@ -43,7 +38,6 @@ for (const file of tsFiles) {
 	for (const m of source.matchAll(/(?:readonly\s+)?(\w+)\s*=\s*(?:input|model)(?:\.required)?\s*[<(]/g)) {
 		inputs.add(m[1]);
 	}
-	/** The @Input decorator form, still used in places. */
 	for (const m of source.matchAll(/@Input\([^)]*\)\s*(?:readonly\s+)?(?:set\s+|get\s+)?(\w+)/g)) {
 		inputs.add(m[1]);
 	}
@@ -77,7 +71,7 @@ for (const file of tsFiles) {
 	const templateUrl = source.match(/templateUrl:\s*'([^']+)'/)?.[1];
 	const inlineTemplate = source.match(/template:\s*`([\s\S]*?)`\s*,\n/)?.[1];
 
-	/** Every name declared on the class, for the shadowing check. */
+	// Every name declared on the class, for the shadowing check below.
 	const members = new Set();
 	for (const m of source.matchAll(
 		/^\t(?:(?:private|protected|public|readonly|static|async|override)\s+)*(\w+)\s*[=(]/gm,
@@ -106,8 +100,6 @@ for (const file of tsFiles) {
 	byFile.set(resolve(file), record);
 }
 
-// Check templates.
-
 const problems = [];
 
 for (const component of byFile.values()) {
@@ -126,7 +118,7 @@ for (const component of byFile.values()) {
 	}
 	if (!template) continue;
 
-	/** A template reference variable shadowing a member of this component's class. */
+	// Template reference variables (#foo) that shadow a member of this component's class.
 	const refs = new Set();
 	for (const m of template.matchAll(/\s#(\w+)[\s=/>]/g)) {
 		refs.add(m[1]);
@@ -158,7 +150,7 @@ for (const component of byFile.values()) {
 			);
 		}
 
-		for (const bind of attrs.matchAll(/\[([\w.$]+)\]\s*=/g)) {
+		for (const bind of attrs.matchAll(/\[\(?([\w.$]+)\)?\]\s*=/g)) {
 			const prop = bind[1];
 			if (
 				prop.startsWith('class') ||
@@ -183,7 +175,7 @@ for (const component of byFile.values()) {
 			}
 		}
 
-		for (const bind of attrs.matchAll(/\((\w+)\)\s*=/g)) {
+		for (const bind of attrs.matchAll(/\((\w+)\)\]?\s*=/g)) {
 			const event = bind[1];
 			if (
 				[

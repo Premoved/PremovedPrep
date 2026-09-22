@@ -2,7 +2,6 @@ import { Injectable, signal } from '@angular/core';
 import { BOARD_THEMES, BoardTheme, findBoardTheme } from './board-themes';
 import { BUNDLED_PIECE_SET, DEFAULT_PIECE_SET, PIECE_ASSET_ROOT, pieceSetCss, pieceSetFor } from './piece-sets';
 
-/** Paints the board: two custom properties for the squares, one generated stylesheet for the pieces. */
 @Injectable({ providedIn: 'root' })
 export class BoardThemeService {
 	private element: HTMLStyleElement | null = null;
@@ -22,10 +21,7 @@ export class BoardThemeService {
 		this.styleElement().textContent = pieceSetCss(set, this.baseUrl());
 	}
 
-	/**
-	 * Reads public/piece/manifest.json, which `npm run assets` writes from what is actually on disk. A
-	 * missing or unreadable manifest leaves the bundled set alone, which needs no files.
-	 */
+	// Reads public/piece/manifest.json, written by `npm run assets` from what is actually on disk.
 	async loadInstalledPieceSets(): Promise<void> {
 		try {
 			const response = await fetch(`${this.baseUrl()}${PIECE_ASSET_ROOT}/manifest.json`, { cache: 'no-cache' });
@@ -48,7 +44,6 @@ export class BoardThemeService {
 		}
 	}
 
-	/** Falls back to the bundled set when the stored one is not installed. */
 	private resolvePieceSet(id: string): string {
 		if (this.installed().includes(id)) {
 			return id;

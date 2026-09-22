@@ -39,7 +39,7 @@ export function annotationFromNag(nag: string): Annotation | undefined {
 
 const PROMOTION_MARKER = /=[QRBNqrbn]/;
 
-/** Recovers an annotation from suffix characters on the SAN itself, e.g. 'Nf3!?'. */
+// Recovers an annotation from suffix characters on the SAN itself, e.g. 'Nf3!?'.
 export function annotationFromSan(san: string): Annotation | undefined {
 	if (san.includes('!!')) return Annotation.BRILLIANT_MOVE;
 	if (san.includes('??')) return Annotation.BLUNDER;

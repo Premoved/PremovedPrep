@@ -46,21 +46,11 @@ type BoardConfig = Config & { pieces?: Pieces };
 
 const ENGINE_BRUSH = { key: 'engine', color: '#3d78ad', opacity: 1, lineWidth: 10 };
 
-/**
- * The Advanced Report's three colours, fixed.
- *
- * They used to be the brush keys 'yellow' and 'blue', which arrowBrushes() fills with the arrow
- * colours from Settings - so the report's red and orange were only red and orange for as long as
- * nobody changed their preferences. The values below are what the defaults produced, so nothing
- * looks different today; the difference is that a report now means the same thing on every screen.
- *
- * The trunk is thinner and translucent on purpose: it is the path to the points of interest, not a
- * point of interest, and at a busy node there can be several of them behind two coloured arrows.
- */
+// Fixed colors, not the user's arrow-brush palette, so a report reads the same on every screen.
 const REPORT_BRUSHES = {
 	reportDeviation: { key: 'reportDeviation', color: '#c62828', opacity: 1, lineWidth: 10 },
 	reportOverlap: { key: 'reportOverlap', color: '#ff8c00', opacity: 1, lineWidth: 10 },
-	reportTrunk: { key: 'reportTrunk', color: '#5c5c5c', opacity: 0.75, lineWidth: 7 },
+	reportTrunk: { key: 'reportTrunk', color: '#5c5c5c', opacity: 0.75, lineWidth: 7 }, // thin/translucent: marks the path, not a point of interest
 };
 
 const LONG_PRESS_DRAW_MS = 450;
@@ -69,7 +59,6 @@ const TOOLTIP_HOLD_MS = 2500;
 
 const COPY_FEEDBACK_MS = 2000;
 const MOVE_ANIMATION_MS = 200;
-/** Animation is disabled for the move itself, then restored. */
 const ANIMATION_RESTORE_MS = 10;
 
 const TOOLTIP_GAP = 10;
@@ -87,10 +76,6 @@ function isPromotionNode(node: MoveNode | undefined): boolean {
 
 const NO_STYLE: Record<string, string> = {};
 
-/**
- * The chessboard: legal moves via chess.js, arrow and circle drawing, promotion, orientation, the setup
- * editor and the utility bar.
- */
 @Component({
 	selector: 'app-chess-board',
 	standalone: true,
@@ -360,9 +345,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 			drawable: {
 				enabled: true,
 				visible: true,
-				/** Renamed from eraseOnClick in chessground v10. */
-				eraseOnMovablePieceClick: false,
-				/** Brush keys do not match the colours they paint; the mapping is historical. */
+				eraseOnMovablePieceClick: false, // renamed from eraseOnClick in chessground v10
 				brushes: {
 					...arrowBrushes(this.prefs.arrowColors()),
 					engine: ENGINE_BRUSH,
@@ -372,7 +355,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 				onChange: (shapes: DrawShape[]) => {
 					if (this.isDrawingGesture) return;
 
-					/** chessground wipes every shape on a plain press on an empty square. */
+					// chessground wipes every shape on a plain press on an empty square.
 					if (shapes.length === 0 && this.pressingBoard) {
 						this.cgApi?.set({ drawable: { shapes: this.visibleDrawings() } });
 						return;
@@ -393,7 +376,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 	private handleMove(orig: Key, dest: Key): void {
 		if (this.isDrawingGesture) return;
 
-		/** chessground's Key allows 'a0', its off-board sentinel. */
+		// chessground's Key allows 'a0', its off-board sentinel.
 		const piece = this.game.get(orig as Square);
 		const isPawn = piece?.type === 'p';
 		const isPromotionRank = (piece?.color === 'w' && dest[1] === '8') || (piece?.color === 'b' && dest[1] === '1');
@@ -425,6 +408,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 			}
 		} catch (error) {
 			console.error(error);
+			this.notifications.error('Invalid move.');
 		} finally {
 			this.promotionData.set(null);
 			tree?.setDrawingsVisible(true);
@@ -464,7 +448,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 			return;
 		}
 
-		/** Crossing between two trees is never a step, so it is never animated. */
+		// Crossing between two trees is never a step, so it is never animated.
 		const animate =
 			previous !== current && previousTree === tree && !isPromotionNode(previous) && !isPromotionNode(current);
 
@@ -657,7 +641,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	toggleCoordinates(): void {
-		/** chessground does not expose `coordinates` through .set(), so the wrapper is re-created. */
+		// chessground does not expose `coordinates` through .set(); the wrapper is re-created instead.
 		this.showCoordinates.update((shown) => !shown);
 		this.initBoard(this.game.fen());
 	}
@@ -715,13 +699,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 		if (pgn) this.copyToClipboard(pgn, this.isPgnCopied);
 	}
 
-	/**
-	 * The file a reader outside this app has to be able to open: the seven-tag roster, everything the
-	 * game arrived with, and a FEN only when the position was set up rather than played.
-	 *
-	 * This is composePgnFile, not the serialiser's own serialize(): that one writes a bare FEN header
-	 * and no roster, which is why copied games used to arrive nameless.
-	 */
+	// composePgnFile adds the header roster and a start FEN; the serializer's movetext() alone omits both.
 	private exportPgn(): string {
 		const store = this.boardTree();
 		const root = store?.root();
@@ -865,7 +843,6 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.initBoard(fullFen);
 	}
 
-	/** Arrow drawing on touch devices: drag from a piece, or long-press any square. */
 	private setupDrawingClearGuard(): void {
 		const boardEl = this.boardNativeEl;
 		if (!boardEl) return;
@@ -975,7 +952,7 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 			this.syncBoard();
 		};
 
-		/** touchmove and touchend must not be passive: they call preventDefault. */
+		// touchmove and touchend must not be passive: they call preventDefault.
 		boardEl.addEventListener('touchstart', onTouchStart, { passive: true });
 		boardEl.addEventListener('touchmove', onTouchMove, { passive: false });
 		boardEl.addEventListener('touchend', onTouchEnd, { passive: false });
@@ -1022,14 +999,8 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 }
 
-/**
- * Which recording a move gets.
- *
- * Castling is its own sound because it is its own move - two pieces, and the one moment in a game
- * where the board changes in two places at once. SAN spells it "O-O" or "O-O-O", with an optional
- * check or mate mark after it.
- */
 function soundFor(san: string): BoardSound {
+	// SAN marks castling as O-O/O-O-O, with an optional check or mate suffix.
 	if (/^O-O(-O)?[+#]?$/.test(san)) {
 		return 'castle';
 	}

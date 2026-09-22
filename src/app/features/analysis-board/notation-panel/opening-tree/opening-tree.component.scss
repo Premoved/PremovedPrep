@@ -1,4 +1,3 @@
-/* The Openings Book tab */
 :host {
 	display: block;
 	padding: 0 0 0.25rem;
@@ -82,7 +81,6 @@
 	white-space: nowrap;
 }
 
-/* Result bar */
 .bar {
 	display: flex;
 	align-items: stretch;
@@ -126,7 +124,6 @@
 	}
 }
 
-/* Reference game */
 .reference {
 	grid-column: 1 / -1;
 	display: flex;

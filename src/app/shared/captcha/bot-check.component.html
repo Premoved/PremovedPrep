@@ -31,7 +31,6 @@
 		</p>
 	</header>
 
-	<!-- Does not allow click-cancelling after premove -->
 	<div class="board-wrap">
 		<div class="board" [class.dests-dot]="moveDests() === 'dot'" #host></div>
 		@if (phase() !== 'waiting') {

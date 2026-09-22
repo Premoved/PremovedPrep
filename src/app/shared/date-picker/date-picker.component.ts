@@ -51,7 +51,7 @@ export class DatePickerComponent {
 	readonly display = computed(() => this.value() || this.placeholder());
 	readonly isEmpty = computed(() => !this.value());
 
-	/** Six-week grid */
+	// 42 cells: a fixed six-week grid, so the layout doesn't reflow between months.
 	readonly calendarDays = computed<readonly CalendarDay[]>(() => {
 		const { year, month } = this.month();
 		const selected = this.value();
@@ -98,6 +98,7 @@ export class DatePickerComponent {
 		this.open.set(true);
 	}
 
+	// Stops the host's document:click listener from closing the panel when a click lands inside it.
 	keepOpen(event: Event): void {
 		event.stopPropagation();
 	}
@@ -158,7 +159,6 @@ function endOfDay(date: Date): number {
 	return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).getTime();
 }
 
-/** Positions the panel relative to the trigger button. */
 function place(trigger: DOMRect): { x: number; y: number } {
 	const margin = 8;
 	const below = trigger.bottom + 4;

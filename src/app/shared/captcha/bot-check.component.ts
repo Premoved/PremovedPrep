@@ -24,10 +24,8 @@ import { PreferencesStore } from '../../core/services/preferences.store';
 
 const MOVE_ANIMATION_MS = 200;
 
-/** How long black 'thinks' before replying. */
 const THINKING_MS = 850;
 
-/** Pause before black's answering move when the premove was not mate. */
 const REPLY_DELAY_MS = 450;
 
 type Phase = 'waiting' | 'thinking' | 'solved' | 'failed';
@@ -91,7 +89,7 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 		this.build(this.challenge(), this.prefs.coordinates(), this.prefs.arrowColors());
 	}
 
-	/** Counts a real gesture over the panel. */
+	// isTrusted excludes synthetic/dispatched events, so a scripted solver can't fake interaction.
 	onInteraction(event: Event): void {
 		if (event.isTrusted) {
 			this.interactions++;
@@ -138,13 +136,8 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 			turnColor: 'black' as const,
 			coordinates,
 			autoCastle: false,
-			/**
-			 * 0, not the default 1. Chessground calls preventDefault on touchstart whenever the touch
-			 * lands within that radius of any piece, which on a phone is most of the board - and a
-			 * cancelled touchstart cancels the scroll with it, no matter what touch-action says. At 0
-			 * only a touch on an occupied square is claimed, so a swipe over empty squares scrolls the
-			 * page while tapping a piece still selects it.
-			 */
+			// 0, not the default 1: at 1, chessground cancels touchstart (and the page scroll with it)
+			// near any piece, which on a phone is most of the board.
 			touchIgnoreRadius: 0,
 			movable: { free: false, color: 'white' as const, showDests: true, dests: new Map<Key, Key[]>() },
 			premovable: {
@@ -155,9 +148,8 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 			draggable: { enabled: true },
 			selectable: { enabled: true },
 			drawable: {
-				// Visible but not editable - `visible` renders the SVG layer the hint arrow needs.
-				enabled: false,
-				visible: true,
+				enabled: false, // not editable
+				visible: true, // renders the SVG layer the hint arrow needs
 				brushes: arrowBrushes(colours),
 				autoShapes: this.hintShapes(),
 			},
@@ -172,7 +164,6 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 		return [{ orig: this.hintMove.slice(0, 2) as Key, dest: this.hintMove.slice(2, 4) as Key, brush: 'green' }];
 	}
 
-	/** The player has committed. Black thinks, replies, and the premove answers instantly */
 	private onPremove(orig: Key, dest: Key): void {
 		if (this.phase() !== 'waiting') {
 			return;
@@ -192,7 +183,7 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 		this.after(THINKING_MS, () => {
 			api.move(challenge.blackMove.slice(0, 2) as Key, challenge.blackMove.slice(2, 4) as Key);
 
-			// requestAnimationFrame gives black's move one frame to start before the premove fires.
+			// Gives black's move one frame to start rendering before the queued premove fires.
 			requestAnimationFrame(() => {
 				api.set({
 					turnColor: 'white',
@@ -203,7 +194,7 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 				api.set({ animation: { enabled: true } });
 
 				if (!played) {
-					// chessground discarded it: illegal move.
+					// chessground discarded it as illegal.
 					this.phase.set('failed');
 					return;
 				}
@@ -221,7 +212,6 @@ export class BotCheckComponent implements AfterViewInit, OnDestroy {
 		});
 	}
 
-	/** Black's reply after a failed attempt. */
 	private answerTheFailedAttempt(api: Api, beforeWhite: string, whiteMove: string): void {
 		const afterWhite = afterMove(beforeWhite, whiteMove);
 		const reply = afterWhite ? anyMove(afterWhite) : null;

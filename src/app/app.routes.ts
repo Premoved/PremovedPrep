@@ -3,14 +3,7 @@ import { HomeComponent } from './features/home/home.component';
 import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 
-/** Route data (`kind` and `color`) is sent automatically into component inputs */
-
-/**
- * Only the shell and Home are in the initial bundle. Every other page is a `loadComponent`, so
- * chessground, chess.js and the board itself are fetched on the first navigation to a page that
- * needs them. PreloadAllModules in app.config.ts pulls those chunks in the background once the
- * application has started, so a navigation still resolves without a visible wait.
- */
+// Route `data` (e.g. `kind`, `color`) is bound automatically into matching component inputs.
 export const routes: Routes = [
 	{
 		path: 'login',
@@ -23,7 +16,6 @@ export const routes: Routes = [
 		data: { title: 'Create an account' },
 	},
 
-	// Standalone pages opened from email links
 	{
 		path: 'forgot-password',
 		loadComponent: () => import('./features/auth/forgot-password.component').then((m) => m.ForgotPasswordComponent),
@@ -103,14 +95,7 @@ export const routes: Routes = [
 					},
 				],
 			},
-			/**
-			 * One URL per player, and it is this page rather than a page about them: somebody arriving
-			 * from a search engine lands in the search with that player already loaded. The HTML a
-			 * crawler receives is written by functions/search/opponent/[slug].ts; this is the route the
-			 * application matches once it boots on the same URL.
-			 *
-			 * Before the bare 'search' route, so the longer path is tried first.
-			 */
+			// Must precede the bare 'search' route so the longer path matches first.
 			{
 				path: 'search/opponent/:slug',
 				loadComponent: () => import('./features/search/search-page.component').then((m) => m.SearchPageComponent),
@@ -139,15 +124,13 @@ export const routes: Routes = [
 				},
 			},
 
-			// Where this page used to live. Kept so a bookmark and a shared link still land on it.
-			{ path: 'agent', pathMatch: 'full', redirectTo: 'app' },
+			{ path: 'agent', pathMatch: 'full', redirectTo: 'app' }, // former path; kept for old bookmarks/links
 			{
 				path: 'settings',
 				loadComponent: () => import('./features/settings/settings-page.component').then((m) => m.SettingsPageComponent),
 				data: { title: 'Settings' },
 			},
 
-			// Reachable signed out, and linked from the registration form and from Settings.
 			{
 				path: 'terms',
 				loadComponent: () => import('./features/legal/terms.component').then((m) => m.TermsComponent),

@@ -1,16 +1,6 @@
 .auth-page {
 	display: flex;
 	justify-content: center;
-	/*
-	 * Its own scroller, on purpose. As a plain tall block this page depended on the document
-	 * scrolling, and the document is shared: `html, body { height: 100% }`, whatever the layout left
-	 * on `body.style.overflow`, and the browser's own viewport rules all get a say. A fixed height
-	 * with overflow-y here answers the question locally - when the bot check makes the content
-	 * taller than the screen, this element scrolls, and nothing outside it can take that away.
-	 *
-	 * "safe" centring is what keeps it usable: plain centring keeps the box centred once it outgrows
-	 * its scroller, which puts the top of it above the scroll origin where no gesture can reach.
-	 */
 	align-items: safe center;
 	height: 100dvh;
 	overflow-y: auto;
@@ -25,7 +15,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	/* Horizontal only: the vertical placement is align-items on the page, so it can be "safe". */
 	margin: 0 auto;
 	width: 100%;
 	max-width: 380px;
@@ -199,12 +188,6 @@ button.primary:disabled {
 	text-decoration: underline;
 }
 
-/*
- * Consent rows: the terms checkbox on the registration form, and the one on the reset form that has
- * to be ticked when no recovery code was given. Same shape on purpose - both are a sentence somebody
- * has to agree to before the form will submit, and the second is the more consequential of the two.
- */
-
 .consent {
 	margin: 0.9rem 0 0.2rem;
 	display: flex;
@@ -219,11 +202,9 @@ button.primary:disabled {
 	font-size: 0.82rem;
 	line-height: 1.4;
 	color: var(--text-muted);
-	/* The row is a label wrapping a checkbox, so the whole of it is a target. */
 	cursor: pointer;
 }
 
-/* Ticking it is only meaningful when the field above is empty; see mustAcceptLoss. */
 .consent-row input:disabled {
 	opacity: 0.5;
 }

@@ -21,17 +21,9 @@ import { RecoveryCodeComponent } from './recovery-code.component';
 
 const MIN_PASSWORD = 8;
 
-/**
- * There is no upper bound any more.
- *
- * It used to be 72, which is BCrypt's ceiling: anything past it was silently truncated. Since
- * end-to-end encryption the server is sent a 43-character derived secret and never sees the
- * password, so BCrypt's limit no longer has anything to do with what a person may choose. The cap
- * that remains is for the sake of the person typing, not the hash.
- */
+// Not a hash limit: the server only ever sees a fixed-length KDF output, never the raw password.
 const MAX_PASSWORD = 200;
 
-/** "2 minutes ago", "yesterday". The wording is the platform's; only the unit is chosen here. */
 const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
 const UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
 	['second', 60],
@@ -52,10 +44,7 @@ const UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
 export class SettingsPageComponent {
 	readonly auth = inject(AuthService);
 
-	/**
-	 * When the account's recovery code was last made. Read once, and only for the one line the
-	 * profile prints - the code itself is not here and cannot be: nothing stores it.
-	 */
+	// The date only; the recovery code itself is never held here, since nothing stores it.
 	private readonly vaultUpdatedAt = signal<string | null>(null);
 
 	readonly recoveryCodeCreated = computed(() => {
@@ -158,7 +147,7 @@ export class SettingsPageComponent {
 			return `Use at least ${MIN_PASSWORD} characters.`;
 		}
 		if (next.length > MAX_PASSWORD) {
-			return `That is longer than ${MAX_PASSWORD} characters, which is as much as the hash can hold.`;
+			return `That is longer than the ${MAX_PASSWORD}-character limit.`;
 		}
 		if (confirm.length > 0 && confirm !== next) {
 			return 'The two new passwords do not match.';
@@ -180,7 +169,6 @@ export class SettingsPageComponent {
 	readonly sessions = signal<readonly SessionSummary[]>([]);
 	readonly sessionsLoaded = signal(false);
 	readonly sessionsError = signal('');
-	/** The id being signed out, so one row shows the wait and the others stay usable. */
 	readonly sessionBusy = signal<number | null>(null);
 	readonly othersBusy = signal(false);
 
@@ -191,7 +179,7 @@ export class SettingsPageComponent {
 	readonly deleteBusy = signal(false);
 	readonly deleteError = signal('');
 
-	/** Exact match, not a second click: the name is on screen, so typing it is the deliberate part. */
+	// Exact match, not a checkbox: typing the visible username is the deliberate confirmation step.
 	readonly deleteReady = computed(() => {
 		const username = this.auth.currentUser()?.username;
 		return username !== undefined && this.deleteConfirm().trim() === username;
@@ -229,7 +217,7 @@ export class SettingsPageComponent {
 		if (this.sessionBusy() !== null) return;
 
 		if (session.current) {
-			/** Ending the session you are in is signing out, and that has to clear the cookie here too. */
+			// Ending the current session signs out and clears local auth state, not only the server row.
 			this.auth.logout();
 			void this.router.navigateByUrl('/home');
 			return;
@@ -315,7 +303,6 @@ export class SettingsPageComponent {
 		});
 	}
 
-	/** Everything on this page that another device could have changed since it was last looked at. */
 	@HostListener('window:focus')
 	refreshStorage(): void {
 		if (!this.auth.isLoggedIn()) return;
@@ -342,10 +329,8 @@ export class SettingsPageComponent {
 		if (this.prefs.customColors()) {
 			return;
 		}
-		/**
-		 * Read at the click, not from baseSurfaces(): that signal only refreshes when the theme changes,
-		 * so it can hold the palette of a mode the user has since left.
-		 */
+		// Read fresh here rather than via baseSurfaces(), which only updates on theme change and could
+		// still hold a mode the user has since left.
 		const base = this.customTheme.baseColors();
 		this.baseSurfaces.set(base);
 		this.prefs.update('customColors', [...base]);
@@ -473,13 +458,12 @@ export class SettingsPageComponent {
 	private refreshRecoveryCodeDate(): void {
 		this.auth.vaultSummary().subscribe({
 			next: (vault) => this.vaultUpdatedAt.set(vault.updatedAt ?? vault.createdAt),
-			/** The line is a nicety; failing to draw it is not worth telling anyone about. */
+			// A nicety; failing to show the date isn't worth surfacing as an error.
 			error: () => this.vaultUpdatedAt.set(null),
 		});
 	}
 }
 
-/** "18 Sep 2026". Short, unambiguous across locales, and no time of day - the day is the point. */
 function formatDay(iso: string): string {
 	const at = new Date(iso);
 	return Number.isNaN(at.getTime())

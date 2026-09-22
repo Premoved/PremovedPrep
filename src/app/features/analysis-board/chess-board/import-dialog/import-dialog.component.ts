@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-/** Overlay for pasting a FEN or a PGN. */
 @Component({
 	selector: 'app-import-dialog',
 	standalone: true,

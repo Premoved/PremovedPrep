@@ -2,12 +2,11 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
-/** The display name of the database the board is currently reading. */
 @Injectable({ providedIn: 'root' })
 export class ArchiveNameService {
 	private readonly http = inject(HttpClient);
 
-	/** Used before the server replies, and if it never does. */
+	// Used before the server replies, and if it never does.
 	private static readonly FALLBACK = 'Database';
 
 	private readonly _shipped = signal<string | null>(null);

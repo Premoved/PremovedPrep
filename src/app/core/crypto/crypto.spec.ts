@@ -4,20 +4,7 @@ import { EnvelopeError, isEnvelope, open, seal } from './envelope';
 import { DEFAULT_KDF, deriveFromPassword, deriveFromRecoveryCode, describeKdf, parseKdf } from './kdf';
 import { group, newRecoveryCode, readRecoveryCode } from './recovery-code';
 
-/**
- * The parts of end-to-end encryption that have to be right before any of it touches a library.
- *
- * These exercise real WebCrypto and real compression rather than stubs: a test of AES-GCM against a
- * fake AES-GCM tells you nothing, and the compression path is exactly where a silent corruption
- * would hide. They run under jsdom like the rest of the suite - envelope.ts drives the compression
- * streams directly rather than through Blob.stream(), which jsdom does not implement, and falls back
- * to storing uncompressed anywhere the streams are missing entirely.
- *
- * PBKDF2 runs here at 100,000 iterations rather than the 600,000 the application uses. The figure
- * under test is the derivation, not the work factor; six times the cost per assertion would be six
- * times the cost of running the suite for no extra coverage.
- */
-
+// Real WebCrypto and compression, no stubs; PBKDF2 uses a lower iteration count than production.
 const TEST_KDF = { name: 'PBKDF2-SHA256' as const, iterations: 100_000 };
 
 const EMAIL = 'armand@example.com';
@@ -37,7 +24,7 @@ describe('base64url', () => {
 	});
 
 	it('survives a value larger than the chunk it encodes in', () => {
-		/** Spreading this into String.fromCharCode's arguments is what used to overflow the stack. */
+		// Regression: spreading into String.fromCharCode overflowed the stack.
 		const big = new Uint8Array(200_000).map((_, i) => i % 256);
 		expect(fromBase64Url(toBase64Url(big)).length).toBe(big.length);
 	});
@@ -59,7 +46,7 @@ describe('the envelope', () => {
 		const sealed = await seal(key, 'key-1', 'item', long);
 		await expect(open(key, 'key-1', 'item', sealed)).resolves.toBe(long);
 
-		/** PGN is repetitive; if this stops holding, the compression stopped happening. */
+		// PGN is repetitive; if this stops holding, the compression stopped happening.
 		expect(sealed.length).toBeLessThan(long.length / 2);
 	});
 
@@ -74,11 +61,8 @@ describe('the envelope', () => {
 		expect(first).not.toBe(second);
 	});
 
-	/**
-	 * The four refusals below are what the associated data is for. GCM alone proves a ciphertext was
-	 * not altered; it does not prove it is the ciphertext that belongs in this field, under this
-	 * account's current key.
-	 */
+	// The four refusals below are what the associated data is for: GCM alone proves a ciphertext was
+	// not altered, not that it is the ciphertext that belongs in this field under this account's key.
 	it('will not open a value under a different purpose', async () => {
 		const key = await aesKey();
 		const sealed = await seal(key, 'k', 'item', 'hello');
@@ -100,11 +84,8 @@ describe('the envelope', () => {
 		const key = await aesKey();
 		const parts = (await seal(key, 'k', 'item', 'hello')).split('.');
 
-		/**
-		 * The byte is flipped after decoding, not by editing a base64 character: the last character of
-		 * a base64url string carries fewer than six significant bits, so editing it can decode to the
-		 * same bytes and this would pass for the wrong reason.
-		 */
+		// Flipped after decoding, not by editing a base64 character: the last character of a base64url
+		// string carries fewer than six significant bits, so editing it could decode to the same bytes.
 		const raw = fromBase64Url(parts[2]);
 		raw[0] ^= 0x01;
 
@@ -144,11 +125,8 @@ describe('deriving from a password', () => {
 		expect(derived.vaultKey.extractable).toBe(false);
 	});
 
-	/**
-	 * The whole guarantee in one assertion: the half that is sent to the server does not open what
-	 * the half that stays here sealed. If this ever passes, the split has collapsed and the server
-	 * can decrypt every account that signs in.
-	 */
+	// The whole guarantee in one assertion: if this ever passes the wrong way, the split has
+	// collapsed and the server could decrypt every account that signs in.
 	it('sends a secret that does not open what the key it kept has sealed', async () => {
 		const derived = await deriveFromPassword('pw', EMAIL, TEST_KDF);
 		const sealed = await seal(derived.vaultKey, 'k', 'wrap:password', 'the master key');
@@ -224,7 +202,7 @@ describe('the recovery code', () => {
 		expect(readRecoveryCode(code.toLowerCase())).toBe(expected);
 		expect(readRecoveryCode(code.replace(/-/g, ' '))).toBe(expected);
 
-		/** The whole reason for Crockford's alphabet. */
+		// The whole reason for Crockford's alphabet.
 		const mistyped = expected.replace(/1/g, 'l').replace(/0/g, 'O');
 		expect(readRecoveryCode(mistyped)).toBe(expected);
 	});

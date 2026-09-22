@@ -5,7 +5,7 @@ export interface EngineTransport {
 
 export type UciLineHandler = (line: string) => void;
 
-/** Returned when the worker could not be constructed, so callers need no null checks. */
+// Returned when the worker could not be constructed, so callers need no null checks.
 const DEAD_ENGINE: EngineTransport = {
 	send: () => undefined,
 	dispose: () => undefined,
@@ -35,8 +35,8 @@ export function createWasmEngine(
 	return {
 		send: (command) => worker.postMessage(command),
 		dispose: () => {
-			/** quit lets Stockfish free its hash table; terminate alone leaks it until GC. */
 			try {
+				// quit lets Stockfish free its hash table; terminate alone leaks it until GC.
 				worker.postMessage('quit');
 			} finally {
 				worker.terminate();

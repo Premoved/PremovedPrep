@@ -4,23 +4,6 @@ import { LogoComponent } from '../../shared/logo/logo.component';
 import { NotificationService } from '../../core/services/notification.service';
 import { saveBlob } from '../../core/browser/download';
 
-/**
- * The one screen that shows a recovery code, and the last one that ever can.
- *
- * WHY IT IS A WHOLE SCREEN
- *
- * The code was generated in this browser and sent nowhere. There is no copy on the server, because a
- * copy on the server would be a way for the server to open the account - which is the thing this
- * whole design removes. So if it is lost and the password is later forgotten, everything the account
- * holds becomes permanently unreadable, by everyone.
- *
- * That is a large consequence for a line of text, and a line of text on a page somebody is trying to
- * get past is a line of text nobody reads. Hence a screen with one thing on it, a checkbox that has
- * to be ticked, and no way onward that does not involve saying you have it.
- *
- * It is reached by router state rather than by a query parameter or a service: a code in a URL is a
- * code in the history, in the referrer, and in whatever the browser syncs.
- */
 @Component({
 	selector: 'app-recovery-code',
 	standalone: true,
@@ -33,6 +16,7 @@ export class RecoveryCodeComponent {
 	private readonly router = inject(Router);
 	private readonly notices = inject(NotificationService);
 
+	// Router state, not a query param: keeps the code out of the URL, browser history and referrers.
 	private readonly state = this.router.getCurrentNavigation()?.extras.state ?? history.state ?? {};
 
 	readonly code = signal<string>(typeof this.state['recoveryCode'] === 'string' ? this.state['recoveryCode'] : '');
@@ -40,11 +24,6 @@ export class RecoveryCodeComponent {
 
 	readonly written = signal(false);
 
-	/**
-	 * Arriving here without a code means a reload, or a link somebody pasted. There is nothing to
-	 * show and nothing to recover - the code is gone - so the screen says so plainly instead of
-	 * showing an empty box.
-	 */
 	readonly missing = computed(() => this.code().length === 0);
 
 	readonly canContinue = computed(() => this.written() && !this.missing());
@@ -58,12 +37,10 @@ export class RecoveryCodeComponent {
 			await navigator.clipboard.writeText(this.code());
 			this.notices.info('Recovery code copied. Paste it somewhere it will still be there in a year.');
 		} catch {
-			/** Denied, or an insecure context. The code is on the screen and can be written down. */
 			this.notices.error('This browser would not let the page copy. Write the code down instead.');
 		}
 	}
 
-	/** A text file, because a password manager is not where everyone keeps things. */
 	download(): void {
 		const body = [
 			'PremovedPrep recovery code',

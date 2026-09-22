@@ -5,7 +5,6 @@ import { MoveNode, RootNode } from '../../../core/models/move-node.model';
 import { OpeningExplorerService } from '../../../core/services/opening-explorer.service';
 import { MoveTreeStore } from './move-tree.store';
 
-/** A game from the archive, opened as a tree of its own beside the analysis. */
 @Injectable()
 export class GamePreviewStore {
 	private readonly api = inject(OpeningExplorerService);
@@ -16,7 +15,7 @@ export class GamePreviewStore {
 
 	private rows: readonly GameSummary[] = [];
 
-	/** Monotonic; only the newest fetch may install a tree. */
+	// Monotonic; only the newest fetch may install a tree.
 	private requestId = 0;
 
 	readonly game = this._game.asReadonly();
@@ -32,7 +31,7 @@ export class GamePreviewStore {
 	select(game: GameSummary): void {
 		if (this._game()?.id === game.id) return;
 
-		/** Set before the fetch so the row highlights immediately. */
+		// Set before the fetch so the row highlights immediately.
 		const id = ++this.requestId;
 		this._game.set(game);
 

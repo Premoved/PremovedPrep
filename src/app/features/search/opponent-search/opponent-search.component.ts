@@ -22,7 +22,7 @@ import { GameResultsComponent } from '../game-results/game-results.component';
 import { OpponentExplorerComponent } from '../opponent-explorer/opponent-explorer.component';
 import { ViewportService } from '../../../core/layout/viewport.service';
 
-/** Autocomplete debounce. */
+// Autocomplete debounce.
 const SUGGEST_DEBOUNCE_MS = 220;
 const MIN_QUERY_LENGTH = 2;
 
@@ -32,7 +32,7 @@ export type ResultPanel = 'games' | 'tree' | 'report';
 	selector: 'app-opponent-search',
 	standalone: true,
 	imports: [GameResultsComponent, DatePickerComponent, OpponentExplorerComponent, AdvancedReportComponent],
-	/** The generated Advanced Report stays with the page while its panels are switched. */
+	// The generated Advanced Report stays with the page while its panels are switched.
 	providers: [AdvancedReportCache],
 	templateUrl: './opponent-search.component.html',
 	styleUrl: './opponent-search.component.scss',
@@ -63,8 +63,6 @@ export class OpponentSearchComponent {
 	readonly color = signal<SearchColor>('w');
 
 	readonly from = signal('');
-
-	// Search result
 
 	readonly profile = signal<PlayerProfile | null>(null);
 	readonly rows = signal<readonly SearchResultGame[]>([]);
@@ -167,6 +165,7 @@ export class OpponentSearchComponent {
 	}
 
 	private fetchSuggestions(query: string): void {
+		// Drop a response for a query this input has since superseded.
 		const request = ++this.suggestRequestId;
 		this.api.suggestPlayers(query).subscribe({
 			next: (list) => {
@@ -215,16 +214,8 @@ export class OpponentSearchComponent {
 		}
 	}
 
-	/**
-	 * Opens the page already searching for one player, from `/search?opponent=<fideId>`.
-	 *
-	 * This is what a link from outside the application arrives on - a player page, a shared result,
-	 * a search engine - so it has to reach the same state a person reaches by typing a name and
-	 * pressing search, not a half-filled form they must finish.
-	 *
-	 * The profile call is what turns an id into a name; the suggestion is rebuilt from it rather
-	 * than asking the autocomplete, which searches by text and could match somebody else.
-	 */
+	// Entry point for /search?opponent=<fideId>. Rebuilds the suggestion from the profile rather
+	// than the text autocomplete, which searches by name and could match someone else.
 	openFor(fideId: number, color: SearchColor | null): void {
 		if (color) {
 			this.color.set(color);
@@ -338,6 +329,9 @@ export class OpponentSearchComponent {
 	}
 
 	onSort(key: SearchSortKey): void {
+		if (this.loading() || this.previewLoading()) {
+			return;
+		}
 		if (this.sort() === key) {
 			this.ascending.update((value) => !value);
 		} else {
@@ -376,6 +370,8 @@ export class OpponentSearchComponent {
 		}
 	}
 
+	private loadRequestId = 0;
+
 	private load(append: boolean): void {
 		const scope = this.scope();
 		if (!scope) {
@@ -383,16 +379,21 @@ export class OpponentSearchComponent {
 		}
 		this.loading.set(true);
 
+		// Guards against an older request's response landing after a newer load.
+		const request = ++this.loadRequestId;
+
 		this.api
 			.opponentGames(scope.fideId, scope.color, scope.from, scope.to, this.sort(), this.ascending(), this.page)
 			.subscribe({
 				next: (result) => {
+					if (request !== this.loadRequestId) return;
 					this.rows.update((current) => (append ? [...current, ...result.games] : result.games));
 					this.hasMore.set(result.hasMore);
 					this.loading.set(false);
 					this.searched.set(true);
 				},
 				error: (err: Error) => {
+					if (request !== this.loadRequestId) return;
 					this.loading.set(false);
 					this.searched.set(true);
 					this.notify.error(err.message);
@@ -452,6 +453,7 @@ function describe(player: PlayerSuggestion): string {
 	return parts.join(' · ');
 }
 
+// Strips the " · title · federation · rating" tail that `describe` appended to a picked suggestion.
 function resolvableQuery(raw: string): string {
 	const [first] = raw.split('·');
 	return first.trim();

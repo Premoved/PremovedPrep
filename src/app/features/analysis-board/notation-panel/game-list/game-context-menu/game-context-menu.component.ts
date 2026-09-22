@@ -5,12 +5,11 @@ export interface GameMenuPlacement {
 	readonly y: number;
 }
 
-/** Rough footprint, used to decide which side of the anchor the menu opens on. */
+// Approximate size; picks the side of the anchor the menu opens on.
 const SIZE = { width: 240, height: 96 };
 const GAP = 8;
 const EDGE = 10;
 
-/** The right-click menu on a row of the Games list. */
 @Component({
 	selector: 'app-game-context-menu',
 	standalone: true,
@@ -30,12 +29,11 @@ export class GameContextMenuComponent {
 	readonly placement = computed<GameMenuPlacement>(() => {
 		const rect = this.anchor();
 
-		/** Preferred: hanging off the row's right edge, top-aligned with it. */
 		let x = rect.right + GAP;
 		const y =
 			rect.top + SIZE.height > window.innerHeight ? Math.max(EDGE, window.innerHeight - SIZE.height - EDGE) : rect.top;
 
-		/** No room on the right: flip to the row's left edge. */
+		// No room on the right: flip to the row's left edge.
 		if (x + SIZE.width > window.innerWidth) {
 			x = rect.left - SIZE.width - GAP;
 		}

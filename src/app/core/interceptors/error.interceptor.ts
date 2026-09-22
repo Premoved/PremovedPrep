@@ -1,13 +1,9 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { catchError, throwError } from 'rxjs';
 
-/**
- * The 401 wording, exported because NotificationService matches on it to attach a way out. A
- * message that tells someone to sign in and gives them nowhere to do it is not much of a message.
- */
+// Exported: NotificationService matches on this exact string to attach a sign-in action.
 export const SIGN_IN_REQUIRED = 'You need to be signed in to continue.';
 
-/** Turns a failed response into an ApiError carrying a message the UI can show. */
 export class ApiError extends Error {
 	constructor(
 		message: string,
@@ -34,7 +30,6 @@ function problemOf(err: unknown): Readonly<Record<string, unknown>> | undefined 
 	return body !== null && typeof body === 'object' ? (body as Record<string, unknown>) : undefined;
 }
 
-/** Every message here is shown to the user, so none of them names a status code, a header or a stack. */
 function describe(err: unknown): string {
 	const generic = 'Something went wrong. Please try again.';
 	if (!(err instanceof HttpErrorResponse)) {
@@ -47,7 +42,7 @@ function describe(err: unknown): string {
 	}
 
 	switch (err.status) {
-		/** Angular reports a request that never reached anything (server down, DNS, CORS) as status 0. */
+		// Angular reports a request that never reached anything (down, DNS, CORS) as status 0.
 		case 0:
 			return 'PremovedPrep could not be reached. Check your connection and try again.';
 		case 400:
@@ -75,7 +70,7 @@ function describe(err: unknown): string {
 	}
 }
 
-/** Only problem+json wording written by this API. A plain-text body is never shown to the user. */
+// Only problem+json wording written by this API; a plain-text body is never shown to the user.
 function readDetail(err: HttpErrorResponse): string | null {
 	const body: unknown = err.error;
 	if (!body || typeof body !== 'object') {

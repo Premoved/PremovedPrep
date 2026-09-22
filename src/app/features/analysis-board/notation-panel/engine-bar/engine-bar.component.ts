@@ -42,14 +42,13 @@ export class EngineBarComponent {
 	readonly tablebaseHint = computed(() => this.tablebaseUnavailable() ?? 'Endgame tablebase');
 
 	constructor() {
-		/** Landing on a hidden solution turns the engine off. */
+		// Engine eval would give away the hidden solution, so force it off while hidden.
 		effect(() => {
 			if (this.solutionHidden() && this.engine.enabled()) {
 				this.engine.setEnabled(false);
 			}
 		});
 
-		/** And closes the tablebase panel, for the same reason. */
 		effect(() => {
 			if (this.solutionHidden() && this.tablebaseOpen()) {
 				this.tablebaseOpen.set(false);

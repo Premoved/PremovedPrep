@@ -20,7 +20,7 @@
 					[class.stale]="status() === 'loading'"
 					[disabled]="!row.move"
 					[attr.aria-label]="row.label"
-					(click)="play(row)"
+					(click)="play(row, $event)"
 				>
 					<span class="san">{{ row.san }}</span>
 					<span class="count">{{ row.count }}</span>

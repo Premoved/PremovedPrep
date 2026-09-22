@@ -235,7 +235,6 @@ button.ghost {
 	outline-offset: 2px;
 }
 
-/* Picked out with Ctrl+click */
 .card.picked {
 	border-color: var(--accent-blue);
 	background: var(--bg-active-move);
@@ -419,7 +418,6 @@ button.ghost {
 	margin-top: 24px;
 }
 
-/* Phone layout */
 :host-context(.shell.mobile) {
 	.collections-page {
 		padding: 16px 14px 32px;
@@ -494,7 +492,6 @@ button.ghost {
 	color: var(--text-muted);
 }
 
-/** The account's allowance, beside the heading. The same rule the application has. */
 .shelf-figure {
 	font: inherit;
 	letter-spacing: inherit;

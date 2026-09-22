@@ -1,6 +1,5 @@
 import { Directive, ElementRef, HostListener, OnDestroy, inject, input } from '@angular/core';
 
-/** Custom tooltip */
 @Directive({
 	selector: '[appTooltip]',
 	standalone: true,
@@ -12,6 +11,7 @@ export class TooltipDirective implements OnDestroy {
 	private node: HTMLDivElement | null = null;
 	private autoHide: ReturnType<typeof setTimeout> | null = null;
 
+	// Long-press/right-click stand in for hover on touch devices, so the tooltip auto-hides on its own.
 	@HostListener('contextmenu')
 	showUntilTimeout(): void {
 		this.show();

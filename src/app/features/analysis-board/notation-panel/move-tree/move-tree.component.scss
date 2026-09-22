@@ -17,7 +17,6 @@
 	vertical-align: middle;
 }
 
-/* A study's own toggle */
 .solution-toggle {
 	display: flex;
 	align-items: center;
@@ -49,7 +48,6 @@
 	}
 }
 
-/* The root's hit target */
 .root-anchor {
 	display: inline-block;
 	width: 10px;
@@ -301,7 +299,6 @@
 	vertical-align: baseline;
 }
 
-/* One reference game */
 .model-game {
 	display: inline-flex;
 	align-items: baseline;

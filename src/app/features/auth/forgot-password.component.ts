@@ -21,7 +21,7 @@ export class ForgotPasswordComponent {
 
 	readonly email = signal('');
 	readonly submitting = signal(false);
-	/** Whether the request was made. Says nothing about whether a mail was sent. */
+	// Set once the request completes; says nothing about whether a mail was actually sent.
 	readonly asked = signal(false);
 
 	readonly botCheck = new BotCheck();

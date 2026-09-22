@@ -98,6 +98,7 @@ export class SettingsPreviewComponent implements AfterViewInit, OnDestroy {
 		effect(() => {
 			const coordinates = this.prefs.coordinates();
 			const colours = this.prefs.arrowColors();
+			// Read only to trigger a rebuild; build() itself doesn't use piece set or board theme.
 			this.prefs.pieceSet();
 			this.prefs.boardThemeId();
 

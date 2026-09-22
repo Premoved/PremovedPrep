@@ -1,5 +1,3 @@
-/** The Opening Tree, as the backend sends it. */
-
 export interface TopGame {
 	readonly id: number;
 	readonly white: string;

@@ -29,27 +29,18 @@ export class SearchPageComponent implements AfterViewInit {
 		{ id: 'advanced', label: 'Advanced search' },
 	];
 
-	/** The player this page was opened for, when it was opened at /search/opponent/<slug>. */
 	private wanted: number | null = null;
 
 	constructor() {
-		/**
-		 * The title of that URL is the player's name, and the name arrives with the profile rather
-		 * than with the route. The function that served the HTML has already written it; this keeps it
-		 * written once Angular has replaced the page, which is the version a rendering crawler reads.
-		 *
-		 * Only for the player the URL asked for. Searching for somebody else afterwards leaves the
-		 * title alone, because the address bar still says whose page this is.
-		 */
+		// Re-sets the SSR title/description post-hydration so crawlers reading the rendered page match.
 		effect(() => {
 			const player = this.opponentSearch()?.profile();
+			// Only for the fideId the route asked for; a later unrelated search leaves the title alone.
 			if (!player || player.fideId !== this.wanted) {
 				return;
 			}
-			/** `archiveName` is the archive's own name - "Official Lichess Broadcasts" - not the player's. */
 			const name = player.name;
 			const games = `${player.archiveGames} game${player.archiveGames === 1 ? '' : 's'}`;
-			/** Word for word what functions/search/opponent/[slug].ts served; SeoService appends the site. */
 			this.seo.describe(
 				`${name} - chess games and preparation`,
 				`${games} by ${name} in the PremovedPrep archive: an all-in-one chess tool for analysis, ` +
@@ -59,14 +50,7 @@ export class SearchPageComponent implements AfterViewInit {
 		});
 	}
 
-	/**
-	 * `/search/opponent/<slug>` opens the page already searching, and `?color=b` starts it on the
-	 * other side of the board.
-	 *
-	 * Read once, after the view exists, rather than subscribed: this is an entry point, not a state
-	 * the page keeps in the URL. Reacting to every parameter change would fight the user the moment
-	 * they searched for somebody else.
-	 */
+	// Read once, not reactive: an entry point, so a later search doesn't fight the URL on param changes.
 	ngAfterViewInit(): void {
 		const slug = this.route.snapshot.paramMap.get('slug');
 		const fideId = slug === null ? null : fideIdFromSlug(slug);

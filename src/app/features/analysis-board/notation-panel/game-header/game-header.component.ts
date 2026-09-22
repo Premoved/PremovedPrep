@@ -12,7 +12,7 @@ import { ArchiveNameService } from '../../../../core/services/archive-name.servi
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GameHeaderComponent {
-	/** What the strip below the tab is naming: the game, or the database. */
+	// What the strip below the tab is naming: the game, or the database.
 	readonly scope = input<'game' | 'database'>('game');
 
 	readonly tree = inject(MoveTreeStore);
@@ -22,4 +22,10 @@ export class GameHeaderComponent {
 	readonly hasHeaders = computed(() => hasGameHeaders(this.tree.headers()));
 
 	readonly date = computed(() => formatGameDate(this.tree.headers().date));
+
+	// A study or analysis has no players: Event and Annotator hold its title and author.
+	readonly document = computed(() => {
+		const headers = this.tree.headers();
+		return !headers.white && !headers.black && Boolean(headers.event || headers.annotator);
+	});
 }

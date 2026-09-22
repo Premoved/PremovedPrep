@@ -3,15 +3,7 @@ import { convertTypeTo, deriveFields, importTypeFor, parsePgn, splitPgn } from '
 import { compareItems } from '../services/item-sort';
 import { ItemSummary } from '../models/collection.model';
 
-/**
- * The columns the server used to derive, derived here instead.
- *
- * The point of these is not that the new code works; it is that it does the same thing the old code
- * did. A person who sorted a folder by White last week has to see the same order this week, and a
- * file that imported as fourteen games has to import as fourteen games - so the cases below are the
- * ones PgnDocument, CollectionService.fieldsFor and ItemSort each had a rule for.
- */
-
+// These cases mirror what PgnDocument, CollectionService.fieldsFor and ItemSort each enforced server-side.
 const GAME = `[Event "Tata Steel"]
 [Site "Wijk aan Zee"]
 [Date "2024.01.20"]
@@ -40,7 +32,7 @@ describe('reading a PGN', () => {
 	});
 
 	it('counts the mainline and not the variations', () => {
-		/** Six moves of mainline, eleven half-moves; the (5... c5 6. dxc5) is not part of it. */
+		// Six moves of mainline, eleven half-moves; the (5... c5 6. dxc5) is not part of it.
 		expect(parsePgn(GAME).plyCount).toBe(11);
 	});
 
@@ -87,7 +79,7 @@ describe('deriving a document-shaped row', () => {
 		expect([fields.white, fields.black, fields.result, fields.event]).toEqual([null, null, null, null]);
 	});
 
-	/** What ck_item_start_fen used to enforce from the database. */
+	// Mirrors the former ck_item_start_fen constraint.
 	it('keeps a starting position on a study and never on an analysis', () => {
 		expect(fields.startFen).toBe('8/8/8/8/8/5K2/6Q1/6k1 w - - 0 1');
 		expect(deriveFields('ANALYSIS', parsePgn(STUDY)).startFen).toBeNull();
@@ -99,11 +91,8 @@ describe('the ECO code', () => {
 		expect(deriveFields('GAME', parsePgn(GAME)).eco).toBe('D37');
 	});
 
-	/**
-	 * The deliberate loss. Classifying an untagged line meant sending its first thirty half-moves to
-	 * the server to be looked up against the public archive, and those half-moves are the thing being
-	 * protected. An untagged line is shown without a code rather than quietly sent upstairs.
-	 */
+	// Classifying an untagged line would mean sending its moves to the server for lookup; refused on
+	// principle, so an untagged line is shown without a code rather than sent upstairs.
 	it('is absent when the file has none', () => {
 		expect(deriveFields('ANALYSIS', parsePgn('1. e4 e5 2. Nf3 *')).eco).toBeNull();
 	});
@@ -155,7 +144,7 @@ describe('converting a type for the other shelf', () => {
 		expect(convertTypeTo('LIBRARY', 'MODEL_GAME', null)).toBe('GAME');
 	});
 
-	/** The one that needs the starting position, which is why this decision moved to the browser. */
+	// The one case that needs the starting position, which is why this decision moved to the browser.
 	it('turns a trunk into a study when it has a starting position, and an analysis when it does not', () => {
 		expect(convertTypeTo('LIBRARY', 'MAIN_LINE', '8/8/8/8/8/5K2/6Q1/6k1 w - - 0 1')).toBe('STUDY');
 		expect(convertTypeTo('LIBRARY', 'MAIN_LINE', null)).toBe('ANALYSIS');
@@ -200,13 +189,13 @@ describe('sorting a collection', () => {
 		expect(ids('WHITE', false)).toEqual([1, 3, 2]);
 	});
 
-	/** ASC NULLS LAST and DESC NULLS LAST: absent is absent whichever way round the sort is. */
+	// ASC NULLS LAST and DESC NULLS LAST: absent is absent whichever way round the sort is.
 	it('keeps absent values at the bottom in both directions', () => {
 		expect(ids('WHITE_ELO', true)).toEqual([3, 1, 2]);
 		expect(ids('WHITE_ELO', false)).toEqual([1, 3, 2]);
 	});
 
-	/** NULLIF(ply_count, 0): an entry with no moves is absent, not the shortest. */
+	// NULLIF(ply_count, 0): an entry with no moves is absent, not the shortest.
 	it('treats an entry with no moves as having no length', () => {
 		expect(ids('MOVES', true)).toEqual([3, 1, 2]);
 	});
@@ -216,7 +205,7 @@ describe('sorting a collection', () => {
 		expect(ids('RESULT')).toEqual([1, 3, 2]);
 	});
 
-	/** What V2's two generated columns existed for: one ordering across both row shapes. */
+	// What V2's two generated columns existed for: one ordering across both row shapes.
 	it('compares a title against a player name', () => {
 		const mixed = [
 			row({ id: 1, itemType: 'GAME', white: 'Zukertort' }),

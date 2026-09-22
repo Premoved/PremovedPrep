@@ -43,7 +43,6 @@ interface OpenMenu {
 	readonly anchor: DOMRect;
 }
 
-/** The Games list tab: every game in the archive that reached the position on the board. */
 @Component({
 	selector: 'app-game-list',
 	standalone: true,
@@ -116,8 +115,6 @@ export class GameListComponent implements OnDestroy {
 		this.store.loadMore();
 	}
 
-	/** Selection */
-
 	selectGame(game: RenderedGame): void {
 		const summary = this.store.rows().find((row) => row.id === game.id);
 		if (summary) {
@@ -125,10 +122,8 @@ export class GameListComponent implements OnDestroy {
 		}
 	}
 
-	/** Context menu */
-
 	onContextMenu(event: MouseEvent, game: RenderedGame): void {
-		/** preventDefault suppresses the browser's menu; stopPropagation keeps this one open. */
+		// preventDefault suppresses the browser's menu; stopPropagation keeps this one open.
 		event.preventDefault();
 		event.stopPropagation();
 
@@ -171,7 +166,7 @@ export class GameListComponent implements OnDestroy {
 		const anchor = this.tree.currentNode();
 		const target = position(anchor.fen);
 
-		/** Matched on the position, not on the ply the row reports. */
+		// Matched on the position, not on the ply the row reports.
 		let start = position(parsed.root.fen) === target ? 0 : -1;
 		if (start < 0) {
 			const index = mainline.findIndex((ply) => position(ply.fen) === target);
@@ -184,7 +179,7 @@ export class GameListComponent implements OnDestroy {
 		let last: MoveNode = anchor;
 		for (let i = start; i < mainline.length; i++) {
 			const ply = mainline[i];
-			/** addMove reuses an existing child with the same resulting position. */
+			// addMove reuses an existing child with the same resulting position.
 			last = this.tree.addMove({
 				from: ply.from,
 				to: ply.to,
@@ -198,12 +193,12 @@ export class GameListComponent implements OnDestroy {
 
 		this.tree.setComment(last, row.comment);
 
-		/** addMove walks the cursor forward as it appends; put it back. */
+		// addMove walks the cursor forward as it appends; put it back.
 		this.tree.select(anchor);
 	}
 }
 
-/** Placement, side to move, castling and en passant - a position without the counters. */
+// Placement, side to move, castling and en passant - a position without the counters.
 function position(fen: string): string {
 	return fen.split(' ').slice(0, 4).join(' ');
 }

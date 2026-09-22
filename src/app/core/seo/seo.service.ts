@@ -9,16 +9,7 @@ const ORIGIN = 'https://premovedprep.com';
 const FALLBACK_DESCRIPTION =
 	'A chess analysis tool for tournament preparation, building organized repertoires, studying opponents and exploring database games.';
 
-/**
- * Keeps the title, the description and the canonical link in step with the route.
- *
- * A single-page application loads index.html once. Without this, every route reports the title and
- * the canonical URL of the home page: to a search engine the site is one page, and to a person the
- * browser tab says "PremovedPrep" whatever they are looking at.
- *
- * The text comes from route data, so a route declares its own description next to its component
- * rather than in a table somewhere else that drifts.
- */
+// The SPA shell sets index.html's title and canonical link once; this keeps them in step with the route.
 @Injectable({ providedIn: 'root' })
 export class SeoService {
 	private readonly router = inject(Router);
@@ -37,21 +28,12 @@ export class SeoService {
 		});
 	}
 
-	/**
-	 * For a page whose subject is only known once a request has answered - the opponent search at
-	 * /search/opponent/<slug>, which has to fetch the player before it can name them. The function
-	 * that served the HTML already wrote these tags; this is what keeps them there after Angular has
-	 * replaced the page, which is the version a rendering crawler reads.
-	 *
-	 * Applied now and forgotten at the next navigation, which reapplies the route's own data, so it
-	 * cannot leak onto another page.
-	 */
+	/** Overrides the server-rendered tags after Angular hydrates; the next navigation resets them. */
 	describe(pageTitle: string, description: string, canonicalPath?: string): void {
 		this.apply(pageTitle, description, canonicalPath);
 	}
 
 	private apply(pageTitle: string | null, description: string | null, canonicalPath?: string): void {
-		/** "Database search - PremovedPrep", and the bare name on the home page. */
 		const full = pageTitle ? `${pageTitle} - ${SITE}` : SITE;
 		const text = description ?? FALLBACK_DESCRIPTION;
 
@@ -62,13 +44,7 @@ export class SeoService {
 		this.meta.updateTag({ name: 'twitter:title', content: full });
 		this.meta.updateTag({ name: 'twitter:description', content: text });
 
-		/**
-		 * Query parameters are dropped on purpose. /search/opponent/x and the same URL with ?color=b
-		 * are one page with a toggle flipped; declaring them as two would split whatever either earns.
-		 *
-		 * A caller may pass the path instead, which is how a player's page declares the server's
-		 * spelling of their name as canonical rather than whichever spelling was followed here.
-		 */
+		// Query params dropped on purpose: e.g. ?color=b is a toggle on the same page, not a new one.
 		const canonical = ORIGIN + (canonicalPath ?? this.router.url.split('?')[0].split('#')[0]);
 		this.meta.updateTag({ property: 'og:url', content: canonical });
 

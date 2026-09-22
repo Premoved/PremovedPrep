@@ -15,7 +15,7 @@ import { DatePickerComponent } from '../../../shared/date-picker/date-picker.com
 import { GameResultsComponent } from '../game-results/game-results.component';
 import { ViewportService } from '../../../core/layout/viewport.service';
 
-/** Autocomplete debounce. */
+// Autocomplete debounce.
 const SUGGEST_DEBOUNCE_MS = 200;
 const MIN_SUGGEST_LENGTH = 3;
 
@@ -141,8 +141,6 @@ export class AdvancedSearchComponent {
 		this.setField(key, (event.target as HTMLInputElement | HTMLSelectElement).value);
 	}
 
-	// Name autocomplete.
-
 	readonly whiteSuggestions = signal<readonly string[]>([]);
 	readonly blackSuggestions = signal<readonly string[]>([]);
 
@@ -178,6 +176,7 @@ export class AdvancedSearchComponent {
 		const request = ++this.suggestRequestIds[key];
 		this.api.suggestPlayers(query).subscribe({
 			next: (list) => {
+				// Drop a response for a request this key has since superseded.
 				if (request !== this.suggestRequestIds[key]) return;
 				this.suggestionsFor(key).set(list.map((player) => player.name));
 			},
@@ -235,6 +234,9 @@ export class AdvancedSearchComponent {
 	}
 
 	onSort(key: SearchSortKey): void {
+		if (this.loading() || this.previewLoading()) {
+			return;
+		}
 		if (this.sort() === key) {
 			this.ascending.update((value) => !value);
 		} else {
@@ -259,6 +261,8 @@ export class AdvancedSearchComponent {
 		}
 	}
 
+	private loadRequestId = 0;
+
 	private load(append: boolean): void {
 		const active = this.active;
 		if (!active) {
@@ -266,14 +270,19 @@ export class AdvancedSearchComponent {
 		}
 		this.loading.set(true);
 
+		// Guards against an older request's response landing after a newer load.
+		const request = ++this.loadRequestId;
+
 		this.api.advanced(active, this.sort(), this.ascending(), this.page).subscribe({
 			next: (result) => {
+				if (request !== this.loadRequestId) return;
 				this.rows.update((current) => (append ? [...current, ...result.games] : result.games));
 				this.hasMore.set(result.hasMore);
 				this.loading.set(false);
 				this.searched.set(true);
 			},
 			error: (err: Error) => {
+				if (request !== this.loadRequestId) return;
 				this.loading.set(false);
 				this.searched.set(true);
 				this.notify.error(err.message);

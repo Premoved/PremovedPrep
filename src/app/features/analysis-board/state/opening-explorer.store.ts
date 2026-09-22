@@ -7,7 +7,6 @@ import { MoveTreeStore } from './move-tree.store';
 
 export type ExplorerStatus = 'idle' | 'loading' | 'ready' | 'error';
 
-/** Opening tree for the position on the board, built from the archive. */
 @Injectable()
 export class OpeningExplorerStore {
 	private readonly api = inject(OpeningExplorerService);
@@ -30,16 +29,16 @@ export class OpeningExplorerStore {
 
 	readonly isEmpty = computed(() => this._status() === 'ready' && this._data().moves.length === 0);
 
-	/** Positions already fetched, so stepping back and forth does not re-query. */
+	// Positions already fetched, so stepping back and forth does not re-query.
 	private readonly cache = new Map<string, OpeningTree>();
 	private static readonly CACHE_LIMIT = 200;
 
-	/** Monotonic; only the newest request may write the signals above. */
+	// Monotonic; only the newest request may write the signals above.
 	private requestId = 0;
 
 	constructor() {
 		effect(() => {
-			/** Read first and return early: a closed tab does not track the position. */
+			// Read first and return early: a closed tab does not track the position.
 			if (!this._active()) {
 				return;
 			}

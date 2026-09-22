@@ -3,7 +3,7 @@ import { MAX_MULTI_PV, hashStepsFor } from '../../../../core/engine/engine-capab
 import { ENGINE_CATALOGUE } from '../../../../core/engine/engine-catalogue';
 import { EngineStore } from '../../state/engine.store';
 
-/** A slider whose stops are a list rather than a range. */
+// A slider whose stops are a list rather than a range.
 interface StepSlider {
 	readonly index: number;
 	readonly max: number;
@@ -25,8 +25,6 @@ export class EngineSettingsComponent {
 	readonly catalogue = ENGINE_CATALOGUE;
 	readonly maxMultiPv = MAX_MULTI_PV;
 
-	/** Search time */
-
 	readonly searchTime = computed<StepSlider>(() => {
 		const steps = this.engine.searchTimeSteps;
 		const seconds = this.engine.settings().searchSeconds;
@@ -44,15 +42,11 @@ export class EngineSettingsComponent {
 		this.engine.updateSettings({ searchSeconds: this.engine.searchTimeSteps[index] });
 	}
 
-	/** Multiple lines */
-
 	readonly multiPv = computed(() => this.engine.settings().multiPv);
 
 	onMultiPv(event: Event): void {
 		this.engine.updateSettings({ multiPv: readSlider(event) });
 	}
-
-	/** Threads */
 
 	readonly threads = computed<StepSlider>(() => {
 		const max = this.engine.maxThreads();
@@ -68,8 +62,6 @@ export class EngineSettingsComponent {
 	onThreads(event: Event): void {
 		this.engine.updateSettings({ threads: readSlider(event) });
 	}
-
-	/** Memory */
 
 	readonly hashSteps = computed(() => hashStepsFor(this.engine.definition()));
 

@@ -9,7 +9,6 @@ export interface PromotionTarget {
 	isWhite: boolean;
 }
 
-/** The four-piece strip over the promotion square, plus the dimming backdrop. */
 @Component({
 	selector: 'app-promotion-overlay',
 	standalone: true,

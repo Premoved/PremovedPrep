@@ -1,21 +1,4 @@
-/**
- * The Advanced Report.
- *
- * Everything below the first type is built in the browser now. The server used to lay the opponent's
- * games over the user's repertoire and send the finished tree; it cannot read the repertoire any
- * more, so it sends the games - which are public archive rows and always were - and the overlay
- * happens where the repertoire is readable. See core/report/advanced-report.ts.
- *
- * The shapes are unchanged, which is the point: the screen that draws a report did not have to learn
- * that any of this moved.
- */
-
-/**
- * One of the opponent's games, as the archive stores it. The only shape here that crosses the wire.
- *
- * `movesSan` is the importer's own normalised movetext - no comments, no variations - which is why
- * the report's reader is simpler than the one that reads a user's own file.
- */
+/** Only shape here that crosses the wire; movesSan is pre-normalised (no comments/variations). */
 export interface ArchiveGame {
 	readonly id: number;
 	readonly white: string | null;

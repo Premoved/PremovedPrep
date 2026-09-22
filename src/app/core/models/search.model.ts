@@ -1,5 +1,3 @@
-/** Database Search, as the backend sends it. */
-
 export type SearchSortKey =
 	'DATE' | 'STRENGTH' | 'WHITE_NAME' | 'BLACK_NAME' | 'WHITE_ELO' | 'BLACK_ELO' | 'RESULT' | 'EVENT' | 'ECO' | 'MOVES';
 

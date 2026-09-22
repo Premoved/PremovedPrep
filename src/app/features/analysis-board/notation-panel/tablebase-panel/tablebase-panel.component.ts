@@ -4,7 +4,6 @@ import { TablebaseOutcome, categoryLabel, outcomeOf } from '../../../../core/mod
 import { TABLEBASE_MAX_PIECES } from '../../../../core/services/tablebase.service';
 import { TablebaseStore } from '../../state/tablebase.store';
 
-/** One row, with everything the template needs already decided. */
 interface RenderedMove {
 	readonly uci: string;
 	readonly san: string;
@@ -14,7 +13,6 @@ interface RenderedMove {
 	readonly move: UciMove | null;
 }
 
-/** The endgame tablebase, in the slot under the engine bar. */
 @Component({
 	selector: 'app-tablebase-panel',
 	standalone: true,
@@ -54,7 +52,7 @@ export class TablebasePanelComponent implements OnDestroy {
 	);
 
 	constructor() {
-		/** The store does nothing until something is looking at it. */
+		// The store does nothing until something is looking at it.
 		this.tablebase.setActive(true);
 	}
 
@@ -69,7 +67,7 @@ export class TablebasePanelComponent implements OnDestroy {
 	}
 }
 
-/** 'DTM 17' when mate distance is known, otherwise 'DTZ n'. */
+// 'DTM 17' when mate distance is known, otherwise 'DTZ n'.
 function distanceOf(dtm: number | null, dtz: number | null): string {
 	if (dtm !== null && dtm !== 0) {
 		return `DTM ${Math.abs(dtm)}`;

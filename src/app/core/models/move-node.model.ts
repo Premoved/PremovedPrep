@@ -3,26 +3,21 @@ import { Annotation, Color, PieceType, SquareName } from './chess-enums';
 import { RepertoireGame } from './repertoire.model';
 import { ReportPoint } from './report.model';
 
-/** The analysis tree. Discriminated union on `isRoot`. */
 interface MoveNodeBase {
 	fen: string;
-	/** Arrows and circles on this position. A circle is stored as orig === dest. */
+	// Arrows and circles on this position. A circle is stored as orig === dest.
 	drawings: DrawShape[];
 	comment?: string;
 	annotation?: Annotation;
 	children: PlyNode[];
-	/** A study's Show/Hide solution boundary: everything after it is hidden while collapsed. */
+	// A study's Show/Hide solution boundary: everything after it is hidden while collapsed.
 	solutionFold?: FoldState;
 
 	modelGames?: readonly RepertoireGame[];
 
 	reportPoint?: ReportPoint;
 
-	/**
-	 * How many of the opponent's games reached this move, when the move came from the Advanced
-	 * Report's overlay. Absent on every other node, which is what tells a move the report found from
-	 * a move the person made themselves while looking at it - only the first kind is drawn.
-	 */
+	// Set only on a move the Advanced Report's overlay found, never on one the user played.
 	reportGames?: number;
 }
 
@@ -46,7 +41,7 @@ export interface PlyNode extends MoveNodeBase {
 	promotion?: PieceType;
 	fold?: FoldState;
 
-	/** True while this move exists only because a model game plays it. */
+	// True while this move exists only because a model game plays it.
 	generated?: boolean;
 }
 

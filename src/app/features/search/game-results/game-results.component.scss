@@ -139,8 +139,6 @@ td.center {
 	padding: 0.9rem 0 0.3rem;
 }
 
-/* Preview */
-
 .preview {
 	position: absolute;
 	top: 0;
@@ -217,9 +215,6 @@ td.center {
 	overflow: hidden;
 }
 
-/* Controls only. The players, ratings and result are in the details block under the board on a
-   phone, and in the list itself on a desktop - repeating them here bought a line of chrome on top
-   of a board that has none to spare. */
 .preview-strip {
 	position: relative;
 	flex: 0 0 auto;
@@ -237,15 +232,10 @@ td.center {
 	align-items: center;
 	justify-content: center;
 	gap: 0.35rem;
-	/* Centred in the strip whether or not the close button is there, so the arrows do not shift
-	   between the phone and the desktop layout. */
 	flex: 1 1 auto;
 	min-width: 0;
 }
 
-/* Copied deliberately from board-toolbar's .tool rather than shared: the two toolbars sit in
-   different components with no common stylesheet, and the alternative was a global class. If one
-   changes, change the other. */
 .preview-controls .tool {
 	flex-shrink: 0;
 	display: flex;
@@ -284,10 +274,6 @@ td.center {
 	opacity: 0.4;
 }
 
-/* The grab bar, and the only affordance for closing the sheet on a phone. Absolute so it costs
-   padding rather than a row. */
-/* Decoration only: the drag is on the whole header. Wide enough to read as "pull me" rather than
-   as a stray rule, since it is the only thing that says the sheet can be thrown away. */
 .sheet-grip {
 	position: absolute;
 	top: 9px;
@@ -305,8 +291,6 @@ app-preview-board {
 	box-sizing: border-box;
 }
 
-/* Desktop header. There is no details block under the board there, so these are the only place the
-   players and the result appear once the row scrolls out of view. */
 .preview-side {
 	flex: 1 1 0;
 	min-width: 0;
@@ -381,7 +365,6 @@ app-preview-board {
 	opacity: 0.55;
 }
 
-/* Phone layout */
 :host-context(.shell.mobile) {
 	.preview {
 		position: fixed;
@@ -394,15 +377,10 @@ app-preview-board {
 		touch-action: none;
 	}
 
-	/* Only when the sheet appears from nothing. Leaving the animation on .preview meant anything that
-	   re-evaluated the element replayed it, so stepping to the next game looked like the sheet leaving
-	   and coming back. */
 	.preview.entering {
 		animation: preview-sheet-up 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
-	/* While a finger is down there is nothing to ease towards: the transform IS the finger. Leaving
-	   the transition on is what made the sheet lag and then replay the drag after it ended. */
 	.preview.dragging {
 		transition: none;
 		animation: none;
@@ -414,8 +392,6 @@ app-preview-board {
 	}
 
 	.preview-strip {
-		/* The whole header is the drag target, so the browser must not claim a vertical swipe here
-		   for a scroll. The top padding is room for the grab bar. */
 		touch-action: none;
 		padding: 1.35rem 0.5rem 0.7rem;
 	}
@@ -425,17 +401,12 @@ app-preview-board {
 		width: 100%;
 	}
 
-	/* Previous and Next are the same width - Next's label is shorter, and left to its content it
-	   looked like a mistake next to Previous. The third button takes whatever is left, so the three
-	   fill the row exactly and none of them can push it wider than the screen. */
 	.preview-controls .tool:not(.open-board):not(.close) {
 		flex: 0 0 auto;
 		min-width: 4.9rem;
 		justify-content: center;
 	}
 
-	/* Square, and no narrower than a fingertip. It is the fourth thing on the row, so it gives up
-	   width first. */
 	.preview-controls .close {
 		flex: 0 0 auto;
 		width: 2rem;
@@ -460,13 +431,8 @@ app-preview-board {
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-		/* On a 320px screen the full label cannot fit next to two others. It shortens rather than
-		   overflowing, which is what the ellipsis is for. */
 	}
 
-	/* Three labelled buttons on a 360px screen only fit if they give up padding and a little size.
-	   They keep their labels: an unlabelled square is a guess, and this bar is the only way out of
-	   the sheet apart from the grab bar. */
 	.preview-controls .tool {
 		height: 2rem;
 		padding: 0 0.45rem;

@@ -106,8 +106,6 @@
 	flex-direction: column;
 }
 
-/* Game data panel */
-
 .form {
 	flex: 1 1 auto;
 	min-height: 0;
@@ -320,8 +318,6 @@
 .context-menu button.danger {
 	color: var(--accent-red);
 }
-
-/* Location panel */
 
 .shelf-tabs {
 	flex: 0 0 auto;
@@ -586,8 +582,6 @@
 	gap: 0.4rem;
 }
 
-/* Footer */
-
 .footer {
 	flex: 0 0 auto;
 	display: flex;
@@ -715,7 +709,6 @@
 	cursor: default;
 }
 
-/* Phone layout */
 :host-context(.shell.mobile) {
 	.backdrop {
 		top: var(--board-overlay-top, 0px);

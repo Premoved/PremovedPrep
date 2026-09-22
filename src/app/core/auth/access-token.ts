@@ -1,14 +1,6 @@
 import { HttpContextToken } from '@angular/common/http';
 
-/**
- * The access token, held in this tab's memory and nowhere else.
- *
- * It used to live in localStorage, which meant anything able to run a script on the page could read
- * it and then hold a working credential for as long as it lasted - and that signing out deleted
- * only the browser's copy, because the server had no way to withdraw one. What survives a reload
- * now is the refresh cookie, which is HttpOnly and cannot be read from here at all; this value is
- * fetched back from it on startup and goes when the tab does.
- */
+// In-memory only, not localStorage: an XSS payload cannot read this or make it outlive the tab.
 let token: string | null = null;
 let expiresAtMs = 0;
 
@@ -26,13 +18,10 @@ export function clearAccessToken(): void {
 	expiresAtMs = 0;
 }
 
-/** Whether the token is still worth sending. Only the server decides; this saves a round trip. */
+// Whether the token is still worth sending. Only the server decides; this just saves a round trip.
 export function accessTokenFresh(marginMs = 15_000): boolean {
 	return token !== null && Date.now() < expiresAtMs - marginMs;
 }
 
-/**
- * Set on the two calls that must not be retried through a refresh, because one of them is the
- * refresh and the other is signing out.
- */
+// Set on the refresh call and on logout, so neither is itself retried through a refresh.
 export const SKIP_SESSION_RETRY = new HttpContextToken<boolean>(() => false);

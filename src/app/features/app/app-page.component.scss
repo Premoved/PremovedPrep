@@ -66,8 +66,6 @@ h2 {
 	margin-top: 0.3rem;
 }
 
-/* Downloads: the build for this computer first, no box around them */
-
 .download {
 	margin-top: 2.5rem;
 }
@@ -145,8 +143,6 @@ h2 {
 	color: var(--text-muted);
 }
 
-/* The screenshots */
-
 .shots {
 	display: flex;
 	gap: 1.25rem;
@@ -192,7 +188,6 @@ h2 {
 .frame {
 	display: block;
 	width: 100%;
-	/** The screenshots' own shape, so nothing is cropped away. */
 	aspect-ratio: 1918 / 1126;
 	object-fit: cover;
 	object-position: top left;
@@ -204,8 +199,6 @@ h2 {
 		border-color 0.15s ease,
 		box-shadow 0.15s ease;
 }
-
-/* The plan: presented here, bought in the app */
 
 .plan {
 	display: flex;
@@ -275,7 +268,6 @@ h2 {
 	color: var(--glow-blue);
 }
 
-/** Where the plan lives, said twice over and side by side, before anything else about it. */
 .where {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -394,7 +386,6 @@ h2 {
 	font-size: 1.3rem;
 	font-weight: 700;
 	letter-spacing: -0.01em;
-	/** A dark grey rather than full black: a label over the benefits, below the headline's weight. */
 	color: var(--text-strong-muted);
 }
 
@@ -429,8 +420,6 @@ h2 {
 		color: var(--text-muted);
 	}
 }
-
-/* A screenshot enlarged: centred over the page, with the page still there behind it */
 
 .lightbox {
 	position: fixed;
@@ -552,8 +541,6 @@ h2 {
 		opacity: 0;
 	}
 }
-
-/* Narrow windows, and the phone layout */
 
 @media (max-width: 900px) {
 	.hero,

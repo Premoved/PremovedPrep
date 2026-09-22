@@ -8,10 +8,10 @@ import { MoveTreeStore } from '../state/move-tree.store';
 import { GameFileDialogComponent, GameFilePanel, SavedEntry } from './game-file-dialog.component';
 import { fitOnScreen } from '../../../core/browser/menu-placement';
 
-/** How long a share URL may get before the PGN goes to a file instead. */
+// How long a share URL may get before the PGN goes to a file instead.
 const MAX_SHARE_URL_TEXT = 1400;
 
-/** The band across the top of the analysis board: navigation, the game's name, and the writing actions. */
+// Approximate share-menu size, keeps it on screen.
 const SHARE_MENU_FOOTPRINT = { width: 160, height: 116 };
 
 @Component({
@@ -70,7 +70,7 @@ export class BoardToolbarComponent {
 			};
 		}
 
-		/** A document has no players, so its title stands in. */
+		// A document has no players, so its title stands in.
 		if (headers.event) {
 			return {
 				players: false,
@@ -169,7 +169,7 @@ export class BoardToolbarComponent {
 		window.open(`https://wa.me/?text=${encodeURIComponent(pgn)}`, '_blank', 'noopener');
 	}
 
-	/** Fallback when the game is too long for a URL: write the file instead. */
+	// Fallback when the game is too long for a URL: write the file instead.
 	private downloadInstead(channel: string): void {
 		this.download();
 		this.notify.info(

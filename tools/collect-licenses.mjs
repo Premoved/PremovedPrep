@@ -3,21 +3,14 @@ import { access, copyFile, mkdir, readdir, stat } from 'node:fs/promises';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/**
- * Puts the dependency licence notices inside the deployed folder.
- *
- * Angular writes 3rdpartylicenses.txt beside `browser/`, not in it, so nothing that reaches
- * Cloudflare Pages carries the notices for the GPL code this application bundles. Chessground and
- * Stockfish are GPL-3.0-or-later; conveying them means conveying their terms with them.
- */
+// Angular writes 3rdpartylicenses.txt beside browser/, not in it, so nothing deployed carries the
+// GPL-3.0-or-later notices Chessground and Stockfish require; this copies them into the output.
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 
 async function outputDir() {
-	// The newest one, not the first: there is more than one application output now - the site's and
-	// the desktop shell's - and the notices belong to the build that has just run, which is the one
-	// whose folder was written last. Picking by name would put them in whichever sorts first and
-	// leave the other build conveying GPL code without its terms.
+	// The newest build, not the first by name: dist/ can hold both the site's and the desktop
+	// shell's output, and the notices must land in the one that just built.
 	const projects = await readdir(DIST, { withFileTypes: true });
 	let newest = null;
 	for (const project of projects) {
@@ -56,8 +49,7 @@ async function main() {
 	await copyFile(notices, join(target, '3rdpartylicenses.txt'));
 	console.log('collect-licenses: licenses/3rdpartylicenses.txt written into the deployed folder.');
 
-	// THIRD-PARTY.md is the attribution the CC BY piece sets and Boxicons require, so it has to be
-	// reachable from the site and not only from the repository.
+	// Required attribution for the CC BY piece sets and Boxicons; must be reachable from the site.
 	for (const name of ['THIRD-PARTY.md', 'LICENSE']) {
 		try {
 			await copyFile(join(ROOT, name), join(target, name));

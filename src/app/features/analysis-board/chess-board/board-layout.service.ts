@@ -13,7 +13,6 @@ export interface BoardLayoutElements {
 export type SetupContentProbe = () => number | null;
 
 const NARROW_HYSTERESIS_PX = 24;
-/** One more than the deepest observed chain: width -> square size -> column height. */
 const PRIMING_PASSES = 3;
 const SETUP_BOTTOM_MARGIN = 8;
 const MAX_BOARD_WIDTH = 640;
@@ -24,13 +23,8 @@ const SHELL_PADDING = 32; // .board-shell { padding: 1rem } top + bottom
 const COLUMN_GAP = 12; // .board-column { gap: 0.75rem }
 const ROW_GAP = 10; // .board-row { gap: 0.6rem } (stacked vertically in narrow mode)
 
-/** What sits above the board on a phone: the shell header and the toolbar band. */
 const MOBILE_CHROME_HEIGHT = 132;
 
-/**
- * Every responsive decision the board makes, from live measurement. Runs a bounded measure-write-measure
- * loop.
- */
 @Injectable()
 export class BoardLayoutService implements OnDestroy {
 	private readonly cdr = inject(ChangeDetectorRef);
@@ -61,7 +55,7 @@ export class BoardLayoutService implements OnDestroy {
 		this.reserveUtilities = reserveUtilities;
 
 		this.resizeObserver = new FrameResizeObserver(() => this.recompute());
-		/** Observes only elements whose size changes externally, never one this loop writes. */
+		// Observes only elements whose size changes externally, never one this loop writes.
 		this.resizeObserver.observe(elements.shell);
 		this.paneEl = elements.shell.parentElement?.parentElement ?? undefined;
 		if (this.paneEl) {
@@ -127,7 +121,7 @@ export class BoardLayoutService implements OnDestroy {
 		changed = this.updateSetupAnchors(el.square, setupContentHeight) || changed;
 
 		if (changed) {
-			/** Synchronous: this is a measure-write-measure loop. */
+			// Synchronous: this is a measure-write-measure loop.
 			this.cdr.detectChanges();
 		}
 
@@ -152,7 +146,6 @@ export class BoardLayoutService implements OnDestroy {
 			return true;
 		}
 
-		/** Hysteresis on the way back to the wide layout. */
 		if (this.isNarrow() && this.narrowSwitchShellWidth === null) {
 			this.isNarrow.set(false);
 			return true;

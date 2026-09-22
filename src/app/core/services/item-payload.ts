@@ -1,20 +1,4 @@
-/**
- * What is actually inside a sealed entry.
- *
- * WHY SO LITTLE
- *
- * Everything the list shows - the players, the result, the date, the event, the ECO code, the ply
- * count, the starting position - is derived from the PGN, and it was derived from the PGN on the
- * server too. Sealing them alongside the moves would store the same facts twice and give an attacker
- * a second, shorter thing to guess at. So the payload is the document and the two fields that are
- * genuinely not in it: the title and the annotator, which a person may set to something the tag
- * pairs do not say.
- *
- * `v` is a version and not decoration. The day this shape grows a field, an entry written before
- * that day still has to open, and a reader that checks a number can say so instead of quietly
- * reading undefined.
- */
-
+// Only moves, title and author are sealed; the rest is derived from the PGN.
 export interface ItemPayload {
 	readonly pgn: string;
 	readonly title: string | null;
@@ -47,6 +31,7 @@ export function readPayload(text: string): ItemPayload {
 		throw new Error('This entry is stored in a form this version cannot read');
 	}
 
+	// Rejects an entry written by a future version rather than silently misreading it.
 	if (typeof parsed?.pgn !== 'string' || typeof parsed.v !== 'number' || parsed.v > VERSION) {
 		throw new Error('This entry is stored in a form this version cannot read');
 	}
@@ -54,13 +39,7 @@ export function readPayload(text: string): ItemPayload {
 	return { pgn: parsed.pgn, title: parsed.title ?? null, author: parsed.author ?? null };
 }
 
-/**
- * The empty trunk every repertoire holds at least one of.
- *
- * It used to be a constant in CollectionService, written by the server when a library folder became
- * a repertoire. The server cannot write it any more - it would have to be sealed, and it has no key
- * - so the constant lives here and the browser sends it. Same text, different side of the wall.
- */
+// Sealed in the browser: the server holds no key.
 export const EMPTY_MAIN_LINE_PGN = `[Event "Main line"]
 [Site "?"]
 [Date "????.??.??"]

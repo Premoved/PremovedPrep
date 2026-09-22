@@ -1,7 +1,6 @@
 import { DEFAULT_FEN } from './fen.util';
 import { GameHeaders } from './game-headers';
 
-/** Composes a complete PGN file from what the board holds. */
 export interface PgnFileOptions {
 	readonly headers: GameHeaders;
 	readonly startFen: string;
@@ -34,15 +33,13 @@ export function composePgnFile(options: PgnFileOptions): string {
 	pushIf(tags, 'Termination', headers.termination);
 	pushIf(tags, 'Annotator', annotator || headers.annotator);
 
-	/** Whatever else the file arrived with. Dropping it is what made a copy lossy. */
+	// Whatever else the file arrived with; dropping it here is what made a copy lossy.
 	for (const [name, value] of Object.entries(headers.extra ?? {})) {
 		pushIf(tags, name, value);
 	}
 
-	/**
-	 * Only for a position that is not the opening array. A FEN on the starting position tells a
-	 * reader the game was set up rather than played, which is why Lichess leaves it out too.
-	 */
+	// Only for a position other than the opening array: a FEN on the start position would tell a
+	// reader the game was set up rather than played (the convention Lichess exports also follow).
 	if (startFen && startFen !== DEFAULT_FEN) {
 		pushIf(tags, 'Variant', variantFor(headers.variant));
 		tags.push(['FEN', startFen]);
@@ -67,16 +64,14 @@ export function pgnFileName(headers: GameHeaders, title?: string | null): string
 	);
 }
 
-/**
- * PGN ends the movetext with the game's result. The serialiser writes `*` because it does not know
- * one; here we do, and a drawn game that ends in `*` reads to any other program as unfinished.
- */
+// The serialiser writes '*' when it has no result; a drawn/decided game ending in '*' reads to
+// other software as unfinished, so the real result is substituted here when there is one.
 function terminate(movetext: string, result: string): string {
 	const body = movetext.trimEnd();
 	return body.endsWith('*') && result !== UNFINISHED ? `${body.slice(0, -1)}${result}` : body;
 }
 
-/** A file's own variant wins, unless it only says Standard, which a set-up position is not. */
+// A file's own variant wins, unless it only says Standard, which a set-up position is not.
 function variantFor(variant: string | undefined): string {
 	return variant && variant.toLowerCase() !== 'standard' ? variant : 'From Position';
 }
@@ -88,5 +83,8 @@ function pushIf(tags: [string, string][], name: string, value: string | undefine
 }
 
 function escapeTag(value: string): string {
-	return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	return value
+		.replace(/\\/g, '\\\\')
+		.replace(/"/g, '\\"')
+		.replace(/\r\n|\r|\n/g, ' ');
 }

@@ -25,7 +25,7 @@ export function pieceTypeFromLetter(letter: string): PieceType {
 
 const PIECE_TYPES = new Set<string>(Object.values(PieceType));
 
-/** Class list chessground's stylesheet expects on a <piece> element. */
+// Class list chessground's stylesheet expects on a <piece> element.
 export function pieceCssClasses(code: string): string {
 	const color = code[0] === 'w' ? 'white' : 'black';
 	return `piece ${color} ${roleFromLetter(code[1])}`;

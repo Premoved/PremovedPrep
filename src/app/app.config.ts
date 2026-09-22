@@ -15,23 +15,16 @@ export const appConfig: ApplicationConfig = {
 	providers: [
 		provideBrowserGlobalErrorListeners(),
 		provideRouter(routes, withComponentInputBinding(), withPreloading(PreloadAllModules)),
-		/**
-		 * errorInterceptor first, so it is the outer one: authInterceptor then sees a raw 401 rather
-		 * than the ApiError the UI is meant to read, and a 401 it recovers from by refreshing never
-		 * becomes a message at all.
-		 */
+		// errorInterceptor must be outer: otherwise authInterceptor's refreshed 401 never reaches it as an ApiError.
 		provideHttpClient(withInterceptors([errorInterceptor, authInterceptor])),
 
 		provideAppInitializer(() => {
 			inject(ThemeService).init();
-			// Loads user preferences early to prevent the board from initially rendering with default settings
 			const prefs = inject(PreferencesStore);
 			prefs.init();
-			// Loads the sound manifest in the background without blocking application startup
 			const sounds = inject(MoveSoundService);
 			void sounds.load();
 			sounds.primeOnFirstGesture(() => prefs.sound());
-			// Initializes analytics: does nothing if no configuration key is provided.
 			inject(AnalyticsService).init();
 			return inject(AuthService).restoreSession();
 		}),

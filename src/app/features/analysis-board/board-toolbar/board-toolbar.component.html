@@ -147,7 +147,7 @@
 	</button>
 
 	@if (shareOpen() && sharePos(); as at) {
-		<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- The click only stops the document handler from closing the menu. Escape closes it; the items inside are buttons. -->
+		<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- The click only stops the document handler from closing the menu. -->
 		<div class="share-menu" role="menu" [style.left.px]="at.x" [style.top.px]="at.y" (click)="$event.stopPropagation()">
 			<button type="button" role="menuitem" (click)="shareByEmail()">Email</button>
 			<button type="button" role="menuitem" (click)="shareByWhatsapp()">WhatsApp</button>

@@ -17,11 +17,9 @@ import { KnightLogoComponent } from '../../shared/logo/knight-logo.component';
 import { RookLogoComponent } from '../../shared/logo/rook-logo.component';
 import { PawnLogoComponent } from '../../shared/logo/pawn-logo.component';
 
-/** What a reader does to scroll by hand, as opposed to the smooth scroll a click starts. */
 const RELEASE_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const;
 const SCROLL_KEYS: ReadonlySet<string> = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ']);
 
-/** The nearest ancestor that scrolls, or null when it is the window. */
 function scrollParentOf(element: HTMLElement): HTMLElement | null {
 	for (let node = element.parentElement; node !== null; node = node.parentElement) {
 		const { overflowY } = getComputedStyle(node);
@@ -50,7 +48,6 @@ export class HomeComponent {
 	readonly viewport = inject(ViewportService);
 	private readonly route = inject(ActivatedRoute);
 
-	/** In the order the guide below is written in. */
 	readonly sections: readonly GuideSection[] = [
 		{ id: 'analysis-board', label: 'Analysis Board' },
 		{ id: 'library', label: 'Library' },
@@ -64,17 +61,9 @@ export class HomeComponent {
 	private readonly bodyEl = viewChild<ElementRef<HTMLElement>>('guideBody');
 	private observer: IntersectionObserver | null = null;
 
-	/**
-	 * The section a click in the index asked for, held until the reader scrolls by hand.
-	 *
-	 * The last sections are shorter than the window, so a click on one cannot bring its heading to
-	 * the top: the page stops at the bottom with an earlier heading still in view, and the scroll
-	 * spy, asked what is on screen, named that one instead. What was clicked is what is being read.
-	 */
+	// Section a nav click targeted; overrides the scroll spy until the reader scrolls by hand.
 	private pinned: string | null = null;
-	/** Whatever actually scrolls: the application's content pane, or the window. */
 	private scrollTarget: EventTarget | null = null;
-	/** The element of it that has a scroll position - the pane, or the document's for the window. */
 	private scroller: Element | null = null;
 	private readonly onScroll = () => this.recompute();
 	private readonly release = (event: Event) => {
@@ -140,7 +129,7 @@ export class HomeComponent {
 			return;
 		}
 
-		/** At the very end the last section is the one being read, whatever else is still in view. */
+		// A short last section may never reach the top of the frame; at the bottom, force it active.
 		const last = headings[headings.length - 1].parentElement?.id;
 		if (last && this.atBottom()) {
 			this.active.set(last);

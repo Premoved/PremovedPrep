@@ -8,7 +8,7 @@ export interface MenuPlacement {
 	readonly lowSpace: boolean;
 }
 
-/** Rough footprints, used to decide which side of the anchor the menu opens on. */
+// Approximate sizes; pick the side of the anchor the menu opens on.
 const COMPACT = { width: 200, height: 264 };
 const GRID = { width: 300, height: 320 };
 const GAP = 8;
@@ -43,17 +43,15 @@ export class MoveContextMenuComponent implements OnDestroy {
 
 	readonly forcedTooltip = signal<string | null>(null);
 
-	/** The menu places itself from the anchor's box alone; it measures nothing. */
 	readonly placement = computed<MenuPlacement>(() => {
 		const rect = this.anchor();
 		const size = this.showAnnotations() ? GRID : COMPACT;
 		const lowSpace = rect.top + size.height > window.innerHeight;
 
-		/** Preferred: hanging off the move's right edge, top-aligned with it. */
 		let x = rect.right + GAP;
 		const y = lowSpace ? Math.max(EDGE, window.innerHeight - size.height - EDGE) : rect.top;
 
-		/** No room on the right: flip to the move's left edge. */
+		// No room on the right: flip to the move's left edge.
 		if (x + size.width > window.innerWidth) {
 			x = rect.left - size.width - GAP;
 		}
@@ -62,7 +60,6 @@ export class MoveContextMenuComponent implements OnDestroy {
 		return { x, y, lowSpace };
 	});
 
-	/** Six columns need ~300px; below that the grid folds to four. */
 	readonly narrowGrid = computed(() => {
 		this.showAnnotations();
 		return window.innerWidth < 400;

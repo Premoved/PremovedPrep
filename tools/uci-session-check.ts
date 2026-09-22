@@ -1,8 +1,7 @@
-/** Simulates engine freezes and timeouts to test how the UCI session recovers 
- * Run by `npm run check:uci`. */
+// Simulates engine freezes and timeouts to test how the UCI session recovers. Run by `npm run check:uci`.
 import { Timers, UciSession } from '../src/app/core/engine/uci-session';
 
-/** Manual type declaration for Node's process to avoid installing @types/node */
+// Manual type declaration for Node's process to avoid installing @types/node.
 declare const process: { exit(code: number): never };
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -27,7 +26,7 @@ function same(name: string, actual: unknown, expected: unknown): void {
 	check(name, ok, ok ? '' : { actual, expected });
 }
 
-/** A mock clock for testing: advance fast-forwards time and triggers scheduled timers in order */
+// A mock clock: advance() fast-forwards time and runs scheduled timers in order.
 class FakeTimers implements Timers {
 	private now = 0;
 	private next = 1;
@@ -48,7 +47,7 @@ class FakeTimers implements Timers {
 	advance(ms: number): void {
 		const until = this.now + ms;
 		for (;;) {
-			// Re-evaluates timers on every pass because a running timer might schedule a new one
+			// Re-filters every pass because a running timer's callback might schedule a new one.
 			const ready = [...this.due.entries()]
 				.filter(([, timer]) => timer.at <= until)
 				.sort((a, b) => a[1].at - b[1].at || a[0] - b[0]);
@@ -68,7 +67,7 @@ class FakeTimers implements Timers {
 	}
 }
 
-/** A mock UCI session that collects outgoing commands without a real chess engine attached. */
+// A mock UCI session that collects outgoing commands without a real chess engine attached.
 function session(options: { readyTimeoutMs?: number; stopTimeoutMs?: number } = {}) {
 	const sent: string[] = [];
 	const warnings: string[] = [];
@@ -125,7 +124,6 @@ console.log('\nThe handshake\n');
 }
 
 {
-	/** Prevents sending the search command before the engine confirms it's ready */
 	const s = session();
 	s.uci.begin();
 	s.uci.search(START, null);
@@ -152,7 +150,6 @@ console.log('\nThe handshake\n');
 }
 
 {
-	/** Edge case: the engine returns 'uciok' but then never answers 'readyok'. */
 	const s = session({ readyTimeoutMs: 1_000 });
 	s.uci.begin();
 	s.uci.search(START, null);
@@ -200,7 +197,6 @@ console.log('\nMoving between positions\n');
 }
 
 {
-	/** Clicking through a game faster than the engine answers. */
 	const s = session();
 	s.uci.begin();
 	s.handshake();
@@ -238,7 +234,6 @@ console.log('\nAn engine that stops answering\n');
 }
 
 {
-	/** Ensures a lost 'bestmove' message doesn't permanently block the queue. */
 	const s = session({ stopTimeoutMs: 100 });
 	s.uci.begin();
 	s.handshake();
@@ -259,7 +254,6 @@ console.log('\nAn engine that stops answering\n');
 }
 
 {
-	/** Worst-case scenario: tests how the watchdog handles an engine that ignores the stop command */
 	const s = session({ stopTimeoutMs: 100 });
 	s.uci.begin();
 	s.handshake();
@@ -279,7 +273,6 @@ console.log('\nAn engine that stops answering\n');
 }
 
 {
-	/** Handles late responses: ignores a 'bestmove' that arrives after we already timed out. */
 	const s = session({ stopTimeoutMs: 100 });
 	s.uci.begin();
 	s.handshake();

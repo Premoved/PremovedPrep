@@ -16,7 +16,7 @@ export function readDeviceCapabilities(): DeviceCapabilities {
 	return {
 		cores: Math.max(1, nav.hardwareConcurrency || 1),
 		memoryGb: nav.deviceMemory ?? null,
-		/** crossOriginIsolated reports whether the COOP/COEP headers arrived. */
+		// crossOriginIsolated reports whether the COOP/COEP headers arrived.
 		isolated: typeof crossOriginIsolated === 'boolean' ? crossOriginIsolated : false,
 	};
 }
@@ -36,7 +36,7 @@ export function maxThreads(caps: DeviceCapabilities, engine: EngineDefinition): 
 	return engine.threads ? Math.max(1, caps.cores) : 1;
 }
 
-/** An eighth of RAM, rounded down to a power of two, capped by the build's own ceiling. */
+// An eighth of RAM, rounded down to a power of two, capped by the build's own ceiling.
 export function recommendedHashMb(caps: DeviceCapabilities, engine: EngineDefinition): number {
 	const target = caps.memoryGb === null ? 256 : (caps.memoryGb * 1024) / 8;
 	const affordable = HASH_STEPS_MB.filter((step) => step <= target && step <= engine.maxHashMb);

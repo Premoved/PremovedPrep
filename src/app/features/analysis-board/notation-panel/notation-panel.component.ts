@@ -32,7 +32,6 @@ import { OpeningTreeComponent } from './opening-tree/opening-tree.component';
 import { ReportBarComponent } from './report-bar/report-bar.component';
 import { FrameResizeObserver } from '../../../core/browser/frame-resize-observer';
 
-/** The panel's top-level views. */
 export type NotationTab = 'notation' | 'openings' | 'games';
 
 interface TabDefinition {
@@ -40,7 +39,7 @@ interface TabDefinition {
 	readonly label: string;
 }
 
-/** The tab strips, module-level so each computed returns the identical array. */
+// Module-level so each computed returns the identical array.
 const ALL_TABS: readonly TabDefinition[] = [
 	{ id: 'notation', label: 'Notation' },
 	{ id: 'openings', label: 'Openings Book' },
@@ -85,12 +84,10 @@ export class NotationPanelComponent implements AfterViewInit, OnDestroy {
 		return this.tabOverride() ?? 'notation';
 	});
 
-	/** Player's Opening Tree mode: the panel shows the tree and nothing else. */
 	readonly openingTreeOnly = input(false);
 
 	readonly scopeLabel = input('');
 
-	/** Advanced Report mode: the overlapped tree and the report bar. */
 	readonly reportMode = input(false);
 
 	readonly report = inject(ReportStore);
@@ -129,7 +126,7 @@ export class NotationPanelComponent implements AfterViewInit, OnDestroy {
 	private lastMinWidth = 0;
 
 	constructor() {
-		/** Each database-backed tab only queries while it is showing. */
+		// Each database-backed tab only queries while it is showing.
 		effect(() => {
 			const tab = this.activeTab();
 			this.explorer.setActive(tab === 'openings');
@@ -138,7 +135,7 @@ export class NotationPanelComponent implements AfterViewInit, OnDestroy {
 	}
 
 	ngAfterViewInit(): void {
-		/** Observing the tabs, not the strip: the strip is stretched by its container. */
+		// Observing the tabs, not the strip: the strip is stretched by its container.
 		this.tabObserver = new FrameResizeObserver(() => this.measure());
 		for (const tab of this.tabButtons()) {
 			this.tabObserver.observe(tab.nativeElement);
@@ -160,7 +157,7 @@ export class NotationPanelComponent implements AfterViewInit, OnDestroy {
 		const padding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
 		const labels = tabs.reduce((total, tab) => total + tab.nativeElement.getBoundingClientRect().width, 0);
 
-		/** Rounded up: half a pixel short of the requirement still clips. */
+		// Rounded up: half a pixel short of the requirement still clips.
 		const min = Math.ceil(labels + gap * (tabs.length - 1) + padding);
 		if (min !== this.lastMinWidth) {
 			this.lastMinWidth = min;
@@ -170,6 +167,14 @@ export class NotationPanelComponent implements AfterViewInit, OnDestroy {
 
 	select(id: NotationTab): void {
 		this.tabOverride.set(id);
+	}
+
+	// A click that lands on the panel's own background (not a row) would otherwise focus this
+	// tabindex="0" div and show its ring; keyboard users still reach it by tabbing in.
+	onTabContentMouseDown(event: MouseEvent): void {
+		if (event.target === event.currentTarget) {
+			event.preventDefault();
+		}
 	}
 
 	onTabKeydown(event: KeyboardEvent, index: number): void {

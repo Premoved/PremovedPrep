@@ -13,10 +13,7 @@ export interface GameHeaders {
 	readonly timeControl?: string;
 	readonly termination?: string;
 	readonly variant?: string;
-	/**
-	 * Every other tag the file carried. Kept so that copying or exporting gives back what came in:
-	 * a reader that models thirteen tags would otherwise strip the rest without saying so.
-	 */
+	/** Every other tag the file carried, so copying or exporting gives back what came in. */
 	readonly extra?: Readonly<Record<string, string>>;
 }
 
@@ -24,10 +21,8 @@ export const NO_GAME_HEADERS: GameHeaders = {};
 
 const UNKNOWN_TAG = /^[?*.\s-]*$/;
 
-/**
- * Tags this file owns. The thirteen it models, plus the three written from the position rather than
- * carried over - a stale FEN would turn a played game into a set-up one.
- */
+// Tags this file owns: the thirteen it models, plus three written from the position, not carried
+// over as-is (a stale FEN would turn a played game into a set-up one).
 const OWN_TAGS = new Set([
 	'White',
 	'WhiteElo',
@@ -45,8 +40,7 @@ const OWN_TAGS = new Set([
 	'Variant',
 	'FEN',
 	'SetUp',
-	/** Derived from the movetext, which editing changes. */
-	'PlyCount',
+	'PlyCount', // derived from the movetext, which editing changes
 ]);
 
 export function hasGameHeaders(headers: GameHeaders): boolean {

@@ -36,10 +36,8 @@ import { FrameResizeObserver } from '../../../core/browser/frame-resize-observer
 
 const MOVE_ANIMATION_MS = 200;
 
-/** Everything between the board and the move list, in px. */
 const COLUMN_CHROME_PX = 33;
 
-/** The board's left and right inset, in px. */
 const BOARD_INSET_PX = 19;
 
 const MIN_DIVIDER_SHARE = 0.5;
@@ -62,7 +60,6 @@ interface MoveSegment {
 	readonly tokens: readonly MoveToken[];
 }
 
-/** A read-only board with the game's moves beneath it. Used by the collection preview pane. */
 const MENU_FOOTPRINT = { width: 208, height: 132 };
 
 @Component({
@@ -73,6 +70,7 @@ const MENU_FOOTPRINT = { width: 208, height: 132 };
 	styleUrl: './preview-board.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** A read-only board with the game's moves beneath it. Used by the collection preview pane. */
 export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 	private readonly parser = inject(PgnParserService);
 	private readonly collections = inject(CollectionApiService);
@@ -148,7 +146,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 	constructor() {
 		effect(() => {
 			const pgn = this.pgn();
-			/** Untracked because everything below writes signals and touches the DOM. */
+			// Untracked because everything below writes signals and touches the DOM.
 			untracked(() => this.load(pgn));
 		});
 
@@ -192,6 +190,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 
 		this.collections.repertoireTree(id).subscribe({
 			next: (links) => {
+				// A later load() may already have replaced the tree while this request was in flight.
 				if (this.tree() !== store) {
 					return;
 				}
@@ -209,7 +208,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 			coordinates: this.prefs.coordinates(),
 			fen: DEFAULT_FEN,
 			orientation: this.orientation(),
-			/** color: undefined is chessground's own lock. */
+			// color: undefined is chessground's own lock, distinct from free/showDests.
 			movable: { free: false, color: undefined, showDests: false },
 			draggable: { enabled: false },
 			selectable: { enabled: false },
@@ -254,7 +253,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 		const usableWidth = Math.max(0, column.width - BOARD_INSET_PX);
 		const size = Math.max(0, Math.min(usableWidth, Math.min(Math.max(requested, floor), ceiling)));
 
-		/** Guarded because writing the signal resizes the element this observer watches. */
+		// Guarded because writing the signal resizes the element this observer watches.
 		if (Math.abs(size - this.boardSize()) > 0.5) {
 			this.boardSize.set(size);
 			this.api?.redrawAll();
@@ -323,7 +322,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 
 		const fen = node.fen || DEFAULT_FEN;
 
-		/** Animate along a game, never into one. */
+		// Animate along a game, never into one.
 		const animate = previousTree === tree && previousNode !== node;
 
 		api.set({
@@ -517,7 +516,7 @@ function walk(from: MoveNode, depth: number, out: MoveSegment[], first: PlyNode 
 	}
 
 	while (node.children.length > 0) {
-		/** A collapsed boundary hides everything after the node that carries it. */
+		// A collapsed boundary hides everything after the node that carries it.
 		if (isStudy && node.solutionFold === 'collapsed') {
 			break;
 		}

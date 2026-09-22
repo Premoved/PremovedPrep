@@ -332,8 +332,6 @@ td.center {
 	background: color-mix(in srgb, var(--accent-green) 28%, transparent);
 }
 
-/* Preview */
-
 .preview {
 	position: absolute;
 	top: 0;
@@ -412,8 +410,6 @@ td.center {
 }
 
 .preview-strip {
-	/* Positioning context for the grab bar of the phone sheet, which is absolute so that it costs
-	   padding rather than a row. */
 	position: relative;
 	flex: 0 0 auto;
 	display: flex;
@@ -478,10 +474,6 @@ app-preview-board {
 	border-color: var(--accent-red);
 }
 
-/* Phone sheet header. Copied deliberately from game-results rather than shared: the two lists sit
-   in different components with no common stylesheet, and the alternative was a global class. If one
-   changes, change the other. */
-
 .preview-controls {
 	display: flex;
 	align-items: center;
@@ -529,8 +521,6 @@ app-preview-board {
 	opacity: 0.4;
 }
 
-/* Decoration only: the drag is on the whole header. Wide enough to read as "pull me" rather than as
-   a stray rule, since it is the only thing that says the sheet can be thrown away. */
 .sheet-grip {
 	position: absolute;
 	top: 9px;
@@ -541,8 +531,6 @@ app-preview-board {
 	border-radius: 2px;
 	background: var(--bg-border);
 }
-
-/* Context menu */
 
 .context-menu {
 	position: fixed;
@@ -682,7 +670,6 @@ app-preview-board {
 	margin-top: 24px;
 }
 
-/* Phone layout */
 :host-context(.shell.mobile) {
 	height: auto;
 	overflow: visible;
@@ -702,14 +689,12 @@ app-preview-board {
 		flex: 0 0 auto;
 	}
 
-	/* Content height, no cap */
 	.list-pane {
 		height: auto;
 		padding: 0 0 1rem 0.75rem;
 	}
 }
 
-/* Phone layout - the preview sheet */
 :host-context(.shell.mobile) {
 	.preview {
 		position: fixed;
@@ -722,15 +707,10 @@ app-preview-board {
 		touch-action: none;
 	}
 
-	/* Only when the sheet appears from nothing. Leaving the animation on .preview meant anything that
-	   re-evaluated the element replayed it, so stepping to the next game looked like the sheet leaving
-	   and coming back. */
 	.preview.entering {
 		animation: preview-sheet-up 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
-	/* While a finger is down there is nothing to ease towards: the transform IS the finger. Leaving
-	   the transition on is what made the sheet lag and then replay the drag after it ended. */
 	.preview.dragging {
 		transition: none;
 		animation: none;
@@ -742,8 +722,6 @@ app-preview-board {
 	}
 
 	.preview-strip {
-		/* The whole header is the drag target, so the browser must not claim a vertical swipe here
-		   for a scroll. The top padding is room for the grab bar. */
 		touch-action: none;
 		padding: 1.35rem 0.5rem 0.7rem;
 	}
@@ -753,16 +731,12 @@ app-preview-board {
 		width: 100%;
 	}
 
-	/* Previous and Next are the same width - Next's label is shorter, and left to its content it
-	   looked like a mistake next to Previous. */
 	.preview-controls .tool:not(.open-board):not(.close) {
 		flex: 0 0 auto;
 		min-width: 4.9rem;
 		justify-content: center;
 	}
 
-	/* Square, and no narrower than a fingertip. It is the fourth thing on the row, so it gives up
-	   width first. */
 	.preview-controls .close {
 		flex: 0 0 auto;
 		width: 2rem;
@@ -789,9 +763,6 @@ app-preview-board {
 		text-overflow: ellipsis;
 	}
 
-	/* Three labelled buttons on a 360px screen only fit if they give up padding and a little size.
-	   They keep their labels: an unlabelled square is a guess, and this bar is the only way out of
-	   the sheet apart from the grab bar. */
 	.preview-controls .tool {
 		height: 2rem;
 		padding: 0 0.45rem;

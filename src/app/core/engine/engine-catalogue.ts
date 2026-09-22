@@ -7,9 +7,7 @@ export interface EngineDefinition {
 	readonly shortLabel: string;
 	readonly worker: string | null;
 	readonly threads: boolean;
-	/**
-	 * True for pthreads builds: they allocate a SharedArrayBuffer, so the page must be cross-origin isolated.
-	 */
+	/** True for pthreads builds: they allocate a SharedArrayBuffer, so the page must be cross-origin isolated. */
 	readonly requiresIsolation: boolean;
 	readonly maxHashMb: number;
 	readonly downloadMb: number;
@@ -57,7 +55,7 @@ export const ENGINE_CATALOGUE: readonly EngineDefinition[] = [
 
 export const DEFAULT_ENGINE_ID = 'sf18-lite-single';
 
-/** Falls back to the default instead of throwing, because the id can come from stored preferences. */
+// Falls back to the default instead of throwing, because the id can come from stored preferences.
 export function engineById(id: string): EngineDefinition {
 	const found = ENGINE_CATALOGUE.find((engine) => engine.id === id);
 	if (found) return found;

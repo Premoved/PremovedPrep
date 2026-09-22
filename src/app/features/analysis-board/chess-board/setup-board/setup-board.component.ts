@@ -37,7 +37,6 @@ type SetupConfig = Config & { pieces?: Pieces };
 
 const ERROR_FLASH_MS = 2000;
 
-/** Free-position editor, shown as an overlay over the main board. */
 @Component({
 	selector: 'app-setup-board',
 	standalone: true,
@@ -68,13 +67,13 @@ export class SetupBoardComponent implements AfterViewInit {
 	protected readonly whitePieces = ['wK', 'wQ', 'wR', 'wB', 'wN', 'wP'] as const;
 	protected readonly blackPieces = ['bK', 'bQ', 'bR', 'bB', 'bN', 'bP'] as const;
 
-	/** null means the eraser is selected. */
+	// null means the eraser is selected.
 	protected readonly selectedPiece = signal<string | null>(null);
 	protected readonly turn = signal<'w' | 'b'>('w');
 	protected readonly enPassantOptions = signal<string[]>(['-']);
 	protected readonly error = signal(false);
 
-	/** Plain fields, not signals: both are [(ngModel)] targets. */
+	// Plain fields, not signals: both are [(ngModel)] targets.
 	protected castling: CastlingRights = { ...NO_CASTLING_RIGHTS };
 	protected enPassantSquare = '-';
 
@@ -141,7 +140,7 @@ export class SetupBoardComponent implements AfterViewInit {
 
 	protected clearBoard(): void {
 		this.cgApi?.set({ pieces: new Map() } as SetupConfig);
-		/** No kings, no rooks, nobody to castle: leaving the ticks on would state the impossible. */
+		// No kings or rooks left: castling would be impossible, so reset the rights too.
 		this.castling = { ...NO_CASTLING_RIGHTS };
 		this.refreshEnPassantOptions();
 	}

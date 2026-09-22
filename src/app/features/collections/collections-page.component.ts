@@ -40,7 +40,6 @@ interface CollectionCard {
 
 type SortMode = 'manual' | 'alpha-asc' | 'alpha-desc';
 
-/** The grid of collections. Serves both /library and /repertoire. */
 const MENU_FOOTPRINT = { width: 208, height: 132 };
 
 @Component({
@@ -58,11 +57,12 @@ const MENU_FOOTPRINT = { width: 208, height: 132 };
 	host: {
 		'(document:click)': 'onDocumentClick($event)',
 		'(document:keydown.escape)': 'onEscape()',
-		/** Ctrl+A / Ctrl+C / Ctrl+X / Ctrl+V / Delete, bound on the document. */
+		// Ctrl+A / Ctrl+C / Ctrl+X / Ctrl+V / Delete, bound on the document.
 		'(document:keydown)': 'onShortcut($event)',
 	},
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/** Serves both /library and /repertoire; `kind` (and `color` for repertoires) picks the request. */
 export class CollectionsPageComponent {
 	private readonly api = inject(CollectionApiService);
 	private readonly router = inject(Router);
@@ -107,10 +107,9 @@ export class CollectionsPageComponent {
 	readonly sortMode = signal<SortMode>('manual');
 	readonly search = signal('');
 
-	/** The account's allowance, so what is left is visible before deciding what to keep where. */
 	readonly storage = signal<StorageUsage | null>(null);
 
-	/** Dragging only works in the server's order, unsorted and unfiltered. */
+	// Dragging only works in the server's order, unsorted and unfiltered.
 	readonly canReorder = computed(() => this.sortMode() === 'manual' && this.search().trim().length === 0);
 
 	readonly cards = computed<readonly CollectionCard[]>(() => {
@@ -170,12 +169,6 @@ export class CollectionsPageComponent {
 		this.load(this.kind(), this.requestColor());
 	}
 
-	/**
-	 * The allowance, and - when the server sends it - what each collection occupies of it.
-	 *
-	 * Somebody deciding what to keep in an account with two megabytes in it is deciding about a
-	 * number, and it is not one they can work out from a game count.
-	 */
 	private loadStorage(): void {
 		this.api.storage().subscribe({
 			next: (usage) => this.storage.set(usage),
@@ -183,7 +176,6 @@ export class CollectionsPageComponent {
 		});
 	}
 
-	/** What one cloud collection occupies, if the server broke the figure down. */
 	cloudBytes(id: number): number | null {
 		const bytes = this.storage()?.perCollection?.[String(id)];
 		return typeof bytes === 'number' ? bytes : null;
@@ -366,7 +358,7 @@ export class CollectionsPageComponent {
 		this.editor.set({
 			editing: collection,
 			name: collection.name,
-			/** The stored icon key may be one this build does not know. */
+			// The stored icon key may be one this build does not know.
 			icon: (COLLECTION_ICONS as readonly string[]).includes(collection.icon)
 				? (collection.icon as CollectionIcon)
 				: 'folder',
@@ -534,7 +526,7 @@ export class CollectionsPageComponent {
 			return;
 		}
 
-		/** `to` is a gap, so lifting the card out shifts everything after it up by one. */
+		// `to` is a gap index, so lifting the card out shifts everything after it up by one.
 		const target = to > from ? to - 1 : to;
 		if (target === from) {
 			return;

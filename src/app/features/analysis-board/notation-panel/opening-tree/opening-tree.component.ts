@@ -13,7 +13,6 @@ interface ReferenceGame {
 	readonly engine: boolean;
 }
 
-/** One row, with everything the template needs already computed. */
 interface RenderedMove {
 	readonly san: string;
 	readonly count: string;
@@ -28,7 +27,6 @@ interface RenderedMove {
 	readonly label: string;
 }
 
-/** The Openings Book tab: every move the archive has seen from the position on the board. */
 @Component({
 	selector: 'app-opening-tree',
 	standalone: true,
@@ -46,7 +44,7 @@ export class OpeningTreeComponent {
 	readonly error = computed(() => this.explorer.error());
 	readonly isEmpty = computed(() => this.explorer.isEmpty());
 
-	/** Which side is about to move, and therefore which player in every reference game. */
+	// Which side is about to move, and therefore which player in every reference game.
 	private readonly moverIsWhite = computed(() => {
 		const fen = this.explorer.totals().fen;
 		return fen ? activeColor(fen) === Color.WHITE : true;
@@ -80,7 +78,12 @@ export class OpeningTreeComponent {
 		return this.explorer.moves().map((move) => this.render(move, total, whiteMoves));
 	});
 
-	play(row: RenderedMove): void {
+	// Blurs first: the list re-renders for the new position and would destroy this button, moving
+	// focus to the panel. detail === 0 (keyboard activation) skips it, keeping the ring visible.
+	play(row: RenderedMove, event: MouseEvent): void {
+		if (event.detail !== 0) {
+			(event.currentTarget as HTMLElement).blur();
+		}
 		if (row.move) {
 			this.moveRequested.emit(row.move);
 		}
@@ -112,7 +115,7 @@ export class OpeningTreeComponent {
 	}
 }
 
-/** Whole percent, except where that would read as zero. */
+// Whole percent, except where that would read as zero.
 function formatShare(percent: number): string {
 	if (percent >= 0.5) {
 		return `${Math.round(percent)}%`;
@@ -141,7 +144,6 @@ function drawSegmentLabel(percent: number): string {
 	return percent > 0 ? `${Math.round(percent)}%` : '';
 }
 
-/** Forenames are cut to an initial. */
 function referenceGame(game: TopGame | null, whiteIsMover: boolean): ReferenceGame | null {
 	if (!game) {
 		return null;
@@ -157,6 +159,7 @@ function referenceGame(game: TopGame | null, whiteIsMover: boolean): ReferenceGa
 	};
 }
 
+// Forenames are cut to an initial.
 function shortName(name: string): string {
 	const comma = name.indexOf(',');
 	if (comma < 0) {

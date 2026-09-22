@@ -5,7 +5,7 @@ import { join, dirname, basename } from 'node:path';
 
 const SRC = 'src/app';
 
-/** Signals exposed by injected services, read in templates as `service.name()`. */
+// Signals exposed by injected services, read in templates as `service.name()`.
 const SERVICE_SIGNALS = [
 	'isMobile',
 	'isNarrow',
@@ -36,10 +36,8 @@ const SERVICE_SIGNALS = [
 	'status',
 ];
 
-/** input and model produce signals a template must call, like signal itself. */
 const DECLARATION =
-	/^\s*(?:(?:readonly|protected|private|public|static)\s+)*(\w+)\s*=\s*(?:signal|computed|input|model)\s*[(<]/gm;
-/** Property bindings, event bindings, structural directives and interpolations. */
+	/^\s*(?:(?:readonly|protected|private|public|static|override)\s+)*(\w+)\s*=\s*(?:signal|computed|input|model)\s*[(<]/gm;
 const EXPRESSION = /(?:\[[\w.\-$]+\]|\(\w[\w.\-]*\)|\*[\w-]+)="([^"]*)"|\{\{([^}]*)\}\}/g;
 
 function walk(dir) {
@@ -71,11 +69,11 @@ for (const tsPath of walk(SRC).filter((p) => p.endsWith('.component.ts'))) {
 		const report = (name) =>
 			problems.push({ file: htmlPath, line: lineOf(match.index), name, expression: expression.trim() });
 
-		// String literals are blanked: prose is not code.
+		// String literals are blanked so quoted prose can't match a signal name.
 		const code = expression.replace(/'[^']*'/g, (literal) => ' '.repeat(literal.length));
 
 		for (const name of names) {
-			// Not preceded by a word char, dot, hyphen or $.
+			// Not preceded by a word char, dot, hyphen or $: skips `.name` and `other-name` matches.
 			for (const hit of code.matchAll(new RegExp(`(?<![\\w.\\-$])${name}(?![\\w\\-$])`, 'g'))) {
 				const rest = code.slice(hit.index + name.length);
 				if (/^(\(|\.set\(|\.update\()/.test(rest)) continue;

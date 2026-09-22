@@ -1,39 +1,26 @@
 import { Injectable } from '@angular/core';
 
-/**
- * Which draft this browser tab owns. sessionStorage is per tab and is restored along with the tab
- * when a browser reopens its windows, so a tab keeps its analysis and a new tab starts a new one.
- */
+// Per-tab id in sessionStorage; DRAFTS_KEY (localStorage) holds every tab's draft, keyed by this id.
 const TAB_KEY = 'premovedprep.board';
 
-/** Every draft, by tab id. localStorage, so closing the browser does not take them. */
 const DRAFTS_KEY = 'premovedprep.drafts';
 
-/** A closed tab leaves its draft behind and nothing can ask it to tidy up, so the oldest go. */
 const MAX_DRAFTS = 10;
 
-/** Roughly a very long game with variations. Past this the tab keeps working, unsaved. */
+// Past this the tab keeps working, unsaved to storage.
 const MAX_PGN_BYTES = 200_000;
 
 export interface AnalysisDraft {
 	readonly pgn: string;
-	/** The cursor, spelled the way ?line= spells it. */
 	readonly line: readonly string[];
 	readonly isStudy: boolean;
-	/** The collection entry this analysis came from, when it came from one. */
 	readonly itemId: number | null;
 	readonly savedAt: number;
 }
 
 type Drafts = Record<string, AnalysisDraft>;
 
-/**
- * The board's work in progress, kept in the browser rather than on the account.
- *
- * This is not a save: nothing here reaches the server, and an entry opened from a collection stays
- * dirty until it is actually saved. It exists so that closing a tab, or the whole browser, is not
- * the same as throwing the analysis away.
- */
+// Not a save: nothing here reaches the server. Only guards against losing work on tab/browser close.
 @Injectable({ providedIn: 'root' })
 export class AnalysisDraftStore {
 	private id: string | null = null;
@@ -43,12 +30,13 @@ export class AnalysisDraftStore {
 		return id ? (this.all()[id] ?? null) : null;
 	}
 
-	write(draft: AnalysisDraft): void {
+	/** Returns whether the draft was actually persisted; false means the work could still be lost. */
+	write(draft: AnalysisDraft): boolean {
 		const id = this.tabId();
 		if (!id || draft.pgn.length > MAX_PGN_BYTES) {
-			return;
+			return false;
 		}
-		this.persist(this.trim({ ...this.all(), [id]: draft }));
+		return this.persist(this.trim({ ...this.all(), [id]: draft }));
 	}
 
 	clear(): void {
@@ -76,7 +64,7 @@ export class AnalysisDraftStore {
 			}
 			return this.id;
 		} catch {
-			/** A browser that refuses storage still gets a board; it just will not be here tomorrow. */
+			// A browser that refuses storage still gets a board; it just will not be here tomorrow.
 			return null;
 		}
 	}
@@ -100,11 +88,13 @@ export class AnalysisDraftStore {
 		return Object.fromEntries(entries.slice(0, MAX_DRAFTS));
 	}
 
-	private persist(all: Drafts): void {
+	private persist(all: Drafts): boolean {
 		try {
 			localStorage.setItem(DRAFTS_KEY, JSON.stringify(all));
+			return true;
 		} catch {
-			/** Quota, or private mode. Losing the draft is bad; losing the board would be worse. */
+			// Quota, or private mode. Losing the draft is bad; losing the board would be worse.
+			return false;
 		}
 	}
 }

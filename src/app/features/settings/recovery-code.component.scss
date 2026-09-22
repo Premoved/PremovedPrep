@@ -1,12 +1,3 @@
-/*
- * The same modal the rest of the application uses - see shared/confirm-dialog - with two departures,
- * both deliberate.
- *
- * It is wider, because a 26-character code broken across three lines is a code somebody writes down
- * wrong. And the backdrop has no click handler once a code is on screen: this is the one value in
- * the application that cannot be produced a second time, so the way out is to say you have kept it.
- */
-
 .modal-backdrop {
 	position: fixed;
 	inset: 0;
@@ -47,11 +38,6 @@ h2 {
 	line-height: 1.5;
 }
 
-/*
- * Monospaced and spaced out: this is copied by eye onto paper at least as often as it is copied by
- * button, which is what the alphabet was chosen for. It breaks anywhere rather than overflowing,
- * because a character scrolled out of sight is a character written down wrong.
- */
 .code {
 	display: block;
 	margin-bottom: 16px;
@@ -96,7 +82,6 @@ input[type='password']:focus {
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--glow-blue) 30%, transparent);
 }
 
-/* The same shape as the registration form's consent row. */
 .kept {
 	display: flex;
 	align-items: flex-start;

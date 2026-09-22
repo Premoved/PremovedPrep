@@ -86,8 +86,6 @@
 	color: var(--text-strong);
 }
 
-/* Inline with the sentence rather than a button below it: the notice is one line of prose, and
-   a second row of chrome would push the stack over the content it is talking about. */
 .action {
 	margin-left: 0.35rem;
 	color: inherit;

@@ -52,6 +52,7 @@ export class ColorPickerComponent {
 		this.typing.set(null);
 	}
 
+	// Stops the host's document:click listener from closing the menu when a click lands inside it.
 	keepOpen(event: MouseEvent): void {
 		event.stopPropagation();
 	}

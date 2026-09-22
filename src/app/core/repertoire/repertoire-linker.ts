@@ -2,42 +2,8 @@ import { CollectionSummary, ItemDetail } from '../models/collection.model';
 import { PgnTreeNode, childByUci, mainlineOf, parsePgnTree, pathOf } from '../chess/pgn-tree';
 import { RepertoireAttachment, RepertoireBranch, RepertoireGame, RepertoireTree } from '../models/repertoire.model';
 
-/**
- * Where a repertoire's model games join its theory.
- *
- * This is the port of RepertoireLinkService, which did the same thing on the server by replaying
- * every model game against every trunk. It had to move: the placement is computed from the moves,
- * and the moves are sealed now. It is also cheaper here - the entries have just been decrypted for
- * the list, so the replay happens over PGNs already in hand, and there is no per-request backfill of
- * derived columns to keep in step.
- *
- * WHAT THE PLACEMENT RULE IS
- *
- * A model game is placed at the point where it leaves the theory: walk the trunk's positions, find
- * the deepest one the game also passes through and from which the game plays something the trunk
- * does not, and attach it there. A game that follows one trunk deeper than this one is not drawn
- * here at all - it belongs to the other trunk - and a tie is drawn on both, which is what the
- * original's `best`/`here` comparison says.
- *
- * WHAT IS NOT INDEXED, AND WHY
- *
- * Only the mainline of a model game. A model game is a game that was played, and the moves that were
- * played are its mainline; an annotator's side lines are commentary on it, not other games, and
- * treating them as branches would attach one game to the trunk in a dozen places. V11's schema note
- * made the same argument about the columns this replaces.
- *
- * POSITIONS ARE KEYED BY THEIR EPD
- *
- * The server keyed them by a 64-bit Zobrist hash, because they were a Postgres BIGINT[] that had to
- * be compared in SQL. Nothing is stored now, so the key can be the position itself: the first four
- * FEN fields, which is what an EPD is and what "the same position" means. It is longer than a hash
- * and it cannot collide, which for a comparison done inside one function is the better trade.
- *
- * The reading itself is pgn-tree.ts, shared with the Advanced Report's book. Two readers of the same
- * documents would eventually disagree about one of them, and nobody would be able to say which was
- * right.
- */
-
+// A model game attaches at the deepest trunk position it shares before playing a move the
+// trunk does not have; positions are keyed by EPD since nothing is precomputed server-side.
 interface TrunkIndex {
 	readonly root: PgnTreeNode;
 	readonly byPosition: Map<string, PgnTreeNode[]>;
@@ -45,14 +11,12 @@ interface TrunkIndex {
 	readonly order: Map<PgnTreeNode, number>;
 }
 
-/** How far a game got on one trunk, and where it stopped. */
 interface Fit {
 	readonly node: PgnTreeNode;
 	readonly ply: number;
 	readonly order: number;
 }
 
-/** A model game reduced to what the placement needs. */
 interface Walk {
 	readonly item: ItemDetail;
 	readonly positions: readonly string[];
@@ -94,12 +58,7 @@ export function buildRepertoireTree(
 	};
 }
 
-/**
- * The deepest fit on this trunk, provided no other trunk fits deeper.
- *
- * A game that leaves trunk A at move 12 and trunk B at move 6 is theory for A and a curiosity for B,
- * and drawing it on both would fill every trunk in the folder with every game in it.
- */
+// The deepest fit on this trunk, provided no other trunk fits deeper (a tie is drawn on both).
 function placeOn(walk: Walk, trunkId: number, indexes: ReadonlyMap<number, TrunkIndex>): Fit | null {
 	let best: Fit | null = null;
 	let here: Fit | null = null;
@@ -117,7 +76,7 @@ function placeOn(walk: Walk, trunkId: number, indexes: ReadonlyMap<number, Trunk
 		}
 	}
 
-	/** A tie is drawn on every trunk that ties. */
+	// A tie is drawn on every trunk that ties, not just the deepest one.
 	if (best === null || here === null || here.ply < best.ply) {
 		return null;
 	}
@@ -133,7 +92,7 @@ function fitOn(walk: Walk, trunk: TrunkIndex): Fit | null {
 			continue;
 		}
 		for (const node of nodes) {
-			/** Past the last move there is nothing left to follow. */
+			// Past the last move there is nothing left to follow.
 			const leaves = ply === walk.moves.length || childByUci(node, walk.moves[ply]) === undefined;
 			if (!leaves) {
 				continue;
@@ -165,7 +124,7 @@ function attachmentsFor(placements: readonly { walk: Walk; node: PgnTreeNode; pl
 		attachments.push({ path: pathOf(node), games: ending, branches });
 	}
 
-	/** Shallowest first, so a client drawing them in order never forward-references. */
+	// Shallowest first, so a client drawing them in order never forward-references.
 	return attachments.sort((left, right) => left.path.length - right.path.length);
 }
 
@@ -178,7 +137,6 @@ function expand(walkers: readonly { walk: Walk; ply: number }[]): {
 
 	for (const walker of walkers) {
 		if (walker.ply >= walker.walk.moves.length) {
-			/** It ran out of moves standing here, so here is where its card goes. */
 			ending.push(cardFor(walker.walk, walker.ply));
 			continue;
 		}
@@ -192,7 +150,7 @@ function expand(walkers: readonly { walk: Walk; ply: number }[]): {
 	for (const [uci, group] of byMove) {
 		if (group.length === 1) {
 			const only = group[0];
-			/** The branch node is the position after this move. */
+			// The branch node is the position after this move.
 			branches.push({ uci, games: [cardFor(only.walk, only.ply + 1)], children: [] });
 			continue;
 		}
@@ -222,16 +180,7 @@ function cardFor(walk: Walk, ply: number): RepertoireGame {
 	};
 }
 
-// ---------------------------------------------------------------------
-// Replaying the documents
-// ---------------------------------------------------------------------
-
-/**
- * A model game's mainline: the position before each half-move, and the half-moves in UCI.
- *
- * Only the mainline, which is what parsePgnTree's first-child walk gives: a model game is a game
- * that was played, and the moves that were played are its mainline.
- */
+// Only the mainline: an annotator's side lines are commentary, not games to attach separately.
 function walkOf(item: ItemDetail): Walk {
 	const root = parsePgnTree(item.pgn, item.startFen);
 	const line = mainlineOf(root);

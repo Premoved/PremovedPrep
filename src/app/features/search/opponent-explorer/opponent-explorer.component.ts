@@ -85,8 +85,6 @@ export class OpponentExplorerComponent implements AfterViewInit {
 		this.board()?.executeMove(move.from, move.to, move.promotion ?? 'q');
 	}
 
-	// Splitter
-
 	readonly treeWidth = signal(DEFAULT_TREE_PX);
 	readonly resizing = signal(false);
 	readonly handleOffset = signal<number | null>(null);

@@ -3,10 +3,9 @@ import { Injectable } from '@angular/core';
 const LONG_PRESS_MS = 450;
 const MOVE_TOLERANCE_PX = 10;
 const TEXT_ENTRY = 'input, textarea, select, [contenteditable]';
-/** Window after our synthetic contextmenu in which a native one is a duplicate of it. */
+// Window after the synthetic contextmenu in which a native one counts as a duplicate.
 const NATIVE_WINDOW_MS = 1500;
 
-/** Turns a touch long press into a contextmenu event, unless the browser produced one itself. */
 @Injectable({ providedIn: 'root' })
 export class LongPressService {
 	private timer: ReturnType<typeof setTimeout> | null = null;
@@ -84,18 +83,9 @@ export class LongPressService {
 		if (this.dispatching) return;
 		if (!event.isTrusted) return;
 
-		/**
-		 * The browser produced one itself for this press, so there is nothing left to synthesise.
-		 *
-		 * This used to latch a `browserHasItsOwn` flag and stop synthesising for the rest of the
-		 * session. One native contextmenu anywhere - long-pressing the board to draw an arrow is
-		 * enough - then killed long-press everywhere else, which is why holding a utility button
-		 * showed no tooltip. Whether a browser has its own long press is not a fact worth inferring
-		 * once and keeping.
-		 */
+		// Evaluated per press, not latched: one native contextmenu must not disable synthesis elsewhere.
 		this.cancel();
 
-		/** Ours went out a moment ago: a second one would open the same menu twice. */
 		if (Date.now() - this.firedAt < NATIVE_WINDOW_MS) {
 			event.preventDefault();
 			event.stopPropagation();

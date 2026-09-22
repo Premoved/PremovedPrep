@@ -56,7 +56,7 @@ describe('recommendedHashMb', () => {
 });
 
 describe('the heap ceiling', () => {
-	/** Every WASM wrapper guards emscripten_resize_heap at 2 GiB. */
+	// Every WASM wrapper guards emscripten_resize_heap at 2 GiB.
 	const CEILING_MB = 2048;
 
 	it('never offers a hash size that could fill the heap on its own', () => {

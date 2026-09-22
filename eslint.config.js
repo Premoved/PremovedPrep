@@ -23,7 +23,7 @@ module.exports = defineConfig([
 	},
 
 	{
-		// Skips the component selector rule to allow <piece> 
+		// <piece> has no hyphen, so the kebab-case component-selector rule is disabled here.
 		files: ['src/app/shared/chess/piece.component.ts'],
 		rules: {
 			'@angular-eslint/component-selector': 'off',

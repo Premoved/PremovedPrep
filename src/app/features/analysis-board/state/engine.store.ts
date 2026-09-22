@@ -28,7 +28,6 @@ export type EngineStatus = 'off' | 'loading' | 'ready' | 'searching' | 'failed';
 
 const ARROW_WIDTHS = [13, 10, 8, 6, 5];
 
-/** Engine selection, configuration and current search output. One per analysis board. */
 @Injectable()
 export class EngineStore {
 	private readonly tree = inject(MoveTreeStore);
@@ -37,6 +36,8 @@ export class EngineStore {
 	private readonly boardTree = computed(() => this.preview.tree() ?? this.tree);
 
 	readonly positionFen = computed(() => this.boardTree().currentNode().fen);
+
+	private readonly solutionHidden = computed(() => this.boardTree().solutionHiddenAtCurrent());
 
 	readonly capabilities: DeviceCapabilities = readDeviceCapabilities();
 
@@ -93,7 +94,6 @@ export class EngineStore {
 	private transport: EngineTransport | null = null;
 	private loadedKey = '';
 
-	/** The UCI session with whatever is on the other end of the transport. */
 	private session: UciSession | null = null;
 
 	constructor() {
@@ -112,6 +112,8 @@ export class EngineStore {
 	}
 
 	setEnabled(enabled: boolean): void {
+		// The hidden solution must never reach the engine, whichever caller asks to enable it.
+		if (enabled && this.solutionHidden()) return;
 		this._enabled.set(enabled);
 	}
 
@@ -190,10 +192,11 @@ export class EngineStore {
 
 	private onEngineWarning(message: string): void {
 		this.recentOutput.push(`[engine] ${message}`);
+		if (this.recentOutput.length > 12) this.recentOutput.shift();
 		console.warn(`[engine] ${message}`);
 	}
 
-	/** What has to change for the engine to be rebuilt. */
+	// What has to change for the engine to be rebuilt.
 	private keyFor(definition: EngineDefinition, settings: EngineSettings): string {
 		return [definition.id, settings.threads, settings.hashMb, settings.multiPv].join('|');
 	}
@@ -205,12 +208,12 @@ export class EngineStore {
 		this._depth.set(0);
 		this._status.set('searching');
 
-		/** Infinity is a legal setting: search until something else stops it. */
+		// Infinity is a legal setting: search until something else stops it.
 		const seconds = this._settings().searchSeconds;
 		this.session.search(fen, Number.isFinite(seconds) ? seconds * 1000 : null);
 	}
 
-	/** The last few lines the engine printed, kept so a crash can be explained. */
+	// The last few lines the engine printed, kept so a crash can be explained.
 	private readonly recentOutput: string[] = [];
 
 	private withEngineOutput(message: string): string {
@@ -260,7 +263,7 @@ function arrowFor(line: EngineLine, rank: number): DrawShape {
 	return {
 		orig: (move?.from ?? 'a1') as Key,
 		dest: (move?.to ?? 'a1') as Key,
-		/** A brush of the engine's own, registered in ChessBoardComponent. */
+		// A brush of the engine's own, registered in ChessBoardComponent.
 		brush: 'engine',
 		modifiers: { lineWidth: ARROW_WIDTHS[Math.min(rank, ARROW_WIDTHS.length - 1)] },
 	};

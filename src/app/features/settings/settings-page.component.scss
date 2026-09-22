@@ -35,8 +35,6 @@
 	color: var(--accent-blue);
 }
 
-/* Account */
-
 .account-line {
 	display: flex;
 	flex-wrap: wrap;
@@ -229,8 +227,6 @@
 	color: var(--accent-blue);
 }
 
-/* Preferences */
-
 .prefs-grid {
 	--title-block: 2.7rem;
 	--panel-pad: 1.25rem;
@@ -249,7 +245,6 @@
 
 .board-stack {
 	width: 100%;
-	/* Two caps: the column's width and the viewport's height. */
 	max-width: min(26rem, calc(100vh - 11rem));
 	margin: 0 auto;
 	display: flex;
@@ -508,8 +503,6 @@
 	}
 }
 
-/* Buttons */
-
 .primary-btn {
 	padding: 0.5rem 1.1rem;
 	border-radius: 8px;
@@ -550,7 +543,6 @@
 	}
 }
 
-/* Phone layout */
 :host-context(.shell.mobile) {
 	.settings-page {
 		padding: 1.25rem 0.9rem 3rem;
@@ -593,8 +585,6 @@
 	line-height: 1.45;
 	color: var(--text-main);
 }
-
-/* Where you are signed in, deleting the account, and the two documents: the foot of the page */
 
 .account-close {
 	margin-top: 2.5rem;
@@ -685,7 +675,6 @@
 	color: var(--text-muted);
 }
 
-/* Inside .account-close the rule above already provides the separation. */
 .account-danger {
 	margin-top: 0;
 }

@@ -51,7 +51,6 @@
 
 <div class="shell" [class.mobile]="viewport.isMobile()">
 	@if (viewport.isMobile()) {
-		<!-- The phone's top bar. -->
 		<header class="mobile-header">
 			<button
 				type="button"
@@ -362,7 +361,7 @@
 </div>
 
 @if (drawerVisible()) {
-	<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Backdrop. The keyboard route is Escape, on onEscape in main-layout.component.ts. -->
+	<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- Backdrop. -->
 	<div class="drawer-backdrop" (click)="closeDrawer()"></div>
 }
 

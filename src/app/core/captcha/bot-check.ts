@@ -1,7 +1,6 @@
 import { computed, signal } from '@angular/core';
 import { CaptchaAnswer, CaptchaChallenge, captchaFrom } from './captcha.model';
 
-/** Holds one form's challenge and its answer, and hands the answer over once. */
 export class BotCheck {
 	private readonly _challenge = signal<CaptchaChallenge | null>(null);
 	private readonly _answer = signal<CaptchaAnswer | null>(null);

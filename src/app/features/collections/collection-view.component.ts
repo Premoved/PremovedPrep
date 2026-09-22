@@ -68,7 +68,6 @@ interface EntryDraft {
 	readonly fen: string;
 }
 
-/** A blank document, so a new analysis is a valid PGN from the moment it exists. */
 const EMPTY_PGN = '[Event "?"]\n[Result "*"]\n\n*';
 
 const MIN_PREVIEW_PX = 300;
@@ -79,7 +78,6 @@ const HANDLE_MARGIN_PX = 24;
 
 const LIST_GUTTER_PX = 20;
 
-/** Game rows and document rows share these columns by merging pairs of them. */
 const COLUMNS: readonly ColumnDefinition[] = [
 	{ key: 'number', label: '#', sort: 'MANUAL', align: 'right', width: 44, minWidth: 44, cell: 'number', pinned: true },
 	{ key: 'type', label: 'Type', sort: 'TYPE', align: 'left', width: 104, minWidth: 104, cell: 'type' },
@@ -96,7 +94,6 @@ const COLUMNS: readonly ColumnDefinition[] = [
 	{ key: 'event', label: 'Event', sort: 'EVENT', align: 'left', width: null, minWidth: 180, cell: 'event' },
 ];
 
-/** Which column a document-shaped row swallows. */
 const MERGE_INTO: Readonly<Record<string, string>> = { first: 'firstElo', second: 'secondElo' };
 
 const COLUMN_ORDER_KEY = 'premovedprep.collections.columnOrder';
@@ -111,13 +108,10 @@ const UNTITLED = 'Untitled';
 
 const MENU_FOOTPRINT = { width: 208, height: 132 };
 
-/** Mirrors the duration of the preview-sheet-up keyframes in the stylesheet. */
 const SHEET_ENTER_MS = 240;
 
-/** How far a finger must travel before this is a drag and not a tap on whatever is underneath. */
 const DRAG_THRESHOLD_PX = 8;
 
-/** One decimal, and no trailing '.0' - '2 MB', not '2.0 MB'. */
 function megabytes(bytes: number): string {
 	return String(Math.round((bytes / (1024 * 1024)) * 10) / 10);
 }
@@ -131,7 +125,7 @@ function megabytes(bytes: number): string {
 	host: {
 		'(document:click)': 'onDocumentClick($event)',
 		'(document:keydown.escape)': 'onEscape()',
-		/** Ctrl+A / Ctrl+C / Ctrl+X / Ctrl+V / Delete, bound on the document. */
+		// Ctrl+A / Ctrl+C / Ctrl+X / Ctrl+V / Delete, bound on the document.
 		'(document:keydown)': 'onShortcut($event)',
 	},
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -165,25 +159,16 @@ export class CollectionViewComponent {
 	readonly previewWidth = signal(DEFAULT_PREVIEW_PX);
 	readonly resizing = signal(false);
 
-	/* The mobile preview sheet. Deliberately the same behaviour as the Database results sheet in
-	   game-results.component.ts; the two are twins and were written to stay that way. */
-
 	readonly sheetOffset = signal(0);
 	private sheetDragFrom: number | null = null;
 	private sheetPointerId: number | null = null;
 	private sheetStartedAt = 0;
 
-	/**
-	 * The sheet carries `transition: transform` so that letting go animates it back. While a finger is
-	 * down that transition is the bug: every pointermove sets a new transform and the browser spends
-	 * 180ms easing towards it, so the sheet trails the finger and replays the movement after it stops.
-	 */
+	// True only while a finger is down: the sheet's CSS transition otherwise eases toward each
+	// pointermove target and trails behind the finger.
 	readonly sheetDragging = signal(false);
 
-	/**
-	 * True only for the length of the opening animation, so that nothing which merely changes the
-	 * sheet's contents - stepping to the next game - replays it.
-	 */
+	// True only for the length of the opening animation, so switching items does not replay it.
 	readonly sheetEntering = signal(false);
 
 	readonly handleOffset = signal<number | null>(null);
@@ -269,7 +254,6 @@ export class CollectionViewComponent {
 		return id === null ? null : (this.rows().find((row) => row.id === id) ?? null);
 	});
 
-	/** The index of the previewed item, or -1. Both sheet arrows are derived from it. */
 	private readonly selectedIndex = computed(() => {
 		const id = this.selectedId();
 		return id === null ? -1 : this.rows().findIndex((row) => row.id === id);
@@ -332,21 +316,34 @@ export class CollectionViewComponent {
 		});
 	}
 
+	private loadRequestId = 0;
+
 	private load(id: number, sort: ItemSortKey, ascending: boolean | undefined): void {
 		this.loading.set(true);
 		this.error.set(null);
 
+		// Guards against an older request's response landing after a newer load.
+		const request = ++this.loadRequestId;
+
 		this.api.get(id).subscribe({
-			next: (collection) => this.collection.set(collection),
-			error: (err: Error) => this.error.set(err.message),
+			next: (collection) => {
+				if (request !== this.loadRequestId) return;
+				this.collection.set(collection);
+			},
+			error: (err: Error) => {
+				if (request !== this.loadRequestId) return;
+				this.error.set(err.message);
+			},
 		});
 
 		this.api.listItems(id, sort, ascending).subscribe({
 			next: (items) => {
+				if (request !== this.loadRequestId) return;
 				this.items.set(items);
 				this.loading.set(false);
 			},
 			error: (err: Error) => {
+				if (request !== this.loadRequestId) return;
 				this.error.set(err.message);
 				this.loading.set(false);
 			},
@@ -361,7 +358,6 @@ export class CollectionViewComponent {
 		this.reload();
 	}
 
-	/** First click uses the column's natural direction, which the server decides. */
 	sortBy(key: ItemSortKey | null): void {
 		if (key === null) {
 			return;
@@ -415,35 +411,33 @@ export class CollectionViewComponent {
 		return key === 'type' ? this.typeOrderHint() : null;
 	}
 
+	private selectRequestId = 0;
+
 	select(row: RenderedItem): void {
 		if (this.selectedId() === row.id) {
 			return;
 		}
 
-		/**
-		 * Opening from nothing is an entrance; stepping to the next game is not. Unlike the Database
-		 * sheet, the element only exists once the item has been fetched, so the flag is raised when the
-		 * detail lands rather than when the tap happens - otherwise a request slower than the animation
-		 * would clear the flag before there was anything to animate.
-		 */
 		const opening = this.selected() === null;
 
 		this.resetSheet();
 
-		/**
-		 * The previous game stays on the board until the next one arrives. Clearing it first put an
-		 * empty board on screen for the length of a request, which on a phone reads as the sheet
-		 * leaving and coming back.
-		 */
+		// Guards against an older request's response landing after a newer selection.
+		const request = ++this.selectRequestId;
+
 		this.api.getItem(row.id).subscribe({
 			next: (detail) => {
+				if (request !== this.selectRequestId) return;
 				if (opening) {
 					this.sheetEntering.set(true);
 					setTimeout(() => this.sheetEntering.set(false), SHEET_ENTER_MS);
 				}
 				this.selected.set(detail);
 			},
-			error: (err: Error) => this.notify.error(err.message),
+			error: (err: Error) => {
+				if (request !== this.selectRequestId) return;
+				this.notify.error(err.message);
+			},
 		});
 	}
 
@@ -451,8 +445,6 @@ export class CollectionViewComponent {
 		this.clipboard.clear();
 
 		if (this.viewport.isMobile()) {
-			/** A tap opens the preview sheet; the analysis board is a button inside it. Before the sheet
-			    existed this jumped straight to a new tab, which is what the Database list does not do. */
 			this.select(row);
 			return;
 		}
@@ -567,12 +559,9 @@ export class CollectionViewComponent {
 		this.sheetDragFrom = null;
 		this.sheetPointerId = null;
 		this.sheetDragging.set(false);
-		/** Not reset while the sheet is being dismissed - see onSheetPointerUp - but it must not be
-		    carried into the next one, and by now the element is gone. */
 		this.sheetOffset.set(0);
 	}
 
-	/** Nothing that opens or changes the sheet may inherit an offset from whatever happened before. */
 	private resetSheet(): void {
 		this.sheetDragFrom = null;
 		this.sheetPointerId = null;
@@ -580,16 +569,6 @@ export class CollectionViewComponent {
 		this.sheetOffset.set(0);
 	}
 
-	/**
-	 * The gesture covers the whole header, buttons included, and still lets those buttons be pressed.
-	 * Nothing is claimed on pointerdown: the press is only recorded. Movement past the threshold is
-	 * what turns it into a drag, and taking the pointer capture at that moment cancels the click the
-	 * button underneath would otherwise receive.
-	 *
-	 * The threshold is also what makes this safe with a mouse. Without it, arming on pointerdown and
-	 * only disarming on pointerup left a stuck start point, and an ordinary hover over the header
-	 * translated the sheet hundreds of pixels down the screen.
-	 */
 	onSheetPointerDown(event: PointerEvent): void {
 		if (!this.viewport.isMobile()) return;
 		this.sheetDragFrom = event.clientY;
@@ -601,7 +580,6 @@ export class CollectionViewComponent {
 	onSheetPointerMove(event: PointerEvent): void {
 		if (this.sheetDragFrom === null || event.pointerId !== this.sheetPointerId) return;
 
-		/** A press that ended somewhere this element never heard about. Stop rather than follow. */
 		if (event.pointerType === 'mouse' && event.buttons === 0) {
 			this.onSheetPointerUp();
 			return;
@@ -611,14 +589,12 @@ export class CollectionViewComponent {
 
 		if (!this.sheetDragging()) {
 			if (travelled < DRAG_THRESHOLD_PX) {
-				/** Upward or barely moved: still a tap as far as the buttons are concerned. */
 				return;
 			}
 			this.sheetDragging.set(true);
 			(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 		}
 
-		/** Downward only. Dragging up would lift the sheet off the top of the screen. */
 		this.sheetOffset.set(Math.max(0, travelled));
 	}
 
@@ -634,17 +610,11 @@ export class CollectionViewComponent {
 		this.sheetDragging.set(false);
 
 		if (!dragged) {
-			/** Never crossed the threshold, so this was a tap; leave the click alone. */
 			return;
 		}
 
-		/**
-		 * A quarter of the screen, or a flick. Distance alone means a quick short swipe - which is what
-		 * dismissing a sheet actually feels like - does nothing, and the sheet springs back at you.
-		 */
+		// A quarter of the screen, or a flick: distance alone would ignore a fast short swipe.
 		if (travelled > window.innerHeight / 4 || (travelled / elapsed > 0.5 && travelled > 40)) {
-			/** Left where it is: the element is about to be removed, and snapping it back to the top
-			    for one frame first is exactly the jump this was meant to fix. */
 			this.closePreview();
 			return;
 		}
@@ -737,7 +707,7 @@ export class CollectionViewComponent {
 			return;
 		}
 
-		/** `to` is a gap, so lifting the column out shifts everything after it up by one. */
+		// `to` is a gap index, so lifting the column out shifts everything after it up by one.
 		const target = Math.max(to > from ? to - 1 : to, this.firstMovableIndex());
 		if (target === from) {
 			return;
@@ -799,6 +769,7 @@ export class CollectionViewComponent {
 			return;
 		}
 
+		// `to` is a gap index, so lifting the item out shifts everything after it up by one.
 		const target = to > from ? to - 1 : to;
 		if (target === from) {
 			return;
@@ -918,7 +889,6 @@ export class CollectionViewComponent {
 			return;
 		}
 
-		/** One request per entry: retagging changes a row's shape, not just a field. */
 		let remaining = ids.length;
 		const done = () => {
 			if (--remaining === 0) {
@@ -1033,7 +1003,7 @@ export class CollectionViewComponent {
 		const pgnTyped = draft.pgn.trim();
 		const fenTyped = draft.fen.trim();
 		let pgn: string;
-		/** An ANALYSIS with a start FEN is stored as a STUDY. */
+		// An ANALYSIS with a start FEN is stored as a STUDY.
 		let itemType = draft.itemType;
 		if (pgnTyped.length > 0) {
 			pgn = pgnTyped;
@@ -1075,20 +1045,14 @@ export class CollectionViewComponent {
 	onImportFile(event: Event): void {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
-		/** Cleared so choosing the same file twice still fires `change`. */
 		input.value = '';
 		if (!file) {
 			return;
 		}
 
-		/**
-		 * The server refuses anything larger, so saying so here costs no upload. The figure comes from
-		 * the account's own storage budget rather than a constant, and null means it has not arrived
-		 * yet - in which case the upload goes ahead and the server answers.
-		 */
+		// The server refuses anything larger; checking here just avoids a wasted upload.
 		const limit = this.cloud.maxRequestBytes();
 		if (limit !== null && file.size > limit) {
-			/** The refusal quotes the allowance, not the request cap: the allowance is what it is about. */
 			const quota = this.cloud.usage()?.bytesQuota ?? limit;
 			this.notify.error(
 				`That file is ${megabytes(file.size)} MB. This account is allocated ${megabytes(quota)} MB ` +

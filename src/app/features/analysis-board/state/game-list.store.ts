@@ -7,7 +7,6 @@ export type GameListStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 const ASCENDING_FIRST: ReadonlySet<GameSortKey> = new Set<GameSortKey>(['WHITE_NAME', 'BLACK_NAME', 'EVENT']);
 
-/** The games that reached the position on the board. */
 @Injectable()
 export class GameListStore {
 	private readonly api = inject(OpeningExplorerService);
@@ -32,11 +31,11 @@ export class GameListStore {
 
 	readonly isEmpty = computed(() => this._status() === 'ready' && this._rows().length === 0);
 
-	/** Only the newest request may write the signals above. */
+	// Only the newest request may write the signals above.
 	private requestId = 0;
 
 	constructor() {
-		/** Reads _active first and returns: a closed tab does not track the position. */
+		// Reads _active first and returns: a closed tab does not track the position.
 		effect(() => {
 			if (!this._active()) {
 				return;

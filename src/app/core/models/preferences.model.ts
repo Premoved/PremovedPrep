@@ -3,7 +3,6 @@ import { DEFAULT_BOARD_THEME } from '../board/board-themes';
 import { DEFAULT_PIECE_SET } from '../board/piece-sets';
 import { CustomColors, customColorsEqual, normaliseCustomColors } from '../theme/custom-theme';
 
-/** Everything the Preferences half of /settings can change. */
 export interface AppPreferences {
 	readonly pieceSet: string;
 	readonly boardTheme: string;
@@ -61,10 +60,9 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
-/** Board themes that used to exist, and what they map to now. */
+// Old theme id -> its current replacement, for values already stored under the old name.
 const RETIRED_BOARD_THEMES: Readonly<Record<string, string>> = { default: 'brown' };
 
-/** Coerces any stored value into a usable AppPreferences. */
 export function normalisePreferences(raw: unknown): AppPreferences {
 	if (typeof raw !== 'object' || raw === null) {
 		return DEFAULT_PREFERENCES;

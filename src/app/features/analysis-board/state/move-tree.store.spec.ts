@@ -94,7 +94,7 @@ describe('MoveTreeStore', () => {
 			expect(store.canGoForward()).toBe(false); // drawings are already visible
 
 			store.setDrawingsVisible(false);
-			expect(store.canGoForward()).toBe(true); // now they are a step to take
+			expect(store.canGoForward()).toBe(true);
 		});
 	});
 

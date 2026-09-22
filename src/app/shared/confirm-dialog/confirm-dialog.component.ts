@@ -35,10 +35,8 @@ export class ConfirmDialogComponent {
 		this.confirm.answer(value);
 	}
 
-	/**
-	 * Escape means "I did not mean to open this". Where a third answer exists it takes it, rather
-	 * than pressing Discard on the user's behalf.
-	 */
+	// Escape means "I didn't mean to open this"; where a third answer exists, use it rather than
+	// pressing Discard on the user's behalf.
 	@HostListener('document:keydown.escape')
 	onEscape(): void {
 		const request = this.confirm.request();

@@ -3,26 +3,35 @@
 } @else if (hasHeaders()) {
 	@let game = tree.headers();
 
-	<p class="players">
-		<span class="name">{{ game.white || 'Unknown' }}</span>
-		@if (game.whiteElo) {
-			<span class="elo">{{ game.whiteElo }}</span>
-		}
-		<span class="versus" aria-hidden="true">&ndash;</span>
-		<span class="name">{{ game.black || 'Unknown' }}</span>
-		@if (game.blackElo) {
-			<span class="elo">{{ game.blackElo }}</span>
-		}
-		@if (game.result) {
-			<span class="result">{{ game.result }}</span>
-		}
-	</p>
+	@if (document()) {
+		<p class="players">
+			<span class="name">{{ game.event || 'Untitled' }}</span>
+			@if (game.annotator) {
+				<span class="annotator">{{ game.annotator }}</span>
+			}
+		</p>
+	} @else {
+		<p class="players">
+			<span class="name">{{ game.white || 'Unknown' }}</span>
+			@if (game.whiteElo) {
+				<span class="elo">{{ game.whiteElo }}</span>
+			}
+			<span class="versus" aria-hidden="true">&ndash;</span>
+			<span class="name">{{ game.black || 'Unknown' }}</span>
+			@if (game.blackElo) {
+				<span class="elo">{{ game.blackElo }}</span>
+			}
+			@if (game.result) {
+				<span class="result">{{ game.result }}</span>
+			}
+		</p>
+	}
 
 	<p class="event">
 		@if (game.eco) {
 			<span class="eco">{{ game.eco }}</span>
 		}
-		@if (game.event) {
+		@if (game.event && !document()) {
 			<span>{{ game.event }}</span>
 		}
 		@if (game.site) {
@@ -40,7 +49,7 @@
 		@if (game.termination) {
 			<span>{{ game.termination }}</span>
 		}
-		@if (game.annotator) {
+		@if (game.annotator && !document()) {
 			<span class="annotator">[{{ game.annotator }}]</span>
 		}
 	</p>

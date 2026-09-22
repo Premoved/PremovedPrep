@@ -4,13 +4,8 @@ export type ThemeName = 'light' | 'dark';
 
 const STORAGE_KEY = 'premovedprep.theme';
 
-/**
- * Light or dark, and which one a visitor gets.
- *
- * Light is the default everywhere it is not overridden: it is the palette `:root` carries in
- * styles.css, so the first paint - before any of this has run - is already light. Dark is a choice,
- * made here or carried in from an account, and never inferred from the operating system.
- */
+// Light is the default everywhere: it is what :root carries in styles.css, so first paint is
+// already light before this has run. Dark is a choice, never inferred from the OS.
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
 	readonly theme = signal<ThemeName>('light');
@@ -28,14 +23,8 @@ export class ThemeService {
 		this.apply(theme);
 	}
 
-	/**
-	 * Back to light, and the stored choice forgotten.
-	 *
-	 * Called when a session ends. The theme on screen belonged to the account that just left, and
-	 * this is one browser: without this, the next person to open the site - or the next account to
-	 * sign in on this machine - inherits it, having chosen nothing. That is how a first visit ends up
-	 * dark.
-	 */
+	// Called when a session ends: without this the next account on this machine inherits the theme
+	// of the one that just left, having chosen nothing.
 	reset(): void {
 		this.apply('light');
 	}

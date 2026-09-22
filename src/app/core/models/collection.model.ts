@@ -1,17 +1,3 @@
-/**
- * Collections and their contents.
- *
- * TWO LAYERS, AND WHY
- *
- * The types whose names begin with `Wire` are what the backend sends: a folder's name and an entry's
- * document arrive sealed, and nothing there can be shown to anyone. Everything else is what the
- * application works with, after CollectionApiService has opened them.
- *
- * CollectionSummary, ItemSummary and ItemDetail are unchanged from before end-to-end encryption, on
- * purpose. They are what the three components that draw collections bind to, and keeping them
- * identical is what let the encryption go in underneath those components rather than through them.
- */
-
 export type CollectionKind = 'LIBRARY' | 'REPERTOIRE';
 
 export type RepertoireColor = 'w' | 'b';
@@ -49,14 +35,6 @@ export interface WireCollectionSummary extends Omit<CollectionSummary, 'name'> {
 	readonly nameCipher: string;
 }
 
-/**
- * An entry as it arrives.
- *
- * There is one wire shape rather than the summary-and-detail pair the API used to have. The list
- * used to send the derived columns and hold the document back, because the document was the
- * expensive part; the columns are now inside the document, so a list that shows anything at all is
- * a list that sent everything - and the browser has to open it all anyway in order to sort it.
- */
 export interface ItemRow {
 	readonly id: number;
 	readonly collectionId: number;
@@ -95,11 +73,6 @@ export interface ItemSummary {
 	readonly updatedAt: string;
 }
 
-/**
- * An entry with its moves. It now extends ItemSummary rather than omitting sortOrder from it: one
- * decrypt produces both, so the detail is what a listing actually holds and the summary is the view
- * of it that the table binds to.
- */
 export interface ItemDetail extends ItemSummary {
 	readonly collectionId: number;
 	readonly pgn: string;
@@ -127,7 +100,6 @@ export interface ImportResult {
 	readonly collectionId: number;
 	readonly imported: number;
 	readonly skipped: number;
-	/** Games left out because the account ran out of room part-way through the file. */
 	readonly skippedForSpace: number;
 	readonly items: readonly ItemSummary[];
 }
@@ -155,29 +127,11 @@ export const TYPE_SORT_KEYS: readonly ItemSortKey[] = ['TYPE', 'TYPE_STUDY_FIRST
 
 export interface StorageUsage {
 	readonly bytesUsed: number;
-	/** The allowance shown to the user. */
 	readonly bytesQuota: number;
 	/** Where writes actually stop, a little above the quota. */
 	readonly bytesHardLimit: number;
-	/**
-	 * The largest PGN one request that saves to the server may carry - a multiple of bytesQuota,
-	 * decided by StorageLimits on the server. Absent on the figures recovered from a 507, which does
-	 * not carry it, so a caller must treat null as "the server will decide".
-	 *
-	 * Since end-to-end encryption this counts the sealed entry, not the PGN. A document usually
-	 * deflates to well under what it was before base64 adds a third back, so an account's allowance
-	 * goes further than it did - but the figure a person sees is the one they actually occupy.
-	 */
+	/** Max payload size per save request; absent on 507 responses — null means the server decides. */
 	readonly bytesMaxRequest?: number;
-	/**
-	 * What each collection occupies, keyed by its id, when the server breaks the figure down.
-	 *
-	 * The allowance is two megabytes for the whole account, so deciding what to keep means deciding
-	 * about one collection against another - and a game count does not answer that: forty short
-	 * games are smaller than one heavily annotated study.
-	 *
-	 * Optional: an older server does not send it, and the interface then shows no size rather than
-	 * a wrong one.
-	 */
+	/** Per-collection usage in bytes; absent on older servers, which send no breakdown. */
 	readonly perCollection?: Readonly<Record<string, number>>;
 }

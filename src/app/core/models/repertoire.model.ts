@@ -1,5 +1,3 @@
-/** Where a repertoire's model games join its theory. */
-
 export interface RepertoireGame {
 	readonly itemId: number;
 	readonly white: string | null;

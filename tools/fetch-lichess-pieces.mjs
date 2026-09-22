@@ -7,18 +7,10 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TARGET = join(ROOT, 'public', 'piece');
 const SOURCE = 'https://raw.githubusercontent.com/lichess-org/lila/master/public/piece';
 
-/** chessground names a piece `knight`; the files on disk are named by letter. */
 const FILES = ['wP', 'wN', 'wB', 'wR', 'wQ', 'wK', 'bP', 'bN', 'bB', 'bR', 'bQ', 'bK'];
 
-/**
- * Only sets whose licence permits commercial redistribution, per lila's COPYING.md. Everything under
- * "Exceptions (non-free)" and every CC BY-NC-SA set is deliberately absent: PremovedPrep plans a paid
- * tier, so NC and freeware terms do not apply to it. Adding a set here is a licensing decision - see
- * THIRD-PARTY.md and docs/legal/asset-licences.md.
- *
- * Firi and mono were here and are not: lila no longer serves a complete set under either name (wP.svg
- * answered 404), so neither ever installed.
- */
+// Only sets whose licence permits commercial redistribution, per lila's COPYING.md; CC BY-NC-SA and
+// non-free sets are deliberately absent. Adding one here is a licensing decision - see THIRD-PARTY.md.
 const SETS = [
 	'cburnett',
 	'celtic',
@@ -37,7 +29,7 @@ const SETS = [
 	'totoy',
 ];
 
-/** CI does not need the artwork: the build is verified, not deployed. Set only in the workflow. */
+// CI does not need the artwork: the build is verified, not deployed. Set only in the workflow.
 if (process.env.PREMOVEDPREP_SKIP_ASSETS === '1') {
 	console.log('fetch-lichess-pieces: PREMOVEDPREP_SKIP_ASSETS=1, nothing fetched.');
 	process.exit(0);
@@ -73,7 +65,6 @@ async function fetchSet(set) {
 	return { set, status: 'downloaded' };
 }
 
-/** Sets whose twelve files are all on disk. The manifest never claims a set the browser cannot load. */
 async function readInstalled() {
 	let entries;
 	try {

@@ -8,7 +8,6 @@ export function scrollableAncestor(el: HTMLElement): HTMLElement | null {
 	return null;
 }
 
-/** Scrolls one container only, leaving every other scroll position untouched. */
 export function scrollIntoContainer(
 	container: HTMLElement,
 	target: HTMLElement,

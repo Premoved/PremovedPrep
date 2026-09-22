@@ -61,7 +61,7 @@ export class AdvancedReportComponent {
 	private readonly analytics = inject(AnalyticsService);
 	readonly viewport = inject(ViewportService);
 	private readonly tree = inject(MoveTreeStore);
-	/** The page's copy of the last report, so coming back to this panel does not generate it again. */
+	// Coming back to this panel with the same scope does not regenerate the report.
 	private readonly cache = inject(AdvancedReportCache, { optional: true });
 
 	readonly report = inject(ReportStore);
@@ -98,7 +98,7 @@ export class AdvancedReportComponent {
 
 	readonly hasTree = computed(() => this.status() === 'ready' && this.emptyReason() === null);
 
-	/** Guards the fetch effect against re-running for the same scope. */
+	// Guards the fetch effect against re-running for the same scope.
 	private requested?: string;
 
 	constructor() {
@@ -182,8 +182,6 @@ export class AdvancedReportComponent {
 	playMove(move: UciMove): void {
 		this.board()?.executeMove(move.from, move.to, move.promotion ?? 'q');
 	}
-
-	// Splitter
 
 	readonly treeWidth = signal(DEFAULT_TREE_PX);
 	readonly resizing = signal(false);

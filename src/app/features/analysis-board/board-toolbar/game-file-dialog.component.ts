@@ -44,21 +44,20 @@ type Draft = Record<string, string>;
 
 const RESULTS: readonly string[] = ['1-0', '1/2-1/2', '0-1', '*'];
 
-/** The PGN TimeControl spellings everyone starts with, before an account teaches it its own. */
+// The PGN TimeControl spellings everyone starts with, before an account teaches it its own.
 const BUILT_IN_TIME_CONTROLS: readonly string[] = ['5400+30', '1800+10', '900+10', '600+0', '180+2'];
 
 interface TimeControlOption {
 	readonly value: string;
-	/** Saved on this account rather than built in, which is what the marker in the list means. */
+	// Saved on this account rather than built in, which is what the marker in the list means.
 	readonly mine: boolean;
 }
 
-/** Types identified by a title and an author rather than by two players. */
+// Types identified by a title and an author rather than by two players.
 const DOCUMENT_TYPES: readonly ItemType[] = ['ANALYSIS', 'STUDY', 'MAIN_LINE'];
 
 const COLOR_LABEL: Readonly<Record<RepertoireColor, string>> = { w: 'White', b: 'Black' };
 
-/** The board's game file: what the game is, and where it goes. */
 @Component({
 	selector: 'app-game-file-dialog',
 	standalone: true,
@@ -94,19 +93,17 @@ export class GameFileDialogComponent {
 	readonly shelves: readonly CollectionKind[] = ['LIBRARY', 'REPERTOIRE'];
 	readonly colors: readonly RepertoireColor[] = ['w', 'b'];
 
-	readonly draft = signal<Draft>(this.draftOf(this.tree.headers(), false));
-
 	private readonly savedTimeControls = signal<readonly string[]>([]);
 
 	readonly tcOpen = signal(false);
 
-	/** True while a spelling the list does not hold is being typed. */
+	// True while a spelling the list does not hold is being typed.
 	readonly tcOther = signal(false);
 
 	readonly timeControlOptions = computed<readonly TimeControlOption[]>(() => {
 		const mine = this.savedTimeControls();
 		const current = (this.draft()['timeControl'] ?? '').trim();
-		/** An imported game can carry a spelling nobody saved; it still has to be selectable. */
+		// An imported game can carry a spelling nobody saved; it still has to be selectable.
 		const values = [...new Set([...(current.length > 0 ? [current] : []), ...BUILT_IN_TIME_CONTROLS, ...mine])];
 		return values.map((value) => ({ value, mine: mine.includes(value) }));
 	});
@@ -130,6 +127,10 @@ export class GameFileDialogComponent {
 
 	readonly isDocument = computed(() => DOCUMENT_TYPES.includes(this.itemType()));
 
+	// Seeded from the live tree headers and the type guessed above, so a document's title/author
+	// (Event/Annotator) show correctly on the very first render, not just after locate*Entry() corrects it.
+	readonly draft = signal<Draft>(this.draftOf(this.tree.headers(), this.isDocument()));
+
 	readonly firstLabel = computed(() => (this.isDocument() ? 'Title' : 'White'));
 	readonly secondLabel = computed(() => (this.isDocument() ? 'Author' : 'Black'));
 
@@ -148,7 +149,7 @@ export class GameFileDialogComponent {
 	readonly userName = computed(() => this.auth.currentUser()?.username ?? 'you');
 	readonly canSave = computed(() => this.selectedId() !== null && !this.saving());
 
-	/** Whether Save overwrites the open entry rather than filing a new one. */
+	// Whether Save overwrites the open entry rather than filing a new one.
 	readonly writesBack = computed(
 		() => this.openItemId() !== null && this.selectedId() !== null && this.selectedId() === this.homeCollectionId(),
 	);
@@ -164,12 +165,8 @@ export class GameFileDialogComponent {
 		this.load();
 		this.loadTimeControls();
 
-		/**
-		 * An effect rather than a call in the body: Angular writes an input after the component is
-		 * constructed, so openItemId() read here was null every time. That is why Save always filed a
-		 * copy instead of writing back, and why the type and the fields never came back as the open
-		 * entry's own.
-		 */
+		// An effect rather than a call in the body: Angular writes an input after construction, so
+		// openItemId() read directly here would always be null.
 		let located: number | null = null;
 		effect(() => {
 			const itemId = this.openItemId();
@@ -201,11 +198,10 @@ export class GameFileDialogComponent {
 					const type = ITEM_TYPES_BY_KIND[folder.kind].includes(itemType) ? itemType : this.defaultTypeFor(folder.kind);
 					this.itemType.set(type);
 
-					/** Re-seeded now that the type is known: a document keeps its title and author in
-					 * Event and Annotator, so those are the tags its first two fields have to show. */
+					// Re-seeded once the type is known: a document stores title/author in Event and Annotator.
 					this.draft.set(this.draftOf(this.tree.headers(), DOCUMENT_TYPES.includes(type)));
 
-					/** The constructor loads the Library, so only another shelf needs a reload. */
+					// The constructor loads the Library, so only another shelf needs a reload.
 					if (folder.kind !== 'LIBRARY') {
 						this.load();
 					}
@@ -227,7 +223,7 @@ export class GameFileDialogComponent {
 	}
 
 	toggleTimeMenu(event: Event): void {
-		/** Without this the click reaches the document handler that closes what it just opened. */
+		// Without this the click reaches the document handler that closes what it just opened.
 		event.stopPropagation();
 		this.tcOther.set(false);
 		this.tcOpen.update((open) => !open);
@@ -247,7 +243,7 @@ export class GameFileDialogComponent {
 		this.tcOther.set(true);
 	}
 
-	/** Keeps the spelling on the account, so the next game finds it already in the list. */
+	// Keeps the spelling on the account, so the next game finds it already in the list.
 	commitTimeControl(): void {
 		const value = (this.draft()['timeControl'] ?? '').trim();
 		this.setField('timeControl', value);
@@ -296,12 +292,8 @@ export class GameFileDialogComponent {
 		this.itemType.set(type);
 	}
 
-	/**
-	 * Apply finishes the job when there is somewhere to put the game. Sending someone to a second tab
-	 * to press a second button is only useful when the destination is genuinely still unknown - which
-	 * is the case for a new analysis, and not for one that was opened from a collection or already
-	 * filed once. The location tab stays reachable either way.
-	 */
+	// Applies immediately when a destination is already known (an open or already-filed entry);
+	// otherwise moves to the location tab, since a new analysis has nowhere to write yet.
 	applyData(event: Event): void {
 		event.preventDefault();
 
@@ -315,7 +307,6 @@ export class GameFileDialogComponent {
 		this.activePanel.set('location');
 	}
 
-	/** True when Apply writes rather than moving to the location tab; the button label follows it. */
 	readonly applySaves = computed(() => this.selectedId() !== null && !this.saving());
 
 	readonly applyLabel = computed(() => {
@@ -349,11 +340,7 @@ export class GameFileDialogComponent {
 			edited['black'] = '';
 		}
 
-		/**
-		 * The roster first, the form on top. Termination is not a field any more, and this is why it
-		 * survives: an imported game keeps the tag it arrived with instead of being blanked by a form
-		 * that no longer asks about it.
-		 */
+		// The roster first, the form on top: an imported tag not asked about by the form survives.
 		const merged: Record<string, string> = { ...this.rosterOf(this.tree.headers()), ...edited };
 		const headers: Record<string, string> = {};
 		for (const [key, value] of Object.entries(merged)) {
@@ -363,19 +350,14 @@ export class GameFileDialogComponent {
 			}
 		}
 
-		/**
-		 * Carried across by hand. rosterOf only copies string values, so the tags the file arrived
-		 * with - which live in an object - would be dropped the first time anyone edited game data.
-		 */
+		// Carried across by hand: rosterOf only copies string values, so these object-valued tags
+		// would otherwise be dropped the first time anyone edited game data.
 		const current = this.tree.headers();
 		return { ...(headers as GameHeaders), variant: current.variant, extra: current.extra };
 	}
 
-	/**
-	 * `document` decides where the first two fields come from. A study or an analysis keeps its title
-	 * in Event and its author in Annotator - the same tags headers() writes them back to - so reading
-	 * them from white and black would show two empty boxes over a named document.
-	 */
+	// `document` decides where the first two fields come from: a study or analysis keeps its title
+	// in Event and its author in Annotator, the same tags headers() writes them back to.
 	private draftOf(headers: GameHeaders, document: boolean): Draft {
 		return {
 			first: (document ? headers.event : headers.white) ?? '',
@@ -515,7 +497,7 @@ export class GameFileDialogComponent {
 			},
 			error: (err: Error) => {
 				this.saving.set(false);
-				/** Out of room is reported by the caller, so the dialog stays open. */
+				// Out of room is reported by the caller, so the dialog stays open.
 				if (this.cloud.reportFull(err)) {
 					this.closed.emit();
 					return;

@@ -47,7 +47,6 @@ Thumbs.db
 /docs
 test-out.txt
 
-# Third-party piece artwork, fetched by `npm run assets` (prebuild/prestart).
-# Not committed: the licences are per-set and belong to their authors, not to this repository.
+# Third-party piece artwork, fetched by `npm run assets`; per-set licences, not committed.
 /public/piece
 

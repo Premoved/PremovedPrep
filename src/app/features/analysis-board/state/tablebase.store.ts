@@ -7,7 +7,6 @@ import { EngineStore } from './engine.store';
 /** out-of-range is not an error: the position has too many pieces for the tables. */
 export type TablebaseStatus = 'idle' | 'out-of-range' | 'loading' | 'ready' | 'empty' | 'error';
 
-/** Endgame tablebase lookups for the position on the board. */
 @Injectable()
 export class TablebaseStore {
 	private readonly api = inject(TablebaseService);
@@ -26,12 +25,12 @@ export class TablebaseStore {
 	private readonly cache = new Map<string, TablebaseResult | null>();
 	private static readonly CACHE_LIMIT = 200;
 
-	/** Monotonic; only the newest request may write the signals above. */
+	// Monotonic; only the newest request may write the signals above.
 	private requestId = 0;
 
 	constructor() {
 		effect(() => {
-			/** Read the flag first and return early: a closed panel does not track the position. */
+			// Read the flag first and return early: a closed panel does not track the position.
 			if (!this._active()) {
 				return;
 			}
@@ -79,7 +78,7 @@ export class TablebaseStore {
 
 	private remember(fen: string, result: TablebaseResult | null): void {
 		if (this.cache.size >= TablebaseStore.CACHE_LIMIT) {
-			/** Insertion order, so the first key is the oldest. */
+			// Insertion order, so the first key is the oldest.
 			const oldest = this.cache.keys().next().value;
 			if (oldest !== undefined) {
 				this.cache.delete(oldest);

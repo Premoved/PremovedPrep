@@ -37,7 +37,6 @@ describe('parseInfoLine', () => {
 	it('ignores the info lines that carry no variation', () => {
 		expect(parseInfoLine('info depth 1 seldepth 1 nodes 20 nps 20000 time 1')).toBeNull();
 		expect(parseInfoLine('info currmove e2e4 currmovenumber 1')).toBeNull();
-		/** A score with no pv is a bound report, not a line worth showing. */
 		expect(parseInfoLine('info depth 5 score cp 20 upperbound')).toBeNull();
 	});
 
@@ -67,7 +66,6 @@ describe('formatScore', () => {
 	});
 
 	it('flips a black-to-move score to White’s point of view', () => {
-		/** Black is a pawn up with Black to move, so UCI reports +100; from White's side that is -1.00. */
 		expect(formatScore(line({ cp: 100 }), Color.BLACK)).toBe('-1.00');
 	});
 

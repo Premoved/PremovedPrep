@@ -43,7 +43,6 @@ const DEFAULT_PREVIEW_PX = 380;
 const HANDLE_MARGIN_PX = 24;
 const LIST_GUTTER_PX = 20;
 
-/** Mirrors the duration of the preview-sheet-up keyframes in the stylesheet. */
 const SHEET_ENTER_MS = 240;
 
 @Component({
@@ -65,7 +64,6 @@ export class GameResultsComponent {
 
 	readonly placeholder = input('Run a search to see games here.');
 
-	/** False while this list is on a tab nobody is looking at. */
 	readonly active = input(true);
 
 	readonly sortRequested = output<SearchSortKey>();
@@ -75,12 +73,9 @@ export class GameResultsComponent {
 
 	readonly tableMinWidth = COLUMNS.reduce((total, column) => total + (column.width ?? ELASTIC_MIN_PX), 0);
 
-	// Selection and preview
-
 	readonly selectedId = signal<number | null>(null);
 	readonly selectedGame = computed(() => this.rows().find((row) => row.id === this.selectedId()) ?? null);
 
-	/** The fetched PGN of the selected row, or null while it is in flight. */
 	readonly previewPgn = signal<string | null>(null);
 
 	readonly viewport = inject(ViewportService);
@@ -88,33 +83,16 @@ export class GameResultsComponent {
 	readonly sheetOffset = signal(0);
 	private sheetDragFrom: number | null = null;
 
-	/**
-	 * The sheet carries `transition: transform` so that letting go animates it back. While a finger is
-	 * down that transition is the bug: every pointermove sets a new transform and the browser spends
-	 * 180ms easing towards it, so the sheet trails the finger and replays the movement after it stops.
-	 * `dragging` turns the transition off for the duration, which is what makes it follow rather than
-	 * chase.
-	 */
+	// True only while a finger is down: the sheet's CSS transition otherwise eases toward each
+	// pointermove target and trails behind the finger.
 	readonly sheetDragging = signal(false);
 
 	private sheetStartedAt = 0;
 
-	/** How far a finger must travel before this is a drag and not a tap on whatever is underneath. */
 	private static readonly DRAG_THRESHOLD_PX = 8;
 
 	private sheetPointerId: number | null = null;
 
-	/**
-	 * The gesture covers the whole header, buttons included, and still lets those buttons be pressed.
-	 * Nothing is claimed on pointerdown: the press is only recorded. Movement past the threshold is
-	 * what turns it into a drag, and taking the pointer capture at that moment cancels the click the
-	 * button underneath would otherwise receive. Below the threshold nothing happens and the tap
-	 * lands normally.
-	 *
-	 * The threshold is also what makes this safe with a mouse. Without it, arming on pointerdown and
-	 * only disarming on pointerup left a stuck start point, and an ordinary hover over the header
-	 * translated the sheet hundreds of pixels down the screen.
-	 */
 	onSheetPointerDown(event: PointerEvent): void {
 		if (!this.viewport.isMobile()) return;
 		this.sheetDragFrom = event.clientY;
@@ -126,7 +104,6 @@ export class GameResultsComponent {
 	onSheetPointerMove(event: PointerEvent): void {
 		if (this.sheetDragFrom === null || event.pointerId !== this.sheetPointerId) return;
 
-		/** A press that ended somewhere this element never heard about. Stop rather than follow. */
 		if (event.pointerType === 'mouse' && event.buttons === 0) {
 			this.onSheetPointerUp();
 			return;
@@ -136,14 +113,12 @@ export class GameResultsComponent {
 
 		if (!this.sheetDragging()) {
 			if (travelled < GameResultsComponent.DRAG_THRESHOLD_PX) {
-				/** Upward or barely moved: still a tap as far as the buttons are concerned. */
 				return;
 			}
 			this.sheetDragging.set(true);
 			(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 		}
 
-		/** Downward only. Dragging up would lift the sheet off the top of the screen. */
 		this.sheetOffset.set(Math.max(0, travelled));
 	}
 
@@ -159,24 +134,17 @@ export class GameResultsComponent {
 		this.sheetDragging.set(false);
 
 		if (!dragged) {
-			/** Never crossed the threshold, so this was a tap; leave the click alone. */
 			return;
 		}
 
-		/**
-		 * A quarter of the screen, or a flick. Distance alone means a quick short swipe - which is what
-		 * dismissing a sheet actually feels like - does nothing, and the sheet springs back at you.
-		 */
+		// A quarter of the screen, or a flick: distance alone would ignore a fast short swipe.
 		if (travelled > window.innerHeight / 4 || (travelled / elapsed > 0.5 && travelled > 40)) {
-			/** Left where it is: the element is about to be removed, and snapping it back to the top
-			    for one frame first is exactly the jump this was meant to fix. */
 			this.closePreview();
 			return;
 		}
 		this.sheetOffset.set(0);
 	}
 
-	/** The mobile sheet has no close button, so this is the only way out for a keyboard or a mouse. */
 	@HostListener('document:keydown.escape')
 	onEscape(): void {
 		if (this.selectedId() !== null) {
@@ -201,7 +169,6 @@ export class GameResultsComponent {
 			return;
 		}
 
-		/** Opening from nothing is an entrance; stepping to the next game is not. */
 		if (this.selectedId() === null) {
 			this.sheetEntering.set(true);
 			setTimeout(() => this.sheetEntering.set(false), SHEET_ENTER_MS);
@@ -210,12 +177,7 @@ export class GameResultsComponent {
 		this.resetSheet();
 		this.selectedId.set(row.id);
 
-		/**
-		 * The previous game stays on the board until the next one arrives. Clearing it first put an
-		 * empty board on screen for the length of a request, which on a phone reads as the sheet
-		 * leaving and coming back - and the sheet is the only thing between a finger and the header
-		 * behind it.
-		 */
+		// Guards against an older request's response landing after a newer selection.
 		const request = ++this.previewRequestId;
 		this.archive.game(row.id).subscribe({
 			next: (detail: GameDetail) => {
@@ -229,13 +191,8 @@ export class GameResultsComponent {
 		});
 	}
 
-	/**
-	 * True only for the length of the opening animation. The animation lives on this class rather than
-	 * on .preview so that nothing which merely changes the sheet's contents can replay it.
-	 */
 	readonly sheetEntering = signal(false);
 
-	/** Nothing that opens or changes the sheet may inherit an offset from whatever happened before. */
 	private resetSheet(): void {
 		this.sheetDragFrom = null;
 		this.sheetDragging.set(false);
@@ -247,8 +204,6 @@ export class GameResultsComponent {
 		this.previewPgn.set(null);
 		this.sheetDragFrom = null;
 		this.sheetDragging.set(false);
-		/** Not reset while the sheet is being dismissed - see onSheetPointerUp - but it must not be
-		    carried into the next one, and by now the element is gone. */
 		this.sheetOffset.set(0);
 	}
 
@@ -262,8 +217,6 @@ export class GameResultsComponent {
 	onContextMenu(event: MouseEvent, game: SearchResultGame): void {
 		event.preventDefault();
 		event.stopPropagation();
-		/** The pointer, not the row. A row here is the width of the table, so anchoring the menu to it
-		    put the menu against the far edge of the screen rather than under the cursor. */
 		this.openMenu.set({ game, anchor: new DOMRect(event.clientX, event.clientY, 0, 0) });
 	}
 
@@ -287,7 +240,6 @@ export class GameResultsComponent {
 		this.step(1);
 	}
 
-	/** The index of the previewed game, or -1. Both header arrows are derived from it. */
 	private readonly selectedIndex = computed(() => this.rows().findIndex((row) => row.id === this.selectedId()));
 
 	readonly hasPreviousGame = computed(() => this.selectedIndex() > 0);
@@ -351,8 +303,6 @@ export class GameResultsComponent {
 			this.sortRequested.emit(column.sort);
 		}
 	}
-
-	// Splitter
 
 	readonly previewWidth = signal(DEFAULT_PREVIEW_PX);
 	readonly resizing = signal(false);

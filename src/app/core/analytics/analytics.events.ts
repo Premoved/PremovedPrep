@@ -1,4 +1,4 @@
-/** Event names for product analytics. Nothing sends them today - see AnalyticsService. */
+// Nothing sends these events today; see AnalyticsService, which is a no-op by design.
 export const AnalyticsEvent = {
 	pageView: '$pageview',
 	userRegistered: 'user_registered',

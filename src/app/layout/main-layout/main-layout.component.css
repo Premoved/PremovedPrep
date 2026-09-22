@@ -505,7 +505,6 @@ nav {
 	overflow: auto;
 }
 
-/* Above the drawer it is opened from - a long press on a drawer item raises it. */
 .nav-context-menu {
 	position: fixed;
 	z-index: 100012;
@@ -553,8 +552,6 @@ nav {
 	margin-right: 0.625rem;
 	font-size: 1.1rem;
 }
-
-/* Phone layout */
 
 .shell.mobile {
 	display: flex;
@@ -646,12 +643,6 @@ nav {
 	height: 1.15rem;
 }
 
-/* The rail, as a drawer. */
-/*
- * Above every overlay a page can raise - the setup-board and import dialogs sit at 2000, the
- * context menus at 99999, the confirm dialog at 100000. The drawer belongs to the frame, not to
- * the page, so nothing the page draws may cover it.
- */
 .shell.mobile .sidebar {
 	position: fixed;
 	top: 0;

@@ -242,7 +242,6 @@ $sq: var(--square-size, 64px);
 	cursor: default;
 }
 
-/* The flip button's mark */
 .board-controls button.flip svg {
 	width: 1em;
 	height: 1em;
@@ -319,7 +318,6 @@ $sq: var(--square-size, 64px);
 	}
 }
 
-/* Utility menu tooltips */
 .utility-tooltip {
 	position: fixed;
 	z-index: 99999;
@@ -347,14 +345,11 @@ $sq: var(--square-size, 64px);
 	}
 }
 
-/* Phone layout */
-
 :host-context(.shell.mobile) .narrow-layout .board-actions-bar {
 	grid-template-rows: none;
 	grid-auto-rows: 44px;
 }
 
-/* The board is never text */
 .board-shell {
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;

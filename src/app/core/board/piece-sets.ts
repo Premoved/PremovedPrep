@@ -10,7 +10,7 @@ export const DEFAULT_PIECE_SET = 'cburnett';
 
 export const BUNDLED_PIECE_SET: PieceSet = { id: DEFAULT_PIECE_SET, name: 'Cburnett', bundled: true };
 
-/** Names for the sets tools/fetch-lichess-pieces.mjs installs. Keep the two lists in step. */
+// Names for the sets tools/fetch-lichess-pieces.mjs installs. Keep the two lists in step.
 const PIECE_SET_NAMES: Readonly<Record<string, string>> = {
 	cburnett: 'Cburnett',
 	celtic: 'Celtic',
@@ -50,7 +50,6 @@ const ROLE_LETTERS: readonly (readonly [string, string])[] = [
 	['king', 'K'],
 ];
 
-/** Generates the twelve rules that repaint the pieces. Empty for the bundled set. */
 export function pieceSetCss(set: PieceSet, baseUrl: string): string {
 	if (set.bundled) {
 		return '';

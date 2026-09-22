@@ -1,75 +1,3 @@
-/**
- * The indexed entry point for one player: /search/opponent/magnus-carlsen-1503014
- *
- * WHAT THIS IS, AND WHAT IT REPLACED
- *
- * It used to be a page of its own, at /player/<slug>, rendered entirely by this function. That page
- * answered a search engine well and served the person badly: they landed on a summary and had to
- * click again to reach the thing they were looking for. It is gone, and the URLs it owned redirect
- * here.
- *
- * This is not a second page about a player. It is *the search page*, on its own URL, with that
- * player already in the box. Somebody arriving from a search engine lands inside the tool.
- *
- * WHY A FUNCTION IS STILL NEEDED
- *
- * The application is a single-page application: every route is the same empty shell plus
- * JavaScript, and the content appears only once that JavaScript has run. Google will render it,
- * but it queues the work, and it does not do it at the scale of tens of thousands of URLs for a
- * domain it has no history with. Bing and the model crawlers mostly do not do it at all.
- *
- * So this function fetches the shell, writes the title, description and canonical into it, and
- * puts the first page of results inside <app-root> before returning it. A crawler that runs no
- * JavaScript reads finished HTML. A browser reads the same HTML, shows it while the bundle loads,
- * and Angular then replaces it with the live page - which is the ordinary hydration handover, and
- * on a slow connection it means content appears sooner than the application does.
- *
- * HTMLRewriter rather than string surgery: the shell is built by Angular and minified, so its
- * attribute order and whitespace are not ours to predict.
- *
- * ONE URL PER PLAYER
- *
- * The id at the end of the slug is what resolves a request, so any words in front of it used to
- * answer 200: an unbounded set of URLs serving one page, held apart only by a canonical tag a
- * crawler is free to disregard. A request whose slug is not the canonical one is now answered with
- * a 301 to the one that is.
- *
- * HOW A CRAWLER GETS FROM ONE PLAYER TO THE NEXT
- *
- * The opponent's name in each row links to that opponent's own page. The sitemap offers the 5,000
- * players the archive knows best; everybody else is reached from here, by having played somebody.
- * That is the archive's real structure, and a link out of a page is a better reason to crawl than a
- * line in a file - which is what the first version of this relied on, and Google answered by
- * discovering 64,000 URLs and fetching almost none of them.
- *
- * THE NAME
- *
- * `profile.name`, which is the `player` table's spelling and the one functions/sitemap-opponents.xml
- * builds its slugs from. The two have to be the same field or every URL in the sitemap declares a
- * canonical pointing somewhere else.
- *
- * WHAT THE PRE-RENDERED HTML DELIBERATELY LEAVES OUT
- *
- * Everything sourced from the FIDE rating list: title, federation, the three ratings, the world and
- * national ranks, and the Elo columns on the game rows - a PGN that arrives without a rating has
- * one filled in from `player_rating`, and this cannot tell those apart.
- *
- * The person still sees all of it, a moment later, rendered by the application. That is the
- * ordinary use every chess tool makes of the list. What is given up is the other thing: publishing
- * it as tens of thousands of crawlable documents. Lichess releases its exports under CC0, which
- * permits publication of any kind; FIDE's download page carries a blanket reservation, and in the
- * EU a database right protects re-utilisation of a substantial part regardless of whether the facts
- * inside it are copyrightable. Which route the data sits on does not enter into that test, so
- * moving the page here changed nothing about it. See OPERATIONS.md 9b.
- */
-
-/**
- * Declared here rather than pulled from @cloudflare/workers-types.
- *
- * These files are the only thing in this repository that runs on Cloudflare rather than in a
- * browser, and the shape they need is a few lines. A dependency for a few lines is a dependency to
- * update, to audit and to explain, and it would be the only one the Angular build has no use for.
- */
 type PagesContext = {
 	request: Request;
 	params: Record<string, string | string[]>;
@@ -90,25 +18,10 @@ declare const HTMLRewriter: { new (): HtmlRewriter };
 
 interface PlayerProfile {
 	fideId: number;
-	/**
-	 * The player. Not `archiveName`, which sits next to it on the same DTO and is the name of the
-	 * *archive* - it answers "Official Lichess Broadcasts", not "Carlsen, Magnus". Reading it as
-	 * the player's spelling put the archive's name in the title, the canonical and the slug of
-	 * every one of these URLs, against a sitemap built from this field.
-	 */
 	name: string;
 	archiveGames: number;
 }
 
-/**
- * `white` and `black` are the PGN's spelling, which is what the row displays and what the game
- * itself says. The `FideName` fields are the `player` table's spelling of the same side, and that
- * is what an opponent's link is built from: every /search/opponent URL comes from that table, so a
- * link built from the PGN spelling would redirect on each row where the two disagree.
- *
- * Both may be null. Not every side in an imported PGN can be matched to a FIDE id, and a name with
- * nothing behind it is shown as text rather than linked to a page that does not exist.
- */
 interface ResultGame {
 	white: string;
 	whiteFideId: number | null;
@@ -126,16 +39,9 @@ interface ResultGame {
 const API = 'https://api.premovedprep.com';
 const SITE = 'https://premovedprep.com';
 
-/**
- * Below this many games the page has a name and little else, which is what search engines call thin
- * content: ignored at best, held against the rest of the domain at worst. It is still served -
- * somebody may have followed a link - but it asks not to be indexed.
- *
- * Same number as the HAVING clause in migration V20, which decides what the sitemap offers.
- */
+// Matches the HAVING clause in migration V20, which decides what the sitemap offers.
 const MIN_GAMES_TO_INDEX = 5;
 
-/** What the application itself asks for on the first page, so the two agree. */
 const PAGE_SIZE = 100;
 
 export const onRequestGet: PagesFunction = async (context) => {
@@ -147,7 +53,6 @@ export const onRequestGet: PagesFunction = async (context) => {
 
 	const url = new URL(context.request.url);
 	const requested = url.searchParams.get('color');
-	/** White unless asked otherwise, which is the colour the component starts on. */
 	const color: 'w' | 'b' = requested === 'b' ? 'b' : 'w';
 
 	const profile = await fetchJson<PlayerProfile>(`${API}/api/search/player/${fideId}`);
@@ -155,26 +60,17 @@ export const onRequestGet: PagesFunction = async (context) => {
 		return notFound();
 	}
 
-	/** The same field the sitemap builds its slugs from, so the canonical and the sitemap agree. */
 	const name = profile.name;
 	const slug = canonicalSlug(name, profile.fideId);
 
-	/**
-	 * Before the games are fetched, because a request that is about to be redirected has no use for
-	 * them. The name is needed first, which is why this cannot be answered from the URL alone.
-	 */
 	if (requestedSlug !== slug) {
 		const target = new URL(`/search/opponent/${slug}`, url);
-		/** ?color=b survives the move; the colour is part of what was asked for. */
 		target.search = url.search;
 		return new Response(null, {
 			status: 301,
 			headers: {
 				location: target.toString(),
-				/**
-				 * At the edge only. A player's spelling can change in the FIDE list, and then so does
-				 * the target of this redirect - a browser holding it for a year would not find out.
-				 */
+				// Edge cache only: a player's canonical name can change, moving this redirect's target.
 				'cache-control': 'public, max-age=0, s-maxage=86400',
 			},
 		});
@@ -184,11 +80,6 @@ export const onRequestGet: PagesFunction = async (context) => {
 
 	const canonical = `${SITE}/search/opponent/${slug}`;
 	const count = `${profile.archiveGames} game${profile.archiveGames === 1 ? '' : 's'}`;
-	/**
-	 * The same two strings SearchPageComponent sets once Angular has booted. They have to match: a
-	 * crawler that runs no JavaScript reads this one, a crawler that does reads that one, and two
-	 * different titles for one URL is the kind of drift nobody notices until it is in the index.
-	 */
 	const title = `${name} - chess games and preparation - PremovedPrep`;
 	const description =
 		`${count} by ${name} in the PremovedPrep archive: an all-in-one chess tool for analysis, ` +
@@ -196,7 +87,6 @@ export const onRequestGet: PagesFunction = async (context) => {
 
 	const shell = await context.env.ASSETS.fetch(new Request(new URL('/index.html', context.request.url).toString()));
 	if (!shell.ok) {
-		/** The shell is the page. Without it there is nothing to answer with, and a 503 says so. */
 		return new Response('Temporarily unavailable', { status: 503 });
 	}
 
@@ -249,7 +139,6 @@ export const onRequestGet: PagesFunction = async (context) => {
 				element.append(head, { html: true });
 			},
 		})
-		/** Angular clears this element when it boots, so what goes in is what a crawler reads. */
 		.on('app-root', {
 			element(element) {
 				element.setInnerContent(body, { html: true });
@@ -260,11 +149,6 @@ export const onRequestGet: PagesFunction = async (context) => {
 	return new Response(rewritten.body, {
 		headers: {
 			'content-type': 'text/html; charset=utf-8',
-			/**
-			 * Held at the edge, not in the browser. A crawler works through thousands of these; a person
-			 * who has just been signed out by a deploy must not be served yesterday's shell, and the
-			 * script tags inside it are the part that would go stale.
-			 */
 			'cache-control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
 			'x-content-type-options': 'nosniff',
 			'referrer-policy': 'strict-origin-when-cross-origin',
@@ -272,12 +156,7 @@ export const onRequestGet: PagesFunction = async (context) => {
 	});
 };
 
-/**
- * The id is the trailing number, so the words in front of it are free to change: a player's name
- * gains a spelling, the slug changes, and every old link still resolves - by being redirected to
- * the current one, which is the 301 above. It is also what keeps two players of the same name
- * apart, which a name alone cannot do.
- */
+// Only the trailing digits matter; the words in front can vary (old spelling, no spelling) and still resolve.
 function idFromSlug(slug: string): number | null {
 	const match = /(\d+)$/.exec(slug);
 	if (!match) {
@@ -287,7 +166,7 @@ function idFromSlug(slug: string): number | null {
 	return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-/** Twin of `opponentSearchPath` in src/app/core/seo/opponent-page.ts. Change one, change the other. */
+// Twin of `slug` in functions/sitemap-opponents.xml.ts; keep both in sync or canonicals diverge.
 function canonicalSlug(name: string, fideId: number): string {
 	const words = name
 		.normalize('NFD')
@@ -324,15 +203,10 @@ function notFound(): Response {
 	});
 }
 
-/** The tags the shell has no version of, appended rather than rewritten. */
 function extraHead(profile: PlayerProfile, canonical: string, title: string, description: string): string {
 	const robots =
 		profile.archiveGames >= MIN_GAMES_TO_INDEX ? '' : '<meta name="robots" content="noindex, follow">';
 
-	/**
-	 * A search page about a person, which is what this is - not a profile of one. Nothing in it comes
-	 * from the rating list: a name, and the FIDE id that is already in the URL.
-	 */
 	const jsonLd = JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'WebPage',
@@ -350,12 +224,6 @@ function extraHead(profile: PlayerProfile, canonical: string, title: string, des
 	return `${robots}<script type="application/ld+json">${jsonLd.replace(/</g, '\\u003c')}</script>`;
 }
 
-/**
- * What sits inside <app-root> until the bundle takes over.
- *
- * Plain and readable rather than hidden: text a crawler is shown and a person is not is cloaking,
- * and this is the same content the application draws a second later.
- */
 function prerendered(name: string, count: string, color: 'w' | 'b', games: ResultGame[]): string {
 	const side = color === 'w' ? 'as White' : 'as Black';
 
@@ -392,17 +260,8 @@ ${table}
 </div>`;
 }
 
-/**
- * The other side of the game, as a link to their own page.
- *
- * Only the other side. On a page of somebody's games as White, the White column is that player on
- * every row, and a page linking to itself a hundred times says nothing to anyone.
- *
- * The text shown is the PGN's spelling, because that is what the game records. The link is built
- * from the `player` table's spelling, because that is what the URL is built from everywhere else -
- * using the PGN's would send every visitor and every crawler through a redirect. A side the ingest
- * never matched to a FIDE id has no page to point at, and stays plain text.
- */
+// Link text is the PGN's spelling; the link itself uses the `player` table's spelling, since
+// every /search/opponent URL is built from that table and would otherwise redirect once more.
 function opponentCell(game: ResultGame, color: 'w' | 'b'): string {
 	const name = color === 'w' ? game.black : game.white;
 	const fideId = color === 'w' ? game.blackFideId : game.whiteFideId;
@@ -415,7 +274,7 @@ function opponentCell(game: ResultGame, color: 'w' | 'b'): string {
 	return `<a href="/search/opponent/${canonicalSlug(fideName, fideId)}">${text}</a>`;
 }
 
-/** Every value here comes from a database that ingests other people's PGN files. Escape all of it. */
+// All fields come from ingested PGN/DB content and are untrusted; escape before inlining as HTML.
 function esc(value: string): string {
 	return value
 		.replace(/&/g, '&amp;')

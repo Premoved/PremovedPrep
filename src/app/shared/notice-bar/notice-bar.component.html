@@ -5,7 +5,6 @@
 			<p class="text">
 				{{ notice.message }}
 				@if (notice.action; as action) {
-					<!-- A plain anchor, not routerLink: the point is a second tab, so this page keeps its work. -->
 					<a class="action" [href]="action.href" target="_blank" rel="noopener">{{ action.label }}</a>
 				}
 			</p>

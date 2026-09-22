@@ -128,12 +128,6 @@
 					(pointercancel)="onSheetPointerUp()"
 				>
 					@if (viewport.isMobile()) {
-						<!-- The only thing that starts the drag. Bound to the grip and not to the whole
-						     header: a pointerdown on a button used to arm the gesture, and because
-						     sheetDragFrom is only cleared on pointerup, a later move over the header
-						     slid the sheet down and left it there. -->
-						<!-- Decoration. The gesture is on the whole header, so a finger anywhere works; a
-						     4mm line would be the smallest target on the screen. -->
 						<span class="sheet-grip" aria-hidden="true"></span>
 
 						<div class="preview-controls">
@@ -189,9 +183,6 @@
 							</button>
 						</div>
 					} @else {
-						<!-- The desktop header is unchanged apart from losing the word "Preview:". The
-						     details are here because on a desktop there is no details block under the
-						     board; on a phone there is, so repeating them would cost a row for nothing. -->
 						<span class="preview-side">
 							<span class="preview-name" [attr.title]="game.white">{{ cellText(game, 'white') }}</span>
 							<span class="preview-elo">{{ cellText(game, 'whiteElo') }}</span>

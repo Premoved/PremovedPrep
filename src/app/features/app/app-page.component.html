@@ -9,14 +9,9 @@
 		</div>
 	</header>
 
-	<!--
-		Signed out, whatever the stage: the sign-in notice. Signed in, two states and nothing between
-		them: the presentation with the downloads, or coming soon.
-	-->
 	@if (!auth.isLoggedIn()) {
 		<app-signed-out-notice />
 	} @else if (showContent()) {
-		<!-- The app for this computer first, the others beside it. -->
 		<section class="download">
 			<p class="eyebrow">Download</p>
 			<div class="builds">
@@ -39,7 +34,6 @@
 			</p>
 		</section>
 
-		<!-- What the application looks like, one picture at a time. -->
 		<section class="shots">
 			@for (shot of showcase; track shot.title; let index = $index) {
 				<figure class="shot">
@@ -54,11 +48,6 @@
 			}
 		</section>
 
-		<!--
-			The plan, presented - and bought in the app, not here. The two facts that say so sit right
-			under the price, before anything else about it, so nobody reads this page as the site
-			asking to be paid for.
-		-->
 		<section class="plan">
 			<div class="hero">
 				<app-plan-icon class="plan-mark"></app-plan-icon>
@@ -100,10 +89,6 @@
 				</div>
 			</div>
 
-			<!--
-				The same line as in the app. The site's one billing action sits at its end: cancelling an
-				active plan that was paid for, so that stopping a payment never needs the app installed.
-			-->
 			@if (line(); as current) {
 				<div class="your-plan">
 					<span class="label">Your plan</span>
@@ -159,10 +144,8 @@
 			</div>
 		</section>
 
-		<!-- A screenshot, larger: over the page, not instead of it. -->
 		@if (zoomedShot(); as shot) {
 			<div class="lightbox">
-				<!-- The backdrop is a button of its own, so a click beside the picture closes it. -->
 				<button type="button" class="backdrop" aria-label="Close" tabindex="-1" (click)="closeZoom()"></button>
 				<figure class="lightbox-card">
 					<img [src]="shot.image" [alt]="shot.title" />
