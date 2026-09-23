@@ -29,10 +29,9 @@ export class ClipboardStore {
 		return contents && contents.scope === scope ? contents : null;
 	}
 
+	// One paste per copy: the Paste action disappears until something is copied or cut again.
 	consumed(): void {
-		if (this._contents()?.copy === false) {
-			this._contents.set(null);
-		}
+		this._contents.set(null);
 	}
 
 	clear(): void {

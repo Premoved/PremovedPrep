@@ -62,6 +62,8 @@ export interface SubscriptionView {
 	readonly refundUntil?: string | null;
 	// The plan is free for this account: prices are hidden rather than explained.
 	readonly complimentary?: boolean;
+	// A previous refund on this account: checkout needs the withdrawal waiver ticked.
+	readonly waiverRequired?: boolean;
 }
 
 export type PlanInterval = 'MONTH' | 'YEAR';

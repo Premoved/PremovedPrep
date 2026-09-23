@@ -8,6 +8,7 @@ import {
 	signal,
 	untracked,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { DesktopAppLogoComponent } from '../../shared/logo/desktop-app-logo.component';
 import { PlanIconComponent } from '../../shared/logo/plan-icon.component';
 import { SignedOutNoticeComponent } from '../../shared/signed-out/signed-out-notice.component';
@@ -41,7 +42,7 @@ const DEFAULT_PRICES = { monthly: 124, yearly: 1199, currency: 'EUR' };
 
 @Component({
 	selector: 'app-app-page',
-	imports: [DesktopAppLogoComponent, PlanIconComponent, SignedOutNoticeComponent],
+	imports: [RouterLink, DesktopAppLogoComponent, PlanIconComponent, SignedOutNoticeComponent],
 	templateUrl: './app-page.component.html',
 	styleUrl: './app-page.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +73,9 @@ export class AppPageComponent {
 	readonly mayDownload = computed(() => this.access()?.allowed === true);
 
 	readonly showContent = computed(() => this.released() || this.mayDownload());
+
+	// Free for this account: the page shows what is included and never a price.
+	readonly complimentary = computed(() => this.plan()?.complimentary === true);
 
 	readonly monthly = computed(() => this.price(this.plan()?.monthlyPriceMinor ?? DEFAULT_PRICES.monthly));
 	readonly yearly = computed(() => this.price(this.plan()?.yearlyPriceMinor ?? DEFAULT_PRICES.yearly));

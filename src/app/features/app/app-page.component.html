@@ -4,7 +4,8 @@
 		<div>
 			<h1>Desktop App</h1>
 			<p>
-				A native application with all the tools of this site, that enables you to use your own game archive as the Database, your own chess engine for analysis, and as much storage as your disk has.
+				A native application with all the tools of this site, that enables you to use your own game archive as the
+				Database, your own chess engine for analysis, and as much storage as your disk has.
 			</p>
 		</div>
 	</header>
@@ -70,7 +71,10 @@
 					</svg>
 					<div>
 						<h3>This website stays free</h3>
-						<p>All functions and features available on premovedprep.com are free to use and only require a registered account.</p>
+						<p>
+							All functions and features available on premovedprep.com are free to use and only require a registered
+							account.
+						</p>
 					</div>
 				</div>
 				<div class="fact">
@@ -81,10 +85,18 @@
 					</svg>
 					<div>
 						<h3>The plan lives in the app</h3>
-						<p>
-							Install the Desktop App, sign in, and open <strong>Subscription Plan</strong>  — €1.24/month or €11.99/year: 
-							Start your <strong>2 week free trial</strong> with a single click, no bank details required.
-						</p>
+						@if (complimentary()) {
+							<p>
+								Install the Desktop App, sign in, and open <strong>Subscription Plan</strong> to see your plan and
+								everything it includes.
+							</p>
+						} @else {
+							<p>
+								Install the Desktop App, sign in, and open <strong>Subscription Plan</strong> — €1.24/month or
+								€11.99/year: Start your <strong>2 week free trial</strong> with a single click, no bank details
+								required.
+							</p>
+						}
 					</div>
 				</div>
 			</div>
@@ -121,8 +133,8 @@
 						<div>
 							<h4>The Desktop App, with all its features</h4>
 							<p>
-								Analysis Board, Database Search, Library and Repertoire - working with native UCI engines, locally indexed
-								databases and your computer's local storage.
+								Analysis Board, Database Search, Library and Repertoire - working with native UCI engines, locally
+								indexed databases and your computer's local storage.
 							</p>
 						</div>
 					</div>
@@ -142,6 +154,12 @@
 					</div>
 				</div>
 			</div>
+
+			<p class="page-legal">
+				<a routerLink="/terms">Terms and Conditions</a>
+				<span class="sep">&middot;</span>
+				<a routerLink="/privacy">Privacy Policy</a>
+			</p>
 		</section>
 
 		@if (zoomedShot(); as shot) {
