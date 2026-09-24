@@ -137,6 +137,11 @@ export const routes: Routes = [
 				data: { title: 'Terms of service' },
 			},
 			{
+				path: 'app-terms',
+				loadComponent: () => import('./features/legal/app-terms.component').then((m) => m.AppTermsComponent),
+				data: { title: 'Desktop App terms' },
+			},
+			{
 				path: 'privacy',
 				loadComponent: () => import('./features/legal/privacy.component').then((m) => m.PrivacyComponent),
 				data: { title: 'Privacy policy' },

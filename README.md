@@ -30,37 +30,6 @@ npm start # http://localhost:4200
 | `npm run assets` | the one below; runs automatically before `start` and `build` |
 | `npm run assets:pieces` | downloads the licence-compatible Lichess piece sets into `public/piece/` |
 
-## Project structure
-
-```
-src/app/
-  core/        
-    board/     board themes and piece sets
-    captcha/   the premove-mate bot check inspired by lichess
-    chess/     PGN parsing and serialisation, FEN utilities, notation
-    engine/    
-    analytics/ 
-  features/    
-    analysis-board/   
-    collections/      
-    search/          
-    app/             
-    auth/  home/  settings/
-  layout/      the application shell
-  shared/      shared components
-public/        public assets 
-tools/         standalone Node checks, run by `npm run check`
-```
-
-## Deployment
-
-The frontend is a static bundle on Cloudflare Pages; the API is a separate host. 
-
-- Build command: `npm ci && npm run build`
-- Output directory: `dist/premoved-prep-frontend/browser`
-- `public/_headers` carries the cross-origin isolation headers and the cache policy
-- `public/_redirects` is the SPA fallback
-
 ## Licence
 
 AGPL-3.0-only. See `LICENSE`.
@@ -68,6 +37,7 @@ AGPL-3.0-only. See `LICENSE`.
 - **Network Interaction Clause:** If you deploy a modified version of this application for public network use, the AGPL requires you to provide users with access to your modified source code.
 - **Third-Party Assets:** Third-party code, icons, and downloaded assets operate under their own specific terms, which are listed in [`THIRD-PARTY.md`](THIRD-PARTY.md).
 - PremovedPrep's custom icons and SVG logos are proprietary to the app's identity and are not covered by the project's primary license.
+- The move, capture and castling recordings in `public/sound/premoved/` are Premoved's own and are covered by this project's licence.
 
 ## Trademarks and Copyrights
 

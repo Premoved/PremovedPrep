@@ -14,7 +14,7 @@ PremovedPrep's source is licensed under AGPL-3.0-only (see `LICENSE`). The follo
 | Stockfish (WebAssembly) | [official-stockfish/Stockfish](https://github.com/official-stockfish/Stockfish), via the [`stockfish`](https://www.npmjs.com/package/stockfish) npm package, v18.0.8 | GPL-3.0-or-later (the npm package declares GPL-3.0) |
 
 
-A machine-generated list of every bundled dependency and its licence is written to`3rdpartylicenses.txt` by the production build.
+A machine-generated list of every bundled dependency and its licence is written to `3rdpartylicenses.txt` by the production build.
 
 | URL on the deployed site | What |
 |---|---|
@@ -51,11 +51,6 @@ covered by this project's licence**; each set carries its own, recorded in lila'
 | papercut | Nikolay Anzarov | CC BY 4.0 |
 | totoy | Kosal Sen | CC BY 4.0 |
 
-## Sound
-
-The move, capture and castling recordings in `public/sound/premoved/` are Premoved's own and are
-covered by this project's licence. 
-
 ## Icons
 
 [Boxicons](https://boxicons.com) v3.0.8, free tier: icons CC BY 4.0, fonts SIL OFL 1.1, code MIT.
@@ -63,13 +58,13 @@ Each inlined glyph carries a `Boxicons v3.0.8` comment beside it.
 
 ## Data
 
-None of this data is redistributed in this repository. It is dynamically fetched at run time by the backend.
+None of this raw data is redistributed in this repository. The PremovedPrep backend server downloads and processes the official monthly archives, and the client applications (Website and Desktop App) dynamically query the backend for results at run time.
 
 | Source | Where it comes from | Used for |
 |---|---|---|
-| Official Lichess broadcast archives | <https://database.lichess.org/#broadcasts> | The game archive used for the Opening Tree, the Game List and Database Search. The monthly export carries official broadcasts only, and is the single source of game data. |
-| Lichess broadcast API | <https://lichess.org/api> | Event, location, round and date for a broadcast game with missing tags |
-| Lichess tablebase API | <https://tablebase.lichess.ovh> | Endgame tablebase lookups |
-| FIDE rating lists | <https://ratings.fide.com/download_lists.phtml> | Player profiles, titles, federations, and the monthly rating for each player |
+| Official Lichess broadcast archives | <https://database.lichess.org/#broadcasts> | Processed by our server to provide the default cloud database. The monthly export carries official broadcasts only, and is the single source of game data. |
+| Lichess broadcast API | <https://lichess.org/api> | Event, location, round and date for a broadcast game with missing tags. |
+| Lichess tablebase API | <https://tablebase.lichess.ovh> | Endgame tablebase lookups. |
+| FIDE rating lists | <https://ratings.fide.com/download_lists.phtml> | Player profiles, titles, federations, and the monthly rating for each player. |
 
-API requests to Lichess are rate-limited and implement an automatic backoff mechanism on HTTP 429 errors.
+API requests made directly to Lichess are rate-limited and implement an automatic backoff mechanism on HTTP 429 errors.
