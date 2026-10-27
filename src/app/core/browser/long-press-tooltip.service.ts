@@ -67,8 +67,7 @@ function showsNoText(button: HTMLElement): boolean {
 		return true;
 	}
 	return [button, ...button.querySelectorAll<HTMLElement>('*')].some(
-		(element) =>
-			getComputedStyle(element).textOverflow === 'ellipsis' && element.scrollWidth > element.clientWidth + 1,
+		(element) => getComputedStyle(element).textOverflow === 'ellipsis' && element.scrollWidth > element.clientWidth + 1,
 	);
 }
 
