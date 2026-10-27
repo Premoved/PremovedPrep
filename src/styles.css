@@ -111,6 +111,23 @@ body {
 	}
 }
 
+/* Same look as the board's utility tooltip. */
+.touch-tooltip {
+	position: fixed;
+	z-index: 99999;
+	padding: 0.3rem 0.7rem;
+	border: 1px solid var(--bg-border);
+	border-radius: 4px;
+	background: var(--bg-elevated);
+	color: var(--text-main);
+	font-size: 0.78rem;
+	font-weight: 500;
+	line-height: 1.2;
+	white-space: nowrap;
+	box-shadow: 0 4px 15px var(--shadow-color);
+	pointer-events: none;
+}
+
 .app-tooltip {
 	position: fixed;
 	z-index: 99999;
