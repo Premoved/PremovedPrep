@@ -103,9 +103,7 @@
 	.analysis-toolbar {
 		overflow-x: auto;
 		overflow-y: hidden;
-		// The first value is the fallback where 'safe' is unsupported.
 		justify-content: flex-start;
-		justify-content: safe center;
 		padding: 0 0.75rem;
 	}
 
