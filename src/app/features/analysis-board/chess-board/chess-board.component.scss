@@ -340,7 +340,7 @@ $sq: var(--square-size, 64px);
 }
 
 @media (hover: none) {
-	.utility-tooltip {
+	.utility-tooltip:not(.held) {
 		display: none;
 	}
 }

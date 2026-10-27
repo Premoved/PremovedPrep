@@ -58,6 +58,8 @@ body {
 	width: 100%;
 	height: 100%;
 	overscroll-behavior-x: none;
+	/* Mobile Chrome widens the layout viewport to any overflow, which resizes every fixed sheet. */
+	overflow-x: clip;
 }
 
 body {

@@ -266,7 +266,10 @@ export class CollectionViewComponent {
 		return at !== -1 && at < this.rows().length - 1;
 	});
 
-	readonly listGutterRight = computed(() => (this.selected() ? this.previewWidth() + LIST_GUTTER_PX : LIST_GUTTER_PX));
+	// On mobile the preview is a full-screen sheet; reserving its desktop width overflows the page.
+	readonly listGutterRight = computed(() =>
+		this.selected() && !this.viewport.isMobile() ? this.previewWidth() + LIST_GUTTER_PX : LIST_GUTTER_PX,
+	);
 
 	readonly picked = signal<ReadonlySet<number>>(new Set());
 

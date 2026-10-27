@@ -4,32 +4,6 @@ PremovedPrep is a tournament preparation platform, designed for chess analysis, 
 
 Live at **[premovedprep.com](https://premovedprep.com)**.
 
-## Requirements
-
-- Node 24
-- npm 10 or newer
-
-## How to run
-
-```bash
-npm ci
-npm start # http://localhost:4200
-```
-
-## Scripts
-
-| Command | What it does |
-|---|---|
-| `npm start` | dev server |
-| `npm run build` | production build into `dist/premoved-prep-frontend/browser` |
-| `npm test` | unit tests (Vitest) |
-| `npm run lint` | ESLint, over TypeScript and templates |
-| `npm run check` | everything CI runs: signal calls, bindings, UCI session, lint, both tsconfigs |
-| `npm run check:signals` | fails if a template reads a signal without calling it |
-| `npm run check:bindings` | fails on an `[input]` or `(output)` that the target component does not declare |
-| `npm run assets` | the one below; runs automatically before `start` and `build` |
-| `npm run assets:pieces` | downloads the licence-compatible Lichess piece sets into `public/piece/` |
-
 ## Licence
 
 AGPL-3.0-only. See `LICENSE`.
