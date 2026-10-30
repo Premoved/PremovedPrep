@@ -107,6 +107,14 @@ export class PreferencesStore {
 		this.scheduleSync();
 	}
 
+	// Sends a sync still waiting out its delay now, e.g. right before signing out drops the session.
+	flush(): void {
+		if (this.syncTimer === null) return;
+		clearTimeout(this.syncTimer);
+		this.syncTimer = null;
+		this.push();
+	}
+
 	private repaint(): void {
 		const current = this.draft();
 		this.boardTheme.apply(current.boardTheme, current.pieceSet);

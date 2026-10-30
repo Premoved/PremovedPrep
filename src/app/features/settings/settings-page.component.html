@@ -180,14 +180,9 @@
 
 					<p class="board-caption">Everything you choose here shows up on this board first.</p>
 
-					<div class="board-actions">
-						<button type="button" class="ghost-btn" [disabled]="prefs.atDefaults()" (click)="resetBoard()">
-							Reset to defaults
-						</button>
-						<button type="button" class="primary-btn" [disabled]="!prefs.dirty()" (click)="saveBoard()">
-							{{ prefs.dirty() ? 'Save changes' : 'Saved' }}
-						</button>
-					</div>
+					@if (!viewport.isMobile()) {
+						<ng-container [ngTemplateOutlet]="boardActions" />
+					}
 				</div>
 			</div>
 
@@ -397,9 +392,25 @@
 							</div>
 						</div>
 					</div>
+
+					<!-- On a phone the board scrolls away long before the last option, so the buttons follow the options. -->
+					@if (viewport.isMobile()) {
+						<ng-container [ngTemplateOutlet]="boardActions" />
+					}
 				</div>
 			</div>
 		</div>
+
+		<ng-template #boardActions>
+			<div class="board-actions">
+				<button type="button" class="ghost-btn" [disabled]="prefs.atDefaults()" (click)="resetBoard()">
+					Reset to defaults
+				</button>
+				<button type="button" class="primary-btn" [disabled]="!prefs.dirty()" (click)="saveBoard()">
+					{{ prefs.dirty() ? 'Save changes' : 'Saved' }}
+				</button>
+			</div>
+		</ng-template>
 	</section>
 
 	@if (auth.currentUser(); as user) {
