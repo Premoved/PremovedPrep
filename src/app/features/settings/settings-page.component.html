@@ -348,7 +348,7 @@
 					</div>
 
 					<div class="group">
-						<h3 class="group-title">Arrow colours</h3>
+						<h3 class="group-title">Arrows</h3>
 						<div class="arrow-rows">
 							@for (slot of arrowSlots; track slot.brush; let i = $index) {
 								<div class="arrow-row">
@@ -373,6 +373,28 @@
 									</div>
 								</div>
 							}
+						</div>
+
+						<div class="arrow-option">
+							<p class="arrow-label">Show arrows separately when navigating</p>
+							<div class="segmented">
+								<button
+									type="button"
+									class="segment"
+									[class.selected]="!prefs.arrowsSeparately()"
+									(click)="setArrowsSeparately(false)"
+								>
+									Off
+								</button>
+								<button
+									type="button"
+									class="segment"
+									[class.selected]="prefs.arrowsSeparately()"
+									(click)="setArrowsSeparately(true)"
+								>
+									On
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

@@ -167,6 +167,7 @@ export class PreviewBoardComponent implements AfterViewInit, OnDestroy {
 		}
 
 		const store = new MoveTreeStore();
+		store.setSeparateDrawings(this.prefs.arrowsSeparately());
 		try {
 			const parsed = this.parser.parse(pgn);
 			store.adopt(parsed.root, parsed.headers, this.itemType() === 'STUDY');

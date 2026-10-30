@@ -202,6 +202,12 @@ export class ChessBoardComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	constructor() {
 		effect(() => {
+			const separate = this.prefs.arrowsSeparately();
+			this.tree.setSeparateDrawings(separate);
+			this.preview.tree()?.setSeparateDrawings(separate);
+		});
+
+		effect(() => {
 			const isStudy = this.tree.isStudy();
 			const root = this.tree.root();
 			if (!isStudy) return;

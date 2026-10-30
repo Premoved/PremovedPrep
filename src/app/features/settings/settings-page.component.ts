@@ -351,6 +351,10 @@ export class SettingsPageComponent {
 		this.prefs.update('moveDests', style);
 	}
 
+	setArrowsSeparately(separate: boolean): void {
+		this.prefs.update('arrowsSeparately', separate);
+	}
+
 	setSound(on: boolean): void {
 		this.prefs.update('sound', on);
 		if (on) {

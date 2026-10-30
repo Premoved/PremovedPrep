@@ -34,6 +34,7 @@ export class PreferencesStore {
 	readonly coordinates = computed(() => this.draft().coordinates);
 	readonly moveDests = computed(() => this.draft().moveDests);
 	readonly arrowColors = computed(() => this.draft().arrowColors);
+	readonly arrowsSeparately = computed(() => this.draft().arrowsSeparately);
 	readonly sound = computed(() => this.draft().sound);
 	readonly customColors = computed(() => this.draft().customColors);
 
