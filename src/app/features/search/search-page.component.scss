@@ -106,9 +106,17 @@ h1 {
 		min-height: 38px;
 		justify-content: center;
 		padding: 4px 8px;
+		white-space: nowrap;
 		text-align: center;
 		line-height: 1.2;
 		font-size: 0.8rem;
+	}
+
+	// em, not px: tracks the browser's text size. One line whenever both labels fit; two only when they cannot.
+	@media (max-width: 17.5em) {
+		.mode-toggle button {
+			white-space: normal;
+		}
 	}
 
 	.panel {
