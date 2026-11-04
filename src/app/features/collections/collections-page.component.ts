@@ -20,6 +20,7 @@ import { BishopLogoComponent } from '../../shared/logo/bishop-logo.component';
 import { RookLogoComponent } from '../../shared/logo/rook-logo.component';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { fitOnScreen } from '../../core/browser/menu-placement';
+import { FormValidationDirective } from '../../shared/form-validation/form-validation.directive';
 
 interface Editor {
 	readonly editing: CollectionSummary | null;
@@ -51,6 +52,7 @@ const MENU_FOOTPRINT = { width: 208, height: 132 };
 		SignedOutNoticeComponent,
 		BishopLogoComponent,
 		RookLogoComponent,
+		FormValidationDirective,
 	],
 	templateUrl: './collections-page.component.html',
 	styleUrl: './collections-page.component.scss',
