@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BoardThemeService } from '../../core/board/board-theme.service';
-import { BOARD_THEMES } from '../../core/board/board-themes';
+import { BOARD_THEMES, BoardTheme } from '../../core/board/board-themes';
 import { pieceSetFor } from '../../core/board/piece-sets';
 import { ViewportService } from '../../core/layout/viewport.service';
 import { CloudStorageService } from '../../core/services/cloud-storage.service';
@@ -70,7 +70,7 @@ export class SettingsPageComponent {
 	private readonly confirmDialog = inject(ConfirmService);
 	readonly viewport = inject(ViewportService);
 
-	readonly boardThemes = BOARD_THEMES;
+	readonly boardThemes = BOARD_THEMES.map((board) => ({ ...board, swatch: boardSwatch(board) }));
 	readonly arrowSlots = ARROW_SLOTS;
 	readonly palette = ARROW_PALETTE;
 
@@ -436,6 +436,24 @@ export class SettingsPageComponent {
 			error: () => this.vaultUpdatedAt.set(null),
 		});
 	}
+}
+
+// Every board swatch is the same crop of a whole board: the texture itself, or the flat colours drawn as
+// an 8x8 board, so both kinds show the same number of squares.
+function boardSwatch(board: BoardTheme): string {
+	if (board.image) {
+		return `url(${board.image})`;
+	}
+	let dark = '';
+	for (let row = 0; row < 8; row++) {
+		for (let col = (row + 1) % 2; col < 8; col += 2) {
+			dark += `M${col} ${row}h1v1h-1z`;
+		}
+	}
+	const svg =
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" shape-rendering="crispEdges">` +
+		`<rect width="8" height="8" fill="${board.light}"/><path d="${dark}" fill="${board.dark}"/></svg>`;
+	return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 
 function formatDay(iso: string): string {

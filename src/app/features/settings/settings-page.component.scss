@@ -364,38 +364,6 @@
 	}
 }
 
-.chips {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.4rem;
-}
-
-.chip {
-	padding: 0.35rem 0.7rem;
-	border-radius: 999px;
-	border: 1px solid var(--bg-border);
-	background: none;
-	color: var(--text-muted);
-	font-family: inherit;
-	font-size: 0.8rem;
-	cursor: default;
-	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		color 0.15s ease;
-
-	&:hover {
-		background: var(--bg-hover);
-		color: var(--text-main);
-	}
-
-	&.selected {
-		border-color: var(--accent-blue);
-		color: var(--accent-blue);
-		background: var(--bg-hover);
-	}
-}
-
 .swatches {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
@@ -440,7 +408,29 @@
 	flex: 1;
 }
 
-// A whole-board texture, cropped to its top-left corner so the grain reads at this size.
+// A white and a black knight from the set, on a light and a dark square of the chosen board.
+.piece-art {
+	.swatch-half {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		&:first-child {
+			background: var(--board-light);
+		}
+
+		&:last-child {
+			background: var(--board-dark);
+		}
+	}
+
+	img {
+		width: 1.7rem;
+		height: 1.7rem;
+	}
+}
+
+// A whole board, cropped to its top-left corner so the squares read at this size.
 .swatch-texture {
 	background-size: 200% auto;
 	background-position: 0 0;

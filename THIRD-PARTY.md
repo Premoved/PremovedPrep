@@ -23,7 +23,6 @@ A machine-generated list of every bundled dependency and its licence is written 
 | `/licenses/LICENSE` | This project's own AGPL-3.0 text |
 | `/licenses/chessground/LICENSE` | Chessground's GPL-3.0 text |
 | `/piece/<set>/LICENSE.txt` | Each piece set's licence text, beside its artwork |
-| `/piece/chessnut/NOTICE.txt` | Chessnut's Apache-2.0 NOTICE, if its author ships one |
 | `/board/LICENSE.txt` | The board textures' AGPL-3.0 text |
 | `/engine/Copying.txt` | Stockfish's GPL-3.0 text, beside the WebAssembly engine files it covers |
 

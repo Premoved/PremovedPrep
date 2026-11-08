@@ -213,15 +213,20 @@
 
 					<div class="group">
 						<h3 class="group-title">Pieces <span class="group-source">— artwork from Lichess</span></h3>
-						<div class="chips">
+						<div class="swatches">
 							@for (set of pieceSets(); track set.id) {
 								<button
 									type="button"
-									class="chip"
+									class="swatch"
 									[class.selected]="prefs.pieceSet() === set.id"
+									[attr.aria-pressed]="prefs.pieceSet() === set.id"
 									(click)="choosePieceSet(set.id)"
 								>
-									{{ set.name }}
+									<span class="swatch-art piece-art" aria-hidden="true">
+										<span class="swatch-half"><img [src]="'piece/' + set.id + '/wN.svg'" alt="" /></span>
+										<span class="swatch-half"><img [src]="'piece/' + set.id + '/bN.svg'" alt="" /></span>
+									</span>
+									<span class="swatch-name">{{ set.name }}</span>
 								</button>
 							}
 						</div>
@@ -238,18 +243,11 @@
 									[title]="board.name"
 									(click)="chooseBoardTheme(board.id)"
 								>
-									@if (board.image) {
-										<span
-											class="swatch-art swatch-texture"
-											[style.background-color]="board.light"
-											[style.background-image]="'url(' + board.image + ')'"
-										></span>
-									} @else {
-										<span class="swatch-art">
-											<span class="swatch-half" [style.background]="board.light"></span>
-											<span class="swatch-half" [style.background]="board.dark"></span>
-										</span>
-									}
+									<span
+										class="swatch-art swatch-texture"
+										[style.background-color]="board.light"
+										[style.background-image]="board.swatch"
+									></span>
 									<span class="swatch-name">{{ board.name }}</span>
 								</button>
 							}
