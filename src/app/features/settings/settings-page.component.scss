@@ -440,6 +440,12 @@
 	flex: 1;
 }
 
+// A whole-board texture, cropped to its top-left corner so the grain reads at this size.
+.swatch-texture {
+	background-size: 200% auto;
+	background-position: 0 0;
+}
+
 .theme-art {
 	align-items: center;
 	padding: 0.3rem;

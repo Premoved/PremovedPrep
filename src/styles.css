@@ -224,15 +224,19 @@ body {
 	pointer-events: none;
 }
 
+/* --board-texture is set by BoardThemeService for the wood and maple boards; the rest are drawn. */
 cg-board {
 	background-color: var(--board-light);
-	background-image: conic-gradient(
-		var(--board-dark) 90deg,
-		var(--board-light) 90deg 180deg,
-		var(--board-dark) 180deg 270deg,
-		var(--board-light) 270deg
+	background-image: var(
+		--board-texture,
+		conic-gradient(
+			var(--board-dark) 90deg,
+			var(--board-light) 90deg 180deg,
+			var(--board-dark) 180deg 270deg,
+			var(--board-light) 270deg
+		)
 	);
-	background-size: 25% 25%;
+	background-size: var(--board-texture-size, 25% 25%);
 }
 
 .cg-wrap.orientation-white coords.ranks :nth-child(odd),

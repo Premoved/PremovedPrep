@@ -1,6 +1,6 @@
 import { DrawBrush, DrawBrushes } from '@lichess-org/chessground/draw';
-import { DEFAULT_BOARD_THEME } from '../board/board-themes';
-import { DEFAULT_PIECE_SET } from '../board/piece-sets';
+import { DEFAULT_BOARD_THEME, normaliseBoardThemeId } from '../board/board-themes';
+import { DEFAULT_PIECE_SET, isOfferedPieceSet } from '../board/piece-sets';
 
 export interface AppPreferences {
 	readonly pieceSet: string;
@@ -60,9 +60,6 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
-// Old theme id -> its current replacement, for values already stored under the old name.
-const RETIRED_BOARD_THEMES: Readonly<Record<string, string>> = { default: 'brown' };
-
 export function normalisePreferences(raw: unknown): AppPreferences {
 	if (typeof raw !== 'object' || raw === null) {
 		return DEFAULT_PREFERENCES;
@@ -72,11 +69,12 @@ export function normalisePreferences(raw: unknown): AppPreferences {
 	const colors = Array.isArray(source.arrowColors) ? source.arrowColors : [];
 
 	return {
-		pieceSet: typeof source.pieceSet === 'string' ? source.pieceSet : DEFAULT_PREFERENCES.pieceSet,
+		pieceSet:
+			typeof source.pieceSet === 'string' && isOfferedPieceSet(source.pieceSet)
+				? source.pieceSet
+				: DEFAULT_PREFERENCES.pieceSet,
 		boardTheme:
-			typeof source.boardTheme === 'string'
-				? (RETIRED_BOARD_THEMES[source.boardTheme] ?? source.boardTheme)
-				: DEFAULT_PREFERENCES.boardTheme,
+			typeof source.boardTheme === 'string' ? normaliseBoardThemeId(source.boardTheme) : DEFAULT_PREFERENCES.boardTheme,
 		coordinates: typeof source.coordinates === 'boolean' ? source.coordinates : DEFAULT_PREFERENCES.coordinates,
 		moveDests:
 			source.moveDests === 'dot' || source.moveDests === 'ring' ? source.moveDests : DEFAULT_PREFERENCES.moveDests,

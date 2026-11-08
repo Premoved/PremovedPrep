@@ -49,4 +49,6 @@ test-out.txt
 
 # Third-party piece artwork, fetched by `npm run assets`; per-set licences, not committed.
 /public/piece
+# Board textures, fetched the same way; AGPL-3.0-or-later per lila, not committed.
+/public/board
 

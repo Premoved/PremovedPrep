@@ -228,7 +228,7 @@
 					</div>
 
 					<div class="group">
-						<h3 class="group-title">Board <span class="group-source">— drawn by Chessground</span></h3>
+						<h3 class="group-title">Board <span class="group-source">— the classic Lichess boards</span></h3>
 						<div class="swatches">
 							@for (board of boardThemes; track board.id) {
 								<button
@@ -238,10 +238,18 @@
 									[title]="board.name"
 									(click)="chooseBoardTheme(board.id)"
 								>
-									<span class="swatch-art">
-										<span class="swatch-half" [style.background]="board.light"></span>
-										<span class="swatch-half" [style.background]="board.dark"></span>
-									</span>
+									@if (board.image) {
+										<span
+											class="swatch-art swatch-texture"
+											[style.background-color]="board.light"
+											[style.background-image]="'url(' + board.image + ')'"
+										></span>
+									} @else {
+										<span class="swatch-art">
+											<span class="swatch-half" [style.background]="board.light"></span>
+											<span class="swatch-half" [style.background]="board.dark"></span>
+										</span>
+									}
 									<span class="swatch-name">{{ board.name }}</span>
 								</button>
 							}

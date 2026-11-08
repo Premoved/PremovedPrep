@@ -49,13 +49,17 @@ async function main() {
 	await copyFile(notices, join(target, '3rdpartylicenses.txt'));
 	console.log('collect-licenses: licenses/3rdpartylicenses.txt written into the deployed folder.');
 
-	// Required attribution for the CC BY piece sets and Boxicons; must be reachable from the site.
-	for (const name of ['THIRD-PARTY.md', 'LICENSE']) {
+	// Required attribution for the piece sets, board textures and Boxicons; must be reachable from the site.
+	// The repository keeps its own licence as LICENSE.md; it is deployed as licenses/LICENSE.
+	for (const [source, name] of [
+		['THIRD-PARTY.md', 'THIRD-PARTY.md'],
+		['LICENSE.md', 'LICENSE'],
+	]) {
 		try {
-			await copyFile(join(ROOT, name), join(target, name));
+			await copyFile(join(ROOT, source), join(target, name));
 			console.log(`collect-licenses: licenses/${name} written into the deployed folder.`);
 		} catch {
-			console.warn(`collect-licenses: ${name} not found in the repository root; not deployed.`);
+			console.warn(`collect-licenses: ${source} not found in the repository root; not deployed.`);
 		}
 	}
 }
