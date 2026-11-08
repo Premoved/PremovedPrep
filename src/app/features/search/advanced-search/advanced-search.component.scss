@@ -229,7 +229,7 @@
 	padding: 0.45rem 1.2rem;
 	border: none;
 	border-radius: 6px;
-	background: var(--accent-blue);
+	background: var(--accent-fill);
 	color: #fff;
 	font-family: inherit;
 	font-size: 0.85rem;
@@ -238,7 +238,7 @@
 }
 
 .primary:hover:not(:disabled) {
-	background: var(--glow-blue);
+	background: var(--accent-fill-hover);
 }
 
 .primary:disabled {

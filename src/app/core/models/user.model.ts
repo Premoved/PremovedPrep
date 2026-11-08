@@ -1,4 +1,5 @@
 import { ResetVaultView } from '../crypto/vault.model';
+import { ThemeName } from '../theme/themes';
 
 export type SubscriptionStatus = 'FREE' | 'ACTIVE' | 'CANCELED';
 
@@ -10,7 +11,7 @@ export interface UserSummary {
 	readonly subscriptionStatus: SubscriptionStatus;
 	// Not incremented or enforced by the server; it always reads as the plan maximum.
 	readonly freeReportsRemaining: number;
-	readonly themePreference: 'light' | 'dark';
+	readonly themePreference: ThemeName;
 	readonly boardPreferences: string | null;
 }
 

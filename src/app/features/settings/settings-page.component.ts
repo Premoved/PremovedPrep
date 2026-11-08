@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -15,9 +15,6 @@ import { NotificationService } from '../../core/services/notification.service';
 import { PreferencesStore } from '../../core/services/preferences.store';
 import { ThemeName, ThemeService } from '../../core/services/theme.service';
 import { MoveSoundService } from '../../core/sound/move-sound.service';
-import { CustomThemeService } from '../../core/theme/custom-theme.service';
-import { CUSTOM_COLOR_PRESETS, CUSTOM_COLOR_SLOTS, legibility } from '../../core/theme/custom-theme';
-import { ColorPickerComponent } from '../../shared/color-picker/color-picker.component';
 import { SettingsPreviewComponent } from './settings-preview.component';
 import { PasswordRevealDirective } from '../../shared/password-reveal/password-reveal.directive';
 import { RecoveryCodeComponent } from './recovery-code.component';
@@ -44,7 +41,6 @@ const UNITS: readonly (readonly [Intl.RelativeTimeFormatUnit, number])[] = [
 		NgTemplateOutlet,
 		RouterLink,
 		SettingsPreviewComponent,
-		ColorPickerComponent,
 		PasswordRevealDirective,
 		RecoveryCodeComponent,
 		FormValidationDirective,
@@ -68,7 +64,6 @@ export class SettingsPageComponent {
 	readonly prefs = inject(PreferencesStore);
 	private readonly boardTheme = inject(BoardThemeService);
 	private readonly sounds = inject(MoveSoundService);
-	private readonly customTheme = inject(CustomThemeService);
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
 	private readonly notify = inject(NotificationService);
@@ -82,47 +77,6 @@ export class SettingsPageComponent {
 	readonly pieceSets = computed(() => this.boardTheme.installedPieceSets().map(pieceSetFor));
 
 	readonly soundInstalled = this.sounds.available;
-
-	readonly colorSlots = CUSTOM_COLOR_SLOTS;
-
-	private readonly baseSurfaces = signal<readonly string[]>(CUSTOM_COLOR_SLOTS.map(() => '#ffffff'));
-	private readonly baseText = signal('#000000');
-
-	readonly surfaceColors = computed<readonly string[]>(() => this.prefs.customColors() ?? this.baseSurfaces());
-
-	readonly themeMode = computed<'light' | 'dark' | 'custom'>(() =>
-		this.prefs.customColors() ? 'custom' : this.theme.theme(),
-	);
-
-	readonly surfaceWarning = computed<string | null>(() => {
-		const colours = this.prefs.customColors();
-		if (!colours) return null;
-
-		const text = this.baseText();
-		const unreadable = CUSTOM_COLOR_SLOTS.findIndex((_, i) => legibility(colours[i], text) === 'unreadable');
-		if (unreadable >= 0) {
-			return `${CUSTOM_COLOR_SLOTS[unreadable].name} is too close to the text colour of ${this.theme.theme()} mode - words on it will be hard to make out. Try the other end of the row, or switch modes.`;
-		}
-
-		const poor = CUSTOM_COLOR_SLOTS.findIndex((_, i) => legibility(colours[i], text) === 'poor');
-		if (poor >= 0) {
-			return `${CUSTOM_COLOR_SLOTS[poor].name} is low-contrast against ${this.theme.theme()} mode's text. It is readable, but not comfortably.`;
-		}
-		return null;
-	});
-
-	presetsFor(slot: number): readonly string[] {
-		return CUSTOM_COLOR_PRESETS[slot] ?? [];
-	}
-
-	chooseSurface(slot: number, colour: string): void {
-		const next = this.surfaceColors().map((existing, index) => (index === slot ? colour : existing));
-		this.prefs.update('customColors', next);
-	}
-
-	clearSurfaces(): void {
-		this.prefs.update('customColors', null);
-	}
 
 	private readonly cloud = inject(CloudStorageService);
 	readonly storage = this.cloud.usage;
@@ -317,12 +271,6 @@ export class SettingsPageComponent {
 		this.route.fragment.pipe(takeUntilDestroyed()).subscribe((fragment) => this.scrollTo(fragment));
 		this.refreshStorage();
 		this.refreshRecoveryCodeDate();
-
-		effect(() => {
-			this.theme.theme();
-			this.baseSurfaces.set(this.customTheme.baseColors());
-			this.baseText.set(this.customTheme.readBaseText());
-		});
 	}
 
 	@HostListener('window:focus')
@@ -342,20 +290,6 @@ export class SettingsPageComponent {
 
 	setTheme(theme: ThemeName): void {
 		this.theme.set(theme);
-		if (this.prefs.customColors()) {
-			this.prefs.update('customColors', null);
-		}
-	}
-
-	useCustom(): void {
-		if (this.prefs.customColors()) {
-			return;
-		}
-		// Read fresh here rather than via baseSurfaces(), which only updates on theme change and could
-		// still hold a mode the user has since left.
-		const base = this.customTheme.baseColors();
-		this.baseSurfaces.set(base);
-		this.prefs.update('customColors', [...base]);
 	}
 
 	choosePieceSet(id: string): void {
