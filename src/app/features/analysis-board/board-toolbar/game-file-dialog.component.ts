@@ -54,9 +54,6 @@ interface TimeControlOption {
 	readonly mine: boolean;
 }
 
-// Types identified by a title and an author rather than by two players.
-const DOCUMENT_TYPES: readonly ItemType[] = ['ANALYSIS', 'STUDY', 'MAIN_LINE'];
-
 const COLOR_LABEL: Readonly<Record<RepertoireColor, string>> = { w: 'White', b: 'Black' };
 
 @Component({
@@ -126,14 +123,8 @@ export class GameFileDialogComponent {
 	readonly itemType = signal<ItemType>(this.defaultTypeFor('LIBRARY'));
 	readonly types = computed(() => ITEM_TYPES_BY_KIND[this.kind()]);
 
-	readonly isDocument = computed(() => DOCUMENT_TYPES.includes(this.itemType()));
-
-	// Seeded from the live tree headers and the type guessed above, so a document's title/author
-	// (Event/Annotator) show correctly on the very first render, not just after locate*Entry() corrects it.
-	readonly draft = signal<Draft>(this.draftOf(this.tree.headers(), this.isDocument()));
-
-	readonly firstLabel = computed(() => (this.isDocument() ? 'Title' : 'White'));
-	readonly secondLabel = computed(() => (this.isDocument() ? 'Author' : 'Black'));
+	// The same fields for every type: choosing a type changes what the entry does, not what it holds.
+	readonly draft = signal<Draft>(this.draftOf(this.tree.headers()));
 
 	readonly path = computed(() => {
 		const parts: string[] = [this.kind() === 'LIBRARY' ? 'library' : 'repertoire'];
@@ -198,9 +189,6 @@ export class GameFileDialogComponent {
 
 					const type = ITEM_TYPES_BY_KIND[folder.kind].includes(itemType) ? itemType : this.defaultTypeFor(folder.kind);
 					this.itemType.set(type);
-
-					// Re-seeded once the type is known: a document stores title/author in Event and Annotator.
-					this.draft.set(this.draftOf(this.tree.headers(), DOCUMENT_TYPES.includes(type)));
 
 					// The constructor loads the Library, so only another shelf needs a reload.
 					if (folder.kind !== 'LIBRARY') {
@@ -334,13 +322,6 @@ export class GameFileDialogComponent {
 			black: draft['second'] ?? '',
 		};
 
-		if (this.isDocument()) {
-			edited['event'] = draft['event'] || draft['first'] || '';
-			edited['annotator'] = draft['annotator'] || draft['second'] || '';
-			edited['white'] = '';
-			edited['black'] = '';
-		}
-
 		// The roster first, the form on top: an imported tag not asked about by the form survives.
 		const merged: Record<string, string> = { ...this.rosterOf(this.tree.headers()), ...edited };
 		const headers: Record<string, string> = {};
@@ -357,21 +338,19 @@ export class GameFileDialogComponent {
 		return { ...(headers as GameHeaders), variant: current.variant, extra: current.extra };
 	}
 
-	// `document` decides where the first two fields come from: a study or analysis keeps its title
-	// in Event and its author in Annotator, the same tags headers() writes them back to.
-	private draftOf(headers: GameHeaders, document: boolean): Draft {
+	private draftOf(headers: GameHeaders): Draft {
 		return {
-			first: (document ? headers.event : headers.white) ?? '',
-			second: (document ? headers.annotator : headers.black) ?? '',
+			first: headers.white ?? '',
+			second: headers.black ?? '',
 			firstElo: headers.whiteElo ?? '',
 			secondElo: headers.blackElo ?? '',
 			result: headers.result ?? '*',
-			event: document ? '' : (headers.event ?? ''),
+			event: headers.event ?? '',
 			site: headers.site ?? '',
 			date: headers.date ?? '',
 			round: headers.round ?? '',
 			timeControl: headers.timeControl ?? '',
-			annotator: document ? '' : (headers.annotator ?? ''),
+			annotator: headers.annotator ?? '',
 		};
 	}
 
@@ -480,15 +459,11 @@ export class GameFileDialogComponent {
 		this.tree.setHeaders(headers);
 		this.saving.set(true);
 
-		const draft = this.draft();
-		const title = this.isDocument() ? draft['first']?.trim() || headers.event : undefined;
-		const author = this.isDocument() ? draft['second']?.trim() || undefined : undefined;
-
 		const openItemId = this.openItemId();
 		const written =
 			this.writesBack() && openItemId !== null
-				? this.api.updateItem(openItemId, this.pgn(headers), title || undefined, author, this.itemType())
-				: this.api.createItem(collectionId, this.itemType(), this.pgn(headers), title || undefined, author);
+				? this.api.updateItem(openItemId, this.pgn(headers), this.itemType())
+				: this.api.createItem(collectionId, this.itemType(), this.pgn(headers));
 
 		written.subscribe({
 			next: (item) => {
@@ -523,6 +498,6 @@ export class GameFileDialogComponent {
 			return 'MAIN_LINE';
 		}
 		const fen = this.tree.root()?.fen;
-		return fen && fen !== DEFAULT_FEN ? 'STUDY' : 'ANALYSIS';
+		return fen && fen !== DEFAULT_FEN ? 'STUDY' : 'GAME';
 	}
 }

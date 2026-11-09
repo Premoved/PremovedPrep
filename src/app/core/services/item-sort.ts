@@ -2,9 +2,9 @@ import { ItemSortKey, ItemSummary, ItemType } from '../models/collection.model';
 
 // The order the TYPE sorts group by, as the SQL CASE did.
 const TYPE_RANK: Readonly<Record<ItemSortKey, Partial<Record<ItemType, number>>>> = {
-	TYPE: { ANALYSIS: 1, STUDY: 2, GAME: 3, MAIN_LINE: 1, MODEL_GAME: 2 },
-	TYPE_STUDY_FIRST: { STUDY: 1, ANALYSIS: 2, GAME: 3, MAIN_LINE: 1, MODEL_GAME: 2 },
-	TYPE_GAME_FIRST: { GAME: 1, ANALYSIS: 2, STUDY: 3, MAIN_LINE: 1, MODEL_GAME: 2 },
+	TYPE: { STUDY: 1, GAME: 2, MAIN_LINE: 1, MODEL_GAME: 2 },
+	TYPE_STUDY_FIRST: { STUDY: 1, GAME: 2, MAIN_LINE: 1, MODEL_GAME: 2 },
+	TYPE_GAME_FIRST: { GAME: 1, STUDY: 2, MAIN_LINE: 1, MODEL_GAME: 2 },
 	MANUAL: {},
 	WHITE: {},
 	BLACK: {},
@@ -74,9 +74,9 @@ function keyOf(item: ItemSummary, sort: ItemSortKey): string | number | null {
 			return TYPE_RANK[sort][item.itemType] ?? null;
 
 		case 'WHITE':
-			return lower(item.white ?? item.title);
+			return lower(item.white);
 		case 'BLACK':
-			return lower(item.black ?? item.author);
+			return lower(item.black);
 
 		case 'WHITE_ELO':
 			return item.whiteElo;
@@ -88,7 +88,7 @@ function keyOf(item: ItemSummary, sort: ItemSortKey): string | number | null {
 			return resultRank(item.result);
 
 		case 'ANNOTATOR':
-			return lower(item.author);
+			return lower(item.annotator);
 		case 'ECO':
 			return item.eco;
 

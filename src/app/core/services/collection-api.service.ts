@@ -14,10 +14,11 @@ import {
 	RepertoireColor,
 	StorageUsage,
 	WireCollectionSummary,
+	itemTypeOf,
 } from '../models/collection.model';
 import { RepertoireTree } from '../models/repertoire.model';
 import { VaultLockedError, VaultService } from '../crypto/vault.service';
-import { convertTypeTo, deriveFields, importTypeFor, parsePgn, shapeOf, splitPgn } from '../chess/pgn-metadata';
+import { convertTypeTo, deriveFields, importTypeFor, parsePgn, splitPgn } from '../chess/pgn-metadata';
 import { compareItems } from './item-sort';
 import { EMPTY_MAIN_LINE_PGN, ItemPayload, readPayload, writePayload } from './item-payload';
 import { buildZip } from '../browser/zip';
@@ -78,7 +79,7 @@ export class CollectionApiService {
 	}
 
 	private sealedEmptyTrunk(): Promise<string> {
-		return this.sealItem({ pgn: EMPTY_MAIN_LINE_PGN, title: null, author: null });
+		return this.sealItem({ pgn: EMPTY_MAIN_LINE_PGN });
 	}
 
 	update(id: number, changes: { name?: string; icon?: string; sortOrder?: number }): Observable<CollectionSummary> {
@@ -146,27 +147,15 @@ export class CollectionApiService {
 		return this.http.get<ItemRow>(`${this.baseUrl}/items/${itemId}`).pipe(switchMap((row) => from(this.openItem(row))));
 	}
 
-	createItem(
-		collectionId: number,
-		itemType: ItemType,
-		pgn: string,
-		title?: string,
-		author?: string,
-	): Observable<ItemSummary> {
-		return from(this.sealItem({ pgn, title: title ?? null, author: author ?? null })).pipe(
+	createItem(collectionId: number, itemType: ItemType, pgn: string): Observable<ItemSummary> {
+		return from(this.sealItem({ pgn })).pipe(
 			switchMap((payload) => this.http.post<ItemRow>(`${this.baseUrl}/${collectionId}/items`, { itemType, payload })),
 			switchMap((row) => from(this.openItem(row))),
 		);
 	}
 
-	updateItem(
-		itemId: number,
-		pgn: string,
-		title?: string,
-		author?: string,
-		itemType?: ItemType,
-	): Observable<ItemSummary> {
-		return from(this.sealItem({ pgn, title: title ?? null, author: author ?? null })).pipe(
+	updateItem(itemId: number, pgn: string, itemType?: ItemType): Observable<ItemSummary> {
+		return from(this.sealItem({ pgn })).pipe(
 			switchMap((payload) => this.http.put<ItemRow>(`${this.baseUrl}/items/${itemId}`, { payload, itemType })),
 			switchMap((row) => from(this.openItem(row))),
 		);
@@ -204,7 +193,7 @@ export class CollectionApiService {
 					Promise.all(
 						games.map(async (game) => ({
 							itemType: itemType ?? importTypeFor(collection.kind, game),
-							payload: await this.sealItem({ pgn: game.pgn, title: null, author: null }),
+							payload: await this.sealItem({ pgn: game.pgn }),
 						})),
 					),
 				).pipe(
@@ -241,7 +230,7 @@ export class CollectionApiService {
 				this.http.post<ItemRow[]>(`${this.baseUrl}/${targetCollectionId}/items/transfer`, {
 					items: items.map((item) => ({
 						itemId: item.id,
-						itemType: convertTypeTo(target.kind, item.itemType, item.startFen),
+						itemType: convertTypeTo(target.kind, item.itemType),
 					})),
 					copy,
 				}),
@@ -300,13 +289,12 @@ export class CollectionApiService {
 
 	private async openItem(row: ItemRow): Promise<ItemDetail> {
 		const payload = readPayload(await this.vault.open('item', row.payload));
-		const fields = deriveFields(row.itemType, parsePgn(payload.pgn), payload.title, payload.author);
+		const fields = deriveFields(parsePgn(payload.pgn));
 
 		return {
 			id: row.id,
 			collectionId: row.collectionId,
-			itemType: row.itemType,
-			shape: shapeOf(row.itemType),
+			itemType: itemTypeOf(row.itemType),
 			sortOrder: row.sortOrder,
 			pgn: payload.pgn,
 			createdAt: row.createdAt,
@@ -372,7 +360,7 @@ export class CollectionApiService {
 
 			const retyped = items.map((item) => ({
 				itemId: item.id,
-				itemType: convertTypeTo(kind, item.itemType, item.startFen),
+				itemType: convertTypeTo(kind, item.itemType),
 			}));
 
 			const needsTrunk = kind === 'REPERTOIRE' && !retyped.some((item) => item.itemType === 'MAIN_LINE');
