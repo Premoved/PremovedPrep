@@ -206,7 +206,7 @@
 						<button
 							type="button"
 							class="rp-link game"
-							[appTooltip]="'Their most recent game with this move, opened where the line left the book'"
+							[appTooltip]="'Latest game'"
 							(click)="openReportGame(game); $event.stopPropagation()"
 						>
 							{{ reportGameLabel(game) }}
@@ -249,7 +249,7 @@
 				<button
 					type="button"
 					class="rp-file"
-					[appTooltip]="'Open your main line at this position'"
+					[appTooltip]="'Open main line'"
 					(click)="openBookFile(file, point); $event.stopPropagation()"
 				>
 					@if (file.collectionName) {
@@ -271,12 +271,7 @@
 
 		@if (treeLink) {
 			<span class="rp-foot">
-				<button
-					type="button"
-					class="rp-link tree"
-					[appTooltip]="'Every move they played from here, in the opening tree of their games'"
-					(click)="treeLink.open(point.line); $event.stopPropagation()"
-				>
+				<button type="button" class="rp-link tree" (click)="treeLink.open(point.line); $event.stopPropagation()">
 					Player's Opening Tree &rarr;
 				</button>
 			</span>
