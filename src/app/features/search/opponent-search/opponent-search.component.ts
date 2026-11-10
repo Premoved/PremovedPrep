@@ -1,5 +1,16 @@
 import { Router } from '@angular/router';
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { Location } from '@angular/common';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	ElementRef,
+	computed,
+	effect,
+	inject,
+	signal,
+	untracked,
+	viewChild,
+} from '@angular/core';
 import {
 	OpponentScope,
 	PlayerProfile,
@@ -21,6 +32,8 @@ import { AdvancedReportCache } from '../advanced-report/advanced-report-cache';
 import { GameResultsComponent } from '../game-results/game-results.component';
 import { OpponentExplorerComponent } from '../opponent-explorer/opponent-explorer.component';
 import { ViewportService } from '../../../core/layout/viewport.service';
+import { opponentSearchPath } from '../../../core/seo/opponent-page';
+import { OpeningTreeLink } from '../../analysis-board/state/opening-tree-link';
 
 // Autocomplete debounce.
 const SUGGEST_DEBOUNCE_MS = 220;
@@ -32,8 +45,9 @@ export type ResultPanel = 'games' | 'tree' | 'report';
 	selector: 'app-opponent-search',
 	standalone: true,
 	imports: [GameResultsComponent, DatePickerComponent, OpponentExplorerComponent, AdvancedReportComponent],
-	// The generated Advanced Report stays with the page while its panels are switched.
-	providers: [AdvancedReportCache],
+	// The Advanced Report is built once per search and kept with the page; its cards can move the
+	// Player's Opening Tree to their position.
+	providers: [AdvancedReportCache, OpeningTreeLink],
 	templateUrl: './opponent-search.component.html',
 	styleUrl: './opponent-search.component.scss',
 	host: {
@@ -48,6 +62,9 @@ export class OpponentSearchComponent {
 	private readonly viewport = inject(ViewportService);
 	private readonly auth = inject(AuthService);
 	private readonly analytics = inject(AnalyticsService);
+	private readonly location = inject(Location);
+	private readonly reports = inject(AdvancedReportCache);
+	readonly treeLink = inject(OpeningTreeLink);
 
 	private readonly queryInput = viewChild<ElementRef<HTMLInputElement>>('queryInput');
 
@@ -80,6 +97,13 @@ export class OpponentSearchComponent {
 
 	constructor() {
 		this.loadPreview();
+
+		// A card in the Advanced report asked for its position in the Player's Opening Tree.
+		effect(() => {
+			if (this.treeLink.target()) {
+				untracked(() => this.selectPanel('tree'));
+			}
+		});
 	}
 
 	readonly canSearch = computed(() => !this.loading());
@@ -96,8 +120,30 @@ export class OpponentSearchComponent {
 		{ id: 'report', label: 'Advanced report' },
 	];
 
+	// The tree and the report are created the first time they are opened, then kept: switching panels
+	// leaves each where it was, and the report is not built again.
+	readonly opened = signal<ReadonlySet<ResultPanel>>(new Set<ResultPanel>(['games']));
+
 	selectPanel(panel: ResultPanel): void {
 		this.panel.set(panel);
+		this.opened.update((opened) => (opened.has(panel) ? opened : new Set([...opened, panel])));
+		this.writeUrl();
+	}
+
+	// Path and query carry the search, so a reload or a shared link opens the same opponent.
+	private writeUrl(): void {
+		const scope = this.scope();
+		if (!scope) {
+			return;
+		}
+		const query = new URLSearchParams({ color: scope.color });
+		if (scope.from) {
+			query.set('from', scope.from);
+		}
+		if (this.panel() !== 'games') {
+			query.set('view', this.panel());
+		}
+		this.location.replaceState(opponentSearchPath(scope.name ?? '', scope.fideId), query.toString());
 	}
 
 	openGuide(event: Event): void {
@@ -214,11 +260,23 @@ export class OpponentSearchComponent {
 		}
 	}
 
-	// Entry point for /search?opponent=<fideId>. Rebuilds the suggestion from the profile rather
+	// Entry point for /search/opponent/<slug>. Rebuilds the suggestion from the profile rather
 	// than the text autocomplete, which searches by name and could match someone else.
-	openFor(fideId: number, color: SearchColor | null): void {
+	openFor(
+		fideId: number,
+		color: SearchColor | null,
+		from: string | null = null,
+		panel: ResultPanel | null = null,
+	): void {
 		if (color) {
 			this.color.set(color);
+		}
+		if (from) {
+			this.from.set(from);
+		}
+		if (panel) {
+			this.panel.set(panel);
+			this.opened.update((opened) => new Set([...opened, panel]));
 		}
 		this.api.playerProfile(fideId).subscribe({
 			next: (profile) => {
@@ -234,6 +292,23 @@ export class OpponentSearchComponent {
 			},
 			error: () => this.notify.error('That player could not be found in the archive.'),
 		});
+	}
+
+	private selectAllOnClick = false;
+
+	// With an opponent already picked, the first click selects the whole text, so typing replaces it.
+	onQueryFocus(input: HTMLInputElement): void {
+		if (this.picked()) {
+			this.selectAllOnClick = true;
+			input.select();
+		}
+	}
+
+	onQueryClick(input: HTMLInputElement): void {
+		if (this.selectAllOnClick) {
+			this.selectAllOnClick = false;
+			input.select();
+		}
 	}
 
 	pick(suggestion: PlayerSuggestion): void {
@@ -319,6 +394,17 @@ export class OpponentSearchComponent {
 		this.rows.set([]);
 		this.loadProfile(player.fideId);
 		this.load(false);
+		this.writeUrl();
+		this.prepareReport();
+	}
+
+	// Built in the background as soon as the opponent is known, so the Advanced report opens ready.
+	// Only when the repertoire can be read here: signed in, with the vault unlocked.
+	private prepareReport(): void {
+		const scope = this.scope();
+		if (scope && this.auth.isAuthenticated() && this.auth.unlockedHere()) {
+			this.reports.prefetch(scope);
+		}
 	}
 
 	private loadProfile(fideId: number): void {

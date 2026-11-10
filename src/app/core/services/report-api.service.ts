@@ -6,7 +6,7 @@ import { AdvancedReport, OpponentGames } from '../models/report.model';
 import { OpponentScope } from '../models/search.model';
 import { ItemDetail, RepertoireColor } from '../models/collection.model';
 import { CollectionApiService } from './collection-api.service';
-import { buildBook } from '../report/repertoire-book';
+import { BookCollection, buildBook } from '../report/repertoire-book';
 import { buildAdvancedReport } from '../report/advanced-report';
 
 // The overlay against the user's repertoire runs here, the only place it is readable; up to four
@@ -23,11 +23,11 @@ export class ReportApiService {
 
 		return forkJoin({
 			opponent: this.opponentGames(scope),
-			trunks: this.trunks(ourColor),
+			repertoire: this.trunks(ourColor),
 		}).pipe(
-			map(({ opponent, trunks }) =>
+			map(({ opponent, repertoire }) =>
 				buildAdvancedReport(
-					buildBook(trunks),
+					buildBook(repertoire.trunks, repertoire.collections),
 					opponent.games,
 					opponent.fideId,
 					opponent.opponentColor,
@@ -48,15 +48,25 @@ export class ReportApiService {
 		return this.http.get<OpponentGames>(`${this.baseUrl}/opponent-games`, { params });
 	}
 
-	// One request per repertoire collection, usually already warm from the collections screen.
-	private trunks(color: RepertoireColor): Observable<ItemDetail[]> {
+	// One request per repertoire collection, usually already warm from the collections screen. The
+	// collections' names and icons come along, for the cards that link back to these main lines.
+	private trunks(
+		color: RepertoireColor,
+	): Observable<{ trunks: ItemDetail[]; collections: Map<number, BookCollection> }> {
 		return this.collections.list('REPERTOIRE', color).pipe(
 			switchMap((collections) =>
-				collections.length === 0
+				(collections.length === 0
 					? of([] as ItemDetail[][])
-					: forkJoin(collections.map((collection) => this.collections.listDetails(collection.id))),
+					: forkJoin(collections.map((collection) => this.collections.listDetails(collection.id)))
+				).pipe(
+					map((contents) => ({
+						trunks: contents.flat().filter((item) => item.itemType === 'MAIN_LINE'),
+						collections: new Map(
+							collections.map((collection) => [collection.id, { name: collection.name, icon: collection.icon }]),
+						),
+					})),
+				),
 			),
-			map((contents) => contents.flat().filter((item) => item.itemType === 'MAIN_LINE')),
 		);
 	}
 }
