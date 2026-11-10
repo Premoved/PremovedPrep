@@ -3,6 +3,7 @@ export const environment = {
 	apiBaseUrl: 'https://api.premovedprep.com/api',
 	sourceCodeUrl: 'https://github.com/Premoved/PremovedPrep',
 	contactEmail: 'contact@premoved.com',
+	supportUrl: 'https://buymeacoffee.com/premoved',
 	desktopApp: {
 		repoUrl: 'https://github.com/Premoved/PremovedPrep-App',
 		releasesUrl: 'https://github.com/Premoved/PremovedPrep-App/releases',
