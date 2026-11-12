@@ -26,6 +26,8 @@ A machine-generated list of every bundled dependency and its licence is written 
 | `/board/LICENSE.txt` | The board textures' AGPL-3.0 text |
 | `/engine/Copying.txt` | Stockfish's GPL-3.0 text, beside the WebAssembly engine files it covers |
 
+The website itself shows these under **Third-party material**, linked from Settings and from the Terms.
+
 ## Piece sets
 
 `npm run assets:pieces` downloads piece artwork from

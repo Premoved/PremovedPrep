@@ -2,14 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, firstValueFrom, from, map, switchMap, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import {
-	AuthResponse,
-	RegisterResponse,
-	ResetContext,
-	SessionSummary,
-	SubscriptionView,
-	UserSummary,
-} from '../models/user.model';
+import { AuthResponse, RegisterResponse, ResetContext, SessionSummary, UserSummary } from '../models/user.model';
 import { SessionService } from '../auth/session.service';
 import { CaptchaAnswer } from '../captcha/captcha.model';
 import { VaultService } from '../crypto/vault.service';
@@ -132,10 +125,6 @@ export class AuthService {
 
 	logout(): void {
 		this.session.end().subscribe();
-	}
-
-	subscription() {
-		return this.http.get<SubscriptionView>(`${this.baseUrl}/me/subscription`, { withCredentials: true });
 	}
 
 	changeUsername(username: string) {
