@@ -14,6 +14,8 @@ import { GameDetail, GameSortKey, GameSummary } from '../../../../core/models/ga
 import { MoveNode, PlyNode } from '../../../../core/models/move-node.model';
 import { OpeningExplorerService } from '../../../../core/services/opening-explorer.service';
 import { GameListStore } from '../../state/game-list.store';
+import { SignedOutNoticeComponent } from '../../../../shared/signed-out/signed-out-notice.component';
+import { AuthService } from '../../../../core/services/auth.service';
 import { GamePreviewStore } from '../../state/game-preview.store';
 import { MoveTreeStore } from '../../state/move-tree.store';
 import { GameContextMenuComponent } from './game-context-menu/game-context-menu.component';
@@ -46,7 +48,7 @@ interface OpenMenu {
 @Component({
 	selector: 'app-game-list',
 	standalone: true,
-	imports: [GameContextMenuComponent],
+	imports: [GameContextMenuComponent, SignedOutNoticeComponent],
 	templateUrl: './game-list.component.html',
 	styleUrl: './game-list.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +74,8 @@ export class GameListComponent implements OnDestroy {
 	readonly status = computed(() => this.store.status());
 	readonly error = computed(() => this.store.error());
 	readonly isEmpty = computed(() => this.store.isEmpty());
+	private readonly auth = inject(AuthService);
+	readonly signedOut = computed(() => !this.auth.isLoggedIn());
 	readonly hasMore = computed(() => this.store.hasMore());
 
 	readonly rows = computed<readonly RenderedGame[]>(() => this.store.rows().map(render));

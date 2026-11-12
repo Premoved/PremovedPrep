@@ -9,7 +9,6 @@ import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
 import { PreferencesStore } from './core/services/preferences.store';
 import { MoveSoundService } from './core/sound/move-sound.service';
-import { AnalyticsService } from './core/analytics/analytics.service';
 import { LongPressTooltipService } from './core/browser/long-press-tooltip.service';
 
 export const appConfig: ApplicationConfig = {
@@ -26,7 +25,6 @@ export const appConfig: ApplicationConfig = {
 			const sounds = inject(MoveSoundService);
 			void sounds.load();
 			sounds.primeOnFirstGesture(() => prefs.sound());
-			inject(AnalyticsService).init();
 			inject(LongPressTooltipService).init();
 			return inject(AuthService).restoreSession();
 		}),

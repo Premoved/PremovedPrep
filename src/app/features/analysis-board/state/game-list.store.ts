@@ -2,6 +2,7 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { GameSortKey, GameSummary } from '../../../core/models/game-list.model';
 import { OpeningExplorerService } from '../../../core/services/opening-explorer.service';
 import { MoveTreeStore } from './move-tree.store';
+import { AuthService } from '../../../core/services/auth.service';
 
 export type GameListStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -11,6 +12,7 @@ const ASCENDING_FIRST: ReadonlySet<GameSortKey> = new Set<GameSortKey>(['WHITE_N
 export class GameListStore {
 	private readonly api = inject(OpeningExplorerService);
 	private readonly tree = inject(MoveTreeStore);
+	private readonly auth = inject(AuthService);
 
 	private readonly _active = signal(false);
 	private readonly _status = signal<GameListStatus>('idle');
@@ -40,6 +42,15 @@ export class GameListStore {
 			if (!this._active()) {
 				return;
 			}
+			// The games at a position need an account: nothing is asked for while signed out.
+			if (!this.auth.isLoggedIn()) {
+				this.requestId++;
+				this._rows.set([]);
+				this._hasMore.set(false);
+				this._error.set(null);
+				this._status.set('idle');
+				return;
+			}
 			const fen = this.tree.currentNode().fen;
 			const sort = this._sort();
 			const ascending = this._ascending();
@@ -62,7 +73,7 @@ export class GameListStore {
 	}
 
 	loadMore(): void {
-		if (this._status() === 'loading' || !this._hasMore()) {
+		if (this._status() === 'loading' || !this._hasMore() || !this.auth.isLoggedIn()) {
 			return;
 		}
 		const next = this._page() + 1;

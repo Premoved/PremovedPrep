@@ -57,7 +57,7 @@
 				@if (loading() && rows().length === 0) {
 					<p class="notice">Loading&hellip;</p>
 				} @else if (isEmpty()) {
-					<p class="notice">Nothing filed here yet. Create a game, or import a PGN.</p>
+					<p class="notice">Nothing here yet.</p>
 				} @else {
 					<table class="entries" [style.minWidth.px]="tableMinWidth">
 						<caption class="sr-only">

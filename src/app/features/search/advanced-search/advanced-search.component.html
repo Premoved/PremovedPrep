@@ -10,20 +10,34 @@
 			</div>
 
 			<div class="line">
-				<label class="field grow">
+				<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- The click only keeps the suggestion list open. -->
+				<label class="field grow" (click)="keepOpen($event)">
 					<span class="field-label">White</span>
 					<input
 						type="text"
-						list="advanced-white-players"
 						autocomplete="off"
+						spellcheck="false"
 						[value]="valueOf('white')"
 						(input)="onNameField('white', $event)"
+						(keydown)="onNameKeydown('white', $event)"
 					/>
-					<datalist id="advanced-white-players">
-						@for (name of whiteSuggestions(); track name) {
-							<option [value]="name"></option>
-						}
-					</datalist>
+					@if (isOpen('white')) {
+						<div class="suggestions" role="listbox">
+							@for (name of whiteSuggestions(); track name; let i = $index) {
+								<button
+									type="button"
+									role="option"
+									class="suggestion"
+									[class.highlighted]="highlighted() === i"
+									[attr.aria-selected]="highlighted() === i"
+									(click)="pickName('white', name)"
+									(mouseenter)="highlighted.set(i)"
+								>
+									{{ name }}
+								</button>
+							}
+						</div>
+					}
 				</label>
 				<label class="field tiny">
 					<span class="field-label">Elo min</span>
@@ -46,20 +60,34 @@
 			</div>
 
 			<div class="line">
-				<label class="field grow">
+				<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- The click only keeps the suggestion list open. -->
+				<label class="field grow" (click)="keepOpen($event)">
 					<span class="field-label">Black</span>
 					<input
 						type="text"
-						list="advanced-black-players"
 						autocomplete="off"
+						spellcheck="false"
 						[value]="valueOf('black')"
 						(input)="onNameField('black', $event)"
+						(keydown)="onNameKeydown('black', $event)"
 					/>
-					<datalist id="advanced-black-players">
-						@for (name of blackSuggestions(); track name) {
-							<option [value]="name"></option>
-						}
-					</datalist>
+					@if (isOpen('black')) {
+						<div class="suggestions" role="listbox">
+							@for (name of blackSuggestions(); track name; let i = $index) {
+								<button
+									type="button"
+									role="option"
+									class="suggestion"
+									[class.highlighted]="highlighted() === i"
+									[attr.aria-selected]="highlighted() === i"
+									(click)="pickName('black', name)"
+									(mouseenter)="highlighted.set(i)"
+								>
+									{{ name }}
+								</button>
+							}
+						</div>
+					}
 				</label>
 				<label class="field tiny">
 					<span class="field-label">Elo min</span>
@@ -177,7 +205,7 @@
 </section>
 
 <div class="results-anchor">
-	@if (previewing()) {
+	@if (previewCapped()) {
 		<p class="preview-caption">The most recent 30 games in the database loaded.</p>
 	}
 

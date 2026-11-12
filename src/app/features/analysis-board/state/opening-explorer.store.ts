@@ -1,9 +1,10 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { OpeningTree, OpeningTreeMove, EMPTY_OPENING_TREE } from '../../../core/models/opening-tree.model';
 import { OpponentScope } from '../../../core/models/search.model';
 import { OpeningExplorerService } from '../../../core/services/opening-explorer.service';
 import { SearchApiService } from '../../../core/services/search-api.service';
 import { MoveTreeStore } from './move-tree.store';
+import { AuthService } from '../../../core/services/auth.service';
 
 export type ExplorerStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -12,9 +13,13 @@ export class OpeningExplorerStore {
 	private readonly api = inject(OpeningExplorerService);
 	private readonly search = inject(SearchApiService);
 	private readonly tree = inject(MoveTreeStore);
+	private readonly auth = inject(AuthService);
 
 	private readonly _scope = signal<OpponentScope | null>(null);
 	readonly scope = this._scope.asReadonly();
+
+	// The archive's opening tree needs an account; an opponent's tree (Database Search) is open to everyone.
+	readonly signedOut = computed(() => this._scope() === null && !this.auth.isLoggedIn());
 
 	private readonly _active = signal(false);
 	private readonly _status = signal<ExplorerStatus>('idle');
@@ -42,6 +47,10 @@ export class OpeningExplorerStore {
 			if (!this._active()) {
 				return;
 			}
+			if (this.signedOut()) {
+				untracked(() => this.clear());
+				return;
+			}
 			this.load(this.tree.currentNode().fen);
 		});
 	}
@@ -56,6 +65,13 @@ export class OpeningExplorerStore {
 		}
 		this.cache.clear();
 		this._scope.set(scope);
+	}
+
+	private clear(): void {
+		this.requestId++;
+		this._data.set(EMPTY_OPENING_TREE);
+		this._error.set(null);
+		this._status.set('idle');
 	}
 
 	private load(fen: string): void {

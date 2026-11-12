@@ -22,8 +22,6 @@ import {
 	fideProfileUrl,
 } from '../../../core/models/search.model';
 import { NotificationService } from '../../../core/services/notification.service';
-import { AnalyticsService } from '../../../core/analytics/analytics.service';
-import { AnalyticsEvent } from '../../../core/analytics/analytics.events';
 import { AuthService } from '../../../core/services/auth.service';
 import { SearchApiService } from '../../../core/services/search-api.service';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
@@ -61,7 +59,6 @@ export class OpponentSearchComponent {
 	private readonly notify = inject(NotificationService);
 	private readonly viewport = inject(ViewportService);
 	private readonly auth = inject(AuthService);
-	private readonly analytics = inject(AnalyticsService);
 	private readonly location = inject(Location);
 	private readonly reports = inject(AdvancedReportCache);
 	readonly treeLink = inject(OpeningTreeLink);
@@ -378,11 +375,6 @@ export class OpponentSearchComponent {
 	}
 
 	private runFor(player: PlayerSuggestion): void {
-		this.analytics.capture(AnalyticsEvent.opponentSearch, {
-			mode: 'opponent',
-			authenticated: this.auth.isAuthenticated(),
-			color: this.color(),
-		});
 		this.scope.set({
 			fideId: player.fideId,
 			color: this.color(),

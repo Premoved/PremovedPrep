@@ -4,6 +4,7 @@ import { UciMove, parseUciMove } from '../../../../core/engine/uci';
 import { Color } from '../../../../core/models/chess-enums';
 import { OpeningTreeMove, TopGame } from '../../../../core/models/opening-tree.model';
 import { OpeningExplorerStore } from '../../state/opening-explorer.store';
+import { SignedOutNoticeComponent } from '../../../../shared/signed-out/signed-out-notice.component';
 
 interface ReferenceGame {
 	readonly white: string;
@@ -30,7 +31,7 @@ interface RenderedMove {
 @Component({
 	selector: 'app-opening-tree',
 	standalone: true,
-	imports: [],
+	imports: [SignedOutNoticeComponent],
 	templateUrl: './opening-tree.component.html',
 	styleUrl: './opening-tree.component.scss',
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +44,7 @@ export class OpeningTreeComponent {
 	readonly status = computed(() => this.explorer.status());
 	readonly error = computed(() => this.explorer.error());
 	readonly isEmpty = computed(() => this.explorer.isEmpty());
+	readonly signedOut = computed(() => this.explorer.signedOut());
 
 	// Which side is about to move, and therefore which player in every reference game.
 	private readonly moverIsWhite = computed(() => {

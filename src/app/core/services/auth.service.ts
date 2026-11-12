@@ -12,8 +12,6 @@ import {
 } from '../models/user.model';
 import { SessionService } from '../auth/session.service';
 import { CaptchaAnswer } from '../captcha/captcha.model';
-import { AnalyticsService } from '../analytics/analytics.service';
-import { AnalyticsEvent } from '../analytics/analytics.events';
 import { VaultService } from '../crypto/vault.service';
 import { VaultMigrationService } from '../crypto/vault-migration.service';
 import { DEFAULT_KDF, deriveFromPassword, parseKdf } from '../crypto/kdf';
@@ -24,7 +22,6 @@ import { VaultMaterial, VaultView } from '../crypto/vault.model';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
 	private readonly http = inject(HttpClient);
-	private readonly analytics = inject(AnalyticsService);
 	private readonly session = inject(SessionService);
 	private readonly vault = inject(VaultService);
 	private readonly migration = inject(VaultMigrationService);
@@ -48,20 +45,18 @@ export class AuthService {
 	): Observable<RegisterResponse> {
 		return from(this.vault.create(password, email, DEFAULT_KDF)).pipe(
 			switchMap((created) =>
-				this.http
-					.post<RegisterResponse>(
-						`${this.baseUrl}/register`,
-						{
-							username,
-							email,
-							secret: created.authSecret,
-							vault: created.material,
-							acceptedTerms,
-							captcha,
-						},
-						{ withCredentials: true },
-					)
-					.pipe(tap(() => this.analytics.capture(AnalyticsEvent.userRegistered))),
+				this.http.post<RegisterResponse>(
+					`${this.baseUrl}/register`,
+					{
+						username,
+						email,
+						secret: created.authSecret,
+						vault: created.material,
+						acceptedTerms,
+						captcha,
+					},
+					{ withCredentials: true },
+				),
 			),
 		);
 	}
@@ -136,7 +131,6 @@ export class AuthService {
 	}
 
 	logout(): void {
-		this.analytics.capture(AnalyticsEvent.userSignedOut);
 		this.session.end().subscribe();
 	}
 
@@ -298,7 +292,6 @@ export class AuthService {
 
 	private signedIn(response: AuthResponse): void {
 		this.session.apply(response);
-		this.analytics.capture(AnalyticsEvent.userSignedIn);
 	}
 }
 

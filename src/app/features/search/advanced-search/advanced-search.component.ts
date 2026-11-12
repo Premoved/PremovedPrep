@@ -7,10 +7,7 @@ import {
 	isCriteriaEmpty,
 } from '../../../core/models/search.model';
 import { NotificationService } from '../../../core/services/notification.service';
-import { AnalyticsService } from '../../../core/analytics/analytics.service';
-import { AnalyticsEvent } from '../../../core/analytics/analytics.events';
-import { AuthService } from '../../../core/services/auth.service';
-import { SearchApiService } from '../../../core/services/search-api.service';
+import { RECENT_PREVIEW_SIZE, SearchApiService } from '../../../core/services/search-api.service';
 import { DatePickerComponent } from '../../../shared/date-picker/date-picker.component';
 import { GameResultsComponent } from '../game-results/game-results.component';
 import { ViewportService } from '../../../core/layout/viewport.service';
@@ -31,14 +28,15 @@ const RESULTS: readonly { value: string; label: string }[] = [
 	imports: [GameResultsComponent, DatePickerComponent],
 	templateUrl: './advanced-search.component.html',
 	styleUrl: './advanced-search.component.scss',
+	host: {
+		'(document:click)': 'closeSuggestions()',
+	},
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdvancedSearchComponent {
 	private readonly api = inject(SearchApiService);
 	private readonly notify = inject(NotificationService);
 	private readonly viewport = inject(ViewportService);
-	private readonly auth = inject(AuthService);
-	private readonly analytics = inject(AnalyticsService);
 
 	readonly results = RESULTS;
 
@@ -104,6 +102,8 @@ export class AdvancedSearchComponent {
 
 	readonly displayRows = computed(() => (this.previewing() ? this.previewRows() : this.rows()));
 
+	readonly previewCapped = computed(() => this.previewing() && this.previewRows().length >= RECENT_PREVIEW_SIZE);
+
 	readonly resultsPlaceholder = computed(() =>
 		this.searched() ? 'No games in the archive match these criteria.' : 'Fill in at least one field and press Search.',
 	);
@@ -112,14 +112,22 @@ export class AdvancedSearchComponent {
 		this.loadPreview();
 	}
 
+	private previewRequestId = 0;
+
 	private loadPreview(): void {
 		this.previewLoading.set(true);
+
+		// Guards against an older request's response landing after a newer preview load.
+		const request = ++this.previewRequestId;
+
 		this.api.recent(this.sort(), this.ascending()).subscribe({
 			next: (result) => {
+				if (request !== this.previewRequestId) return;
 				this.previewRows.set(result.games);
 				this.previewLoading.set(false);
 			},
 			error: () => {
+				if (request !== this.previewRequestId) return;
 				this.previewRows.set([]);
 				this.previewLoading.set(false);
 			},
@@ -144,6 +152,49 @@ export class AdvancedSearchComponent {
 	readonly whiteSuggestions = signal<readonly string[]>([]);
 	readonly blackSuggestions = signal<readonly string[]>([]);
 
+	readonly openField = signal<'white' | 'black' | null>(null);
+	readonly highlighted = signal(0);
+
+	isOpen(key: 'white' | 'black'): boolean {
+		return this.openField() === key && this.suggestionsFor(key)().length > 0;
+	}
+
+	keepOpen(event: Event): void {
+		event.stopPropagation();
+	}
+
+	closeSuggestions(): void {
+		this.openField.set(null);
+	}
+
+	pickName(key: 'white' | 'black', name: string): void {
+		this.setField(key, name);
+		this.suggestionsFor(key).set([]);
+		this.closeSuggestions();
+	}
+
+	onNameKeydown(key: 'white' | 'black', event: KeyboardEvent): void {
+		if (event.key === 'Escape') {
+			this.closeSuggestions();
+			return;
+		}
+		const list = this.suggestionsFor(key)();
+		if (!this.isOpen(key) || list.length === 0) {
+			return;
+		}
+
+		if (event.key === 'ArrowDown') {
+			event.preventDefault();
+			this.highlighted.update((at) => (at + 1) % list.length);
+		} else if (event.key === 'ArrowUp') {
+			event.preventDefault();
+			this.highlighted.update((at) => (at - 1 + list.length) % list.length);
+		} else if (event.key === 'Enter') {
+			event.preventDefault();
+			this.pickName(key, list[this.highlighted()] ?? list[0]);
+		}
+	}
+
 	private readonly suggestTimers: Record<'white' | 'black', ReturnType<typeof setTimeout> | null> = {
 		white: null,
 		black: null,
@@ -163,8 +214,10 @@ export class AdvancedSearchComponent {
 		const trimmed = value.trim();
 		if (trimmed.length < MIN_SUGGEST_LENGTH) {
 			this.suggestionsFor(key).set([]);
+			this.closeSuggestions();
 			return;
 		}
+		this.openField.set(key);
 		this.suggestTimers[key] = setTimeout(() => this.fetchSuggestions(key, trimmed), SUGGEST_DEBOUNCE_MS);
 	}
 
@@ -176,9 +229,10 @@ export class AdvancedSearchComponent {
 		const request = ++this.suggestRequestIds[key];
 		this.api.suggestPlayers(query).subscribe({
 			next: (list) => {
-				// Drop a response for a request this key has since superseded.
+				// Drops the response if a newer request for this field has since started.
 				if (request !== this.suggestRequestIds[key]) return;
 				this.suggestionsFor(key).set(list.map((player) => player.name));
+				this.highlighted.set(0);
 			},
 			error: () => {
 				if (request !== this.suggestRequestIds[key]) return;
@@ -222,10 +276,6 @@ export class AdvancedSearchComponent {
 			this.notify.error('Fill in at least one search field.');
 			return;
 		}
-		this.analytics.capture(AnalyticsEvent.opponentSearch, {
-			mode: 'advanced',
-			authenticated: this.auth.isAuthenticated(),
-		});
 
 		this.active = this.criteria();
 		this.page = 0;

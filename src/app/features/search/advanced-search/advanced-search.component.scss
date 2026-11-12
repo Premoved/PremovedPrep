@@ -125,10 +125,53 @@
 }
 
 .field {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
 	min-width: 0;
+}
+
+.suggestions {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	right: 0;
+	z-index: 40;
+	max-height: 18rem;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	padding: 4px;
+	border: 1px solid var(--bg-border);
+	border-radius: 6px;
+	background: var(--bg-elevated);
+	box-shadow: 0 8px 24px var(--shadow-color);
+	box-sizing: border-box;
+}
+
+.suggestion {
+	flex: 0 0 auto;
+	display: block;
+	width: 100%;
+	padding: 6px 8px;
+	border: none;
+	border-radius: 4px;
+	background: transparent;
+	color: var(--text-main);
+	font-family: inherit;
+	font-size: 0.85rem;
+	font-weight: 600;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: default;
+}
+
+.suggestion.highlighted {
+	background: var(--bg-active-move);
 }
 
 .field.grow {
