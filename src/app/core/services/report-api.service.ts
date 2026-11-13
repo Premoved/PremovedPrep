@@ -6,8 +6,8 @@ import { AdvancedReport, OpponentGames } from '../models/report.model';
 import { OpponentScope } from '../models/search.model';
 import { ItemDetail, RepertoireColor } from '../models/collection.model';
 import { CollectionApiService } from './collection-api.service';
-import { BookCollection, buildBook } from '../report/repertoire-book';
-import { buildAdvancedReport } from '../report/advanced-report';
+import { BookCollection } from '../report/repertoire-book';
+import { buildReportOffThread } from '../report/report-thread';
 
 // The overlay against the user's repertoire runs here, the only place it is readable; up to four
 // thousand games' movetext comes down the wire instead of a finished tree.
@@ -25,14 +25,15 @@ export class ReportApiService {
 			opponent: this.opponentGames(scope),
 			repertoire: this.trunks(ourColor),
 		}).pipe(
-			map(({ opponent, repertoire }) =>
-				buildAdvancedReport(
-					buildBook(repertoire.trunks, repertoire.collections),
-					opponent.games,
-					opponent.fideId,
-					opponent.opponentColor,
-					opponent.truncated,
-				),
+			switchMap(({ opponent, repertoire }) =>
+				buildReportOffThread({
+					trunks: repertoire.trunks,
+					collections: repertoire.collections,
+					games: opponent.games,
+					fideId: opponent.fideId,
+					opponentColor: opponent.opponentColor,
+					truncated: opponent.truncated,
+				}),
 			),
 		);
 	}

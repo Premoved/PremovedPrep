@@ -6,6 +6,9 @@ import { AuthService } from '../../../core/services/auth.service';
 
 export type GameListStatus = 'idle' | 'loading' | 'ready' | 'error';
 
+// Stepping through moves asks only for the position it stops on.
+const POSITION_SETTLE_MS = 150;
+
 const ASCENDING_FIRST: ReadonlySet<GameSortKey> = new Set<GameSortKey>(['WHITE_NAME', 'BLACK_NAME', 'EVENT']);
 
 @Injectable()
@@ -36,6 +39,9 @@ export class GameListStore {
 	// Only the newest request may write the signals above.
 	private requestId = 0;
 
+	private settle: ReturnType<typeof setTimeout> | null = null;
+	private lastFen: string | null = null;
+
 	constructor() {
 		// Reads _active first and returns: a closed tab does not track the position.
 		effect(() => {
@@ -44,6 +50,7 @@ export class GameListStore {
 			}
 			// The games at a position need an account: nothing is asked for while signed out.
 			if (!this.auth.isLoggedIn()) {
+				this.cancelSettle();
 				this.requestId++;
 				this._rows.set([]);
 				this._hasMore.set(false);
@@ -55,11 +62,34 @@ export class GameListStore {
 			const sort = this._sort();
 			const ascending = this._ascending();
 
-			this.fetch(fen, sort, ascending, 0, false);
+			const moved = fen !== this.lastFen;
+			this.lastFen = fen;
+			this.cancelSettle();
+			if (!moved) {
+				this.fetch(fen, sort, ascending, 0, false);
+				return;
+			}
+			this.requestId++;
+			this._status.set('loading');
+			this.settle = setTimeout(() => {
+				this.settle = null;
+				this.fetch(fen, sort, ascending, 0, false);
+			}, POSITION_SETTLE_MS);
 		});
 	}
 
+	private cancelSettle(): void {
+		if (this.settle !== null) {
+			clearTimeout(this.settle);
+			this.settle = null;
+		}
+	}
+
 	setActive(active: boolean): void {
+		if (!active) {
+			this.cancelSettle();
+			this.lastFen = null;
+		}
 		this._active.set(active);
 	}
 

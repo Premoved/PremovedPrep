@@ -6,6 +6,8 @@ import { SearchApiService } from '../../../core/services/search-api.service';
 import { MoveTreeStore } from './move-tree.store';
 import { AuthService } from '../../../core/services/auth.service';
 
+const POSITION_SETTLE_MS = 150;
+
 export type ExplorerStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 @Injectable()
@@ -41,6 +43,8 @@ export class OpeningExplorerStore {
 	// Monotonic; only the newest request may write the signals above.
 	private requestId = 0;
 
+	private settle: ReturnType<typeof setTimeout> | null = null;
+
 	constructor() {
 		effect(() => {
 			// Read first and return early: a closed tab does not track the position.
@@ -68,6 +72,7 @@ export class OpeningExplorerStore {
 	}
 
 	private clear(): void {
+		this.cancelSettle();
 		this.requestId++;
 		this._data.set(EMPTY_OPENING_TREE);
 		this._error.set(null);
@@ -75,6 +80,7 @@ export class OpeningExplorerStore {
 	}
 
 	private load(fen: string): void {
+		this.cancelSettle();
 		const cached = this.cache.get(fen);
 		if (cached) {
 			this.requestId++;
@@ -88,6 +94,25 @@ export class OpeningExplorerStore {
 		this._status.set('loading');
 		this._error.set(null);
 
+		// A player's tree is computed, not looked up: stepping through moves asks only for where it stops.
+		if (this._scope()) {
+			this.settle = setTimeout(() => {
+				this.settle = null;
+				this.request(fen, id);
+			}, POSITION_SETTLE_MS);
+			return;
+		}
+		this.request(fen, id);
+	}
+
+	private cancelSettle(): void {
+		if (this.settle !== null) {
+			clearTimeout(this.settle);
+			this.settle = null;
+		}
+	}
+
+	private request(fen: string, id: number): void {
 		const scope = this._scope();
 		const request$ = scope ? this.search.opponentOpeningTree(scope, fen) : this.api.openingTree(fen);
 

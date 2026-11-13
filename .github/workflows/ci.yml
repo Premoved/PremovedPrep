@@ -39,6 +39,9 @@ jobs:
       - name: Types (app)
         run: npx tsc -p tsconfig.app.json --noEmit
 
+      - name: Types (worker)
+        run: npx tsc -p tsconfig.worker.json --noEmit
+
       - name: Types (specs)
         run: npx tsc -p tsconfig.spec.json --noEmit
 
