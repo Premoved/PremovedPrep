@@ -15,6 +15,7 @@ interface Download {
 interface Showcase {
 	readonly title: string;
 	readonly text: string;
+	readonly image: string;
 }
 
 @Component({
@@ -47,29 +48,26 @@ export class AppPageComponent {
 
 	readonly showContent = computed(() => this.released() || this.mayDownload());
 
-	// Kept for later: the descriptions stay, hidden until there are pictures to go with them.
-	readonly showcaseVisible = false;
-
 	readonly showcase: readonly Showcase[] = [
 		{
 			title: 'Local Resources',
-			text: 'Select a local folder for saving your collections, use Stockfish or any other UCI engine you add, and index any local PGN databases on your own computer.',
+			text: 'Select a local folder for saving your collections, use Stockfish or any other UCI engine you add, and index your own PGN databases on your computer.',
+			image: 'showcase/local-resources.webp',
 		},
 		{
 			title: 'Cloud and local, kept in sync',
 			text: 'All your collections in one place. Choose which collections to keep in cloud, which to keep on your own computer, and which to keep synced between both.',
+			image: 'showcase/library.webp',
 		},
 		{
-			title: 'Search your local databases offline',
-			text: 'Use the advanced search by multiple criteria to query your local databases any time.',
+			title: 'Offline workstation',
+			text: 'Use the app without an account and completely offline with your own local resources.',
+			image: 'showcase/offline-workstation.webp',
 		},
 		{
-			title: 'Advanced Report',
-			text: 'Power your Advanced Reports and Search Opponent functions, using any selected local database and the main lines from all your repertoire collections.',
-		},
-		{
-			title: 'Access the cloud resources any time',
-			text: "Use any setup you like and query the site's cloud database any time",
+			title: 'Prepare against opponents',
+			text: 'Use any setup you like to prepare against your opponents and access the cloud database any time.',
+			image: 'showcase/prepare-against-opponents.webp',
 		},
 	];
 

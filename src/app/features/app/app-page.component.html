@@ -30,23 +30,23 @@
 				}
 			</div>
 			<p class="fine">
-				Every build, with its checksums and release notes, is on
-				<a [href]="releasesUrl" target="_blank" rel="noopener">the releases page</a>.
+				Note: The app is not signed, so your system may show a warning when installing it. Every build can be found on
+				<a [href]="releasesUrl" target="_blank" rel="noopener">the releases page</a>, with its checksums and release
+				notes.
 			</p>
 		</section>
 
-		@if (showcaseVisible) {
-			<section class="shots">
-				@for (shot of showcase; track shot.title) {
-					<figure class="shot">
-						<figcaption>
-							<h3>{{ shot.title }}</h3>
-							<p>{{ shot.text }}</p>
-						</figcaption>
-					</figure>
-				}
-			</section>
-		}
+		<section class="shots">
+			@for (shot of showcase; track shot.title) {
+				<figure class="shot">
+					<img [src]="shot.image" [alt]="shot.title" width="1600" height="941" loading="lazy" decoding="async" />
+					<figcaption>
+						<h3>{{ shot.title }}</h3>
+						<p>{{ shot.text }}</p>
+					</figcaption>
+				</figure>
+			}
+		</section>
 	} @else {
 		<div class="card">
 			<h2>Coming soon...</h2>
