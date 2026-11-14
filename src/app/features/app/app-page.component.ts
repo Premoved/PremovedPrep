@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	HostListener,
+	computed,
+	effect,
+	inject,
+	signal,
+	untracked,
+} from '@angular/core';
 import { DesktopAppLogoComponent } from '../../shared/logo/desktop-app-logo.component';
 import { SignedOutNoticeComponent } from '../../shared/signed-out/signed-out-notice.component';
 import { AuthService } from '../../core/services/auth.service';
@@ -71,6 +80,12 @@ export class AppPageComponent {
 		},
 	];
 
+	readonly zoomed = signal<number | null>(null);
+	readonly zoomedShot = computed(() => {
+		const at = this.zoomed();
+		return at === null ? null : this.showcase[at];
+	});
+
 	constructor() {
 		this.api.stage().subscribe({
 			next: (answer) => this.stage.set(answer.stage),
@@ -89,6 +104,39 @@ export class AppPageComponent {
 				});
 			});
 		});
+	}
+
+	zoom(index: number): void {
+		this.zoomed.set(index);
+	}
+
+	closeZoom(): void {
+		this.zoomed.set(null);
+	}
+
+	step(by: number): void {
+		const at = this.zoomed();
+		if (at !== null) {
+			const count = this.showcase.length;
+			this.zoomed.set((at + by + count) % count);
+		}
+	}
+
+	@HostListener('document:keydown', ['$event'])
+	onKey(event: KeyboardEvent): void {
+		if (this.zoomed() === null) {
+			return;
+		}
+		if (event.key === 'Escape') {
+			this.closeZoom();
+		} else if (event.key === 'ArrowRight') {
+			this.step(1);
+		} else if (event.key === 'ArrowLeft') {
+			this.step(-1);
+		} else {
+			return;
+		}
+		event.preventDefault();
 	}
 }
 

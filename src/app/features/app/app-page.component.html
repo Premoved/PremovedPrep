@@ -37,9 +37,11 @@
 		</section>
 
 		<section class="shots">
-			@for (shot of showcase; track shot.title) {
+			@for (shot of showcase; track shot.title; let index = $index) {
 				<figure class="shot">
-					<img [src]="shot.image" [alt]="shot.title" width="1600" height="941" loading="lazy" decoding="async" />
+					<button type="button" class="frame-button" [attr.aria-label]="'Enlarge: ' + shot.title" (click)="zoom(index)">
+						<img class="frame" [src]="shot.image" [alt]="shot.title" loading="lazy" />
+					</button>
 					<figcaption>
 						<h3>{{ shot.title }}</h3>
 						<p>{{ shot.text }}</p>
@@ -47,6 +49,24 @@
 				</figure>
 			}
 		</section>
+
+		@if (zoomedShot(); as shot) {
+			<div class="lightbox">
+				<button type="button" class="backdrop" aria-label="Close" tabindex="-1" (click)="closeZoom()"></button>
+				<figure class="lightbox-card">
+					<img [src]="shot.image" [alt]="shot.title" />
+					<figcaption>
+						<button type="button" class="nav" aria-label="Previous picture" (click)="step(-1)">&#8249;</button>
+						<div class="caption">
+							<h3>{{ shot.title }}</h3>
+							<p>{{ shot.text }}</p>
+						</div>
+						<button type="button" class="nav" aria-label="Next picture" (click)="step(1)">&#8250;</button>
+					</figcaption>
+					<button type="button" class="close" aria-label="Close" (click)="closeZoom()">&times;</button>
+				</figure>
+			</div>
+		}
 	} @else {
 		<div class="card">
 			<h2>Coming soon...</h2>
