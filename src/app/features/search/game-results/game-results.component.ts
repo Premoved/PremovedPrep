@@ -15,6 +15,7 @@ import { OpeningExplorerService } from '../../../core/services/opening-explorer.
 import { PreviewBoardComponent } from '../../collections/preview-board/preview-board.component';
 import { ViewportService } from '../../../core/layout/viewport.service';
 import { GameContextMenuComponent } from '../../analysis-board/notation-panel/game-list/game-context-menu/game-context-menu.component';
+import { GameSequenceStore } from '../../../core/services/game-sequence.store';
 
 interface ResultColumn {
 	readonly key: string;
@@ -79,6 +80,7 @@ export class GameResultsComponent {
 	readonly previewPgn = signal<string | null>(null);
 
 	readonly viewport = inject(ViewportService);
+	private readonly sequence = inject(GameSequenceStore);
 
 	readonly sheetOffset = signal(0);
 	private sheetDragFrom: number | null = null;
@@ -209,6 +211,8 @@ export class GameResultsComponent {
 
 	openInNewTab(row: SearchResultGame): void {
 		this.closeMenu();
+		// The list these results show: the board steps through it with Previous and Next.
+		this.sequence.remember('cloud', this.rows().map((game) => game.id));
 		window.open(`/analysis?game=${row.id}`, '_blank', 'noopener');
 	}
 

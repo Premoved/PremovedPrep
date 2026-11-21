@@ -153,6 +153,14 @@ export class OpponentSearchComponent {
 
 	private readonly foldRequested = signal(false);
 
+	// The Search button folds the search section away, so the results show; the round button brings it back.
+	searchAndFold(): void {
+		this.search();
+		if (this.hasResults()) {
+			this.foldRequested.set(true);
+		}
+	}
+
 	readonly barCollapsed = computed(() => this.collapsible() && this.foldRequested());
 	readonly handleOffset = signal<number | null>(null);
 	readonly handleDragging = signal(false);
