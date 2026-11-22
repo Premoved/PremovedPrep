@@ -212,7 +212,10 @@ export class GameResultsComponent {
 	openInNewTab(row: SearchResultGame): void {
 		this.closeMenu();
 		// The list these results show: the board steps through it with Previous and Next.
-		this.sequence.remember('cloud', this.rows().map((game) => game.id));
+		this.sequence.remember(
+			'cloud',
+			this.rows().map((game) => game.id),
+		);
 		window.open(`/analysis?game=${row.id}`, '_blank', 'noopener');
 	}
 

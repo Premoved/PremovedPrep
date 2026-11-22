@@ -482,7 +482,10 @@ export class AnalysisBoardComponent implements AfterViewInit, OnDestroy {
 		if (this.game()) {
 			void this.confirmDiscardOrSave().then((proceed) => {
 				if (proceed) {
-					void this.router.navigate([], { queryParams: { game: id, ply: null, line: null }, queryParamsHandling: 'merge' });
+					void this.router.navigate([], {
+						queryParams: { game: id, ply: null, line: null },
+						queryParamsHandling: 'merge',
+					});
 				}
 			});
 			return;
