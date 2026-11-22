@@ -42,12 +42,16 @@ export class AppPageComponent {
 	readonly access = signal<DesktopAppAccess | null>(null);
 
 	readonly releasesUrl = environment.desktopApp.releasesUrl;
+	readonly mobileReleasesUrl = environment.mobileApp.releasesUrl;
 
-	readonly downloads: readonly Download[] = environment.desktopApp.builds.map((build) => ({
-		platform: build.platform,
-		detail: build.detail,
-		url: `${environment.desktopApp.releasesUrl}/latest/download/${build.file}`,
-	}));
+	// Each from the latest release of its own repository: the desktop app and the mobile app are released apart.
+	readonly downloads: readonly Download[] = [environment.desktopApp, environment.mobileApp].flatMap((app) =>
+		app.builds.map((build) => ({
+			platform: build.platform,
+			detail: build.detail,
+			url: `${app.releasesUrl}/latest/download/${build.file}`,
+		})),
+	);
 
 	readonly suggested = computed(() => this.downloads.find((build) => build.platform === detectPlatform()) ?? null);
 	readonly others = computed(() => this.downloads.filter((build) => build !== this.suggested()));
@@ -145,6 +149,7 @@ function detectPlatform(): string | null {
 		return null;
 	}
 	const agent = `${navigator.userAgent} ${navigator.platform ?? ''}`;
+	if (/Android/i.test(agent)) return 'Android';
 	if (/Win/i.test(agent)) return 'Windows';
 	if (/Mac/i.test(agent)) return 'macOS';
 	if (/Linux|X11/i.test(agent) && !/Android/i.test(agent)) return 'Linux';

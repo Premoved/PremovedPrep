@@ -118,9 +118,9 @@ export const routes: Routes = [
 				path: 'app',
 				loadComponent: () => import('./features/app/app-page.component').then((m) => m.AppPageComponent),
 				data: {
-					title: 'Desktop App',
+					title: 'PremovedPrep App',
 					description:
-						'PremovedPrep on your own computer: your own game archive as the database, your own engine, and your own disk. Downloads for Windows, macOS and Linux.',
+						'PremovedPrep on your own computer: your own game archive as the database, your own engine, and your own disk. Downloads for Windows, macOS, Linux and Android.',
 				},
 			},
 

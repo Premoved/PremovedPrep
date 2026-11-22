@@ -17,4 +17,10 @@ export const environment = {
 			{ platform: 'Linux', detail: 'AppImage, x86-64', file: 'PremovedPrep.AppImage' },
 		],
 	},
+	// Released apart, from its own repository, with version numbers of its own.
+	mobileApp: {
+		repoUrl: 'https://github.com/Premoved/PremovedPrep-mobile',
+		releasesUrl: 'https://github.com/Premoved/PremovedPrep-mobile/releases',
+		builds: [{ platform: 'Android', detail: 'APK, Android 7 or newer', file: 'PremovedPrep.apk' }],
+	},
 };

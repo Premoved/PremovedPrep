@@ -68,10 +68,18 @@ h2 {
 	color: var(--logo-accent-color);
 }
 
+/* The suggested build on a row of its own, the others side by side below it, evenly. */
 .builds {
-	display: flex;
-	flex-wrap: wrap;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
 	gap: 0.75rem;
+	max-width: 52rem;
+}
+
+.build.primary {
+	grid-column: 1 / -1;
+	justify-self: start;
+	min-width: 16rem;
 }
 
 .btn {
@@ -330,9 +338,14 @@ h2 {
 		height: 2.75rem;
 	}
 
-	.build {
+	.builds {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.build,
+	.build.primary {
 		min-width: 0;
-		flex: 1 1 100%;
+		justify-self: stretch;
 	}
 
 	.shots {
