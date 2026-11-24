@@ -1,4 +1,8 @@
-// IndexedDB holds the non-extractable CryptoKey: scripts can use it, never read its bytes.
+// IndexedDB holds the master CryptoKey, stored extractable: a password change after a reload
+// re-wraps this exact key via exportKey (VaultService.rewrapForNewPassword). Trade-off: script access
+// on this origin, or read access to this store, could export the key, not only use it. Hardening it
+// means rewrap re-deriving the master from the current password instead - a deliberate, test-gated
+// change, not a quick patch.
 const DATABASE = 'premovedprep-vault';
 const STORE = 'keys';
 const RECORD = 'master';
